@@ -16,6 +16,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -57,6 +58,24 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.savePlayerData(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * Give dragon egg back on respawn
+     */
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        PlayerData data = plugin.getPlayerData(player.getUniqueId());
+
+        if (data != null && data.getAttribute() == AttributeType.DRAGON_EGG) {
+            // Give dragon egg back after respawn
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!player.getInventory().contains(Material.DRAGON_EGG)) {
+                    player.getInventory().addItem(new ItemStack(Material.DRAGON_EGG));
+                }
+            }, 1L);
+        }
     }
 
     /**
@@ -394,6 +413,9 @@ public class EventListener implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
+
+        // Keep dragon egg on death - remove from drops
+        event.getDrops().removeIf(item -> item.getType() == Material.DRAGON_EGG);
 
         if (data == null) return;
 
