@@ -16,7 +16,6 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -58,24 +57,6 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.savePlayerData(event.getPlayer().getUniqueId());
-    }
-
-    /**
-     * Give dragon egg back on respawn
-     */
-    @EventHandler
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        Player player = event.getPlayer();
-        PlayerData data = plugin.getPlayerData(player.getUniqueId());
-
-        if (data != null && data.getAttribute() == AttributeType.DRAGON_EGG) {
-            // Give dragon egg back after respawn
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (!player.getInventory().contains(Material.DRAGON_EGG)) {
-                    player.getInventory().addItem(new ItemStack(Material.DRAGON_EGG));
-                }
-            }, 1L);
-        }
     }
 
     /**
@@ -411,11 +392,21 @@ public class EventListener implements Listener {
      */
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        Player player = event.getEntity();
+        Player player = event.getPlayer();
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
 
-        // Keep dragon egg on death - remove from drops
-        event.getDrops().removeIf(item -> item.getType() == Material.DRAGON_EGG);
+        // If player has dragon egg attribute and drops the egg, remove the attribute
+        if (data != null && data.getAttribute() == AttributeType.DRAGON_EGG) {
+            boolean droppingEgg = event.getDrops().stream()
+                    .anyMatch(item -> item.getType() == Material.DRAGON_EGG);
+            if (droppingEgg) {
+                removeDragonEggEffects(player);
+                plugin.setPlayerData(player.getUniqueId(), new PlayerData());
+                player.sendMessage("§c§lYou have lost the Dragon Egg!");
+                Bukkit.broadcastMessage("§c§l⚠ §6§lDRAGON EGG DROPPED §c§l⚠");
+                Bukkit.broadcastMessage("§e" + player.getName() + " §7has lost the Dragon Egg!");
+            }
+        }
 
         if (data == null) return;
 
