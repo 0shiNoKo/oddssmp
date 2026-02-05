@@ -585,40 +585,41 @@ public class EventListener implements Listener {
      * Fill in the End fountain structure at 0, 0
      */
     private void fillEndFountain(World world) {
-        // Base layer at y=60
-        for (int x = -2; x <= 2; x++) {
-            for (int z = -2; z <= 2; z++) {
-                world.getBlockAt(x, 60, z).setType(Material.BEDROCK);
-            }
+        // The vanilla End portal structure - fill it all with bedrock
+        int baseY = 61;
+
+        // Layer 1 (y=61) - the portal frame base
+        // Pattern: cross shape with corners
+        int[][] layer1 = {
+            {-1, -3}, {0, -3}, {1, -3},
+            {-2, -2}, {-1, -2}, {0, -2}, {1, -2}, {2, -2},
+            {-3, -1}, {-2, -1}, {-1, -1}, {0, -1}, {1, -1}, {2, -1}, {3, -1},
+            {-3, 0}, {-2, 0}, {-1, 0}, {0, 0}, {1, 0}, {2, 0}, {3, 0},
+            {-3, 1}, {-2, 1}, {-1, 1}, {0, 1}, {1, 1}, {2, 1}, {3, 1},
+            {-2, 2}, {-1, 2}, {0, 2}, {1, 2}, {2, 2},
+            {-1, 3}, {0, 3}, {1, 3}
+        };
+
+        for (int[] pos : layer1) {
+            world.getBlockAt(pos[0], baseY, pos[1]).setType(Material.BEDROCK);
         }
 
-        // Pillar layers y=61-64
-        for (int y = 61; y <= 64; y++) {
-            world.getBlockAt(0, y, 0).setType(Material.BEDROCK);
-            // Corner pillars
-            world.getBlockAt(-2, y, -2).setType(Material.BEDROCK);
-            world.getBlockAt(-2, y, 2).setType(Material.BEDROCK);
-            world.getBlockAt(2, y, -2).setType(Material.BEDROCK);
-            world.getBlockAt(2, y, 2).setType(Material.BEDROCK);
-        }
-
-        // Fill center area y=61-63
-        for (int y = 61; y <= 63; y++) {
-            for (int x = -1; x <= 1; x++) {
-                for (int z = -1; z <= 1; z++) {
-                    if (x != 0 || z != 0) {
-                        world.getBlockAt(x, y, z).setType(Material.BEDROCK);
-                    }
-                }
-            }
-        }
-
-        // Top platform at y=64
+        // Layer 2 (y=62) - fill the center
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
-                world.getBlockAt(x, 64, z).setType(Material.BEDROCK);
+                world.getBlockAt(x, baseY + 1, z).setType(Material.BEDROCK);
             }
         }
+
+        // Layer 3 (y=63) - smaller platform
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                world.getBlockAt(x, baseY + 2, z).setType(Material.BEDROCK);
+            }
+        }
+
+        // Layer 4 (y=64) - top platform for egg
+        world.getBlockAt(0, baseY + 3, 0).setType(Material.BEDROCK);
     }
 
     /**
