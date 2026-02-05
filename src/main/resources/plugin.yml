@@ -5,6 +5,16 @@ description: A comprehensive attribute and ability system for Minecraft
 api-version: '1.21'
 author: OddSMP Team
 
+commands:
+  smp:
+    description: OddSMP player commands
+    usage: /<command> [support|melee|info]
+    permission: oddsmp.player
+  admin:
+    description: OddSMP admin commands
+    usage: /<command> [gui|boss]
+    permission: oddsmp.admin
+
 permissions:
   oddsmp.admin:
     description: Access to admin commands
