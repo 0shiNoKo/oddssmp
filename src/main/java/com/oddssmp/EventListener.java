@@ -66,13 +66,7 @@ public class EventListener implements Listener {
 
         if (event.getItem().getItemStack().getType() != Material.DRAGON_EGG) return;
 
-        // Cancel the pickup - we'll handle it ourselves
-        event.setCancelled(true);
-
-        // Remove the item from the world
-        event.getItem().remove();
-
-        // Grant Dragon Egg attribute
+        // Grant Dragon Egg attribute (player keeps the egg item)
         PlayerData data = new PlayerData(AttributeType.DRAGON_EGG, Tier.EXTREME);
         plugin.setPlayerData(player.getUniqueId(), data);
 
