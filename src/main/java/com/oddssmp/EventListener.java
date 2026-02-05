@@ -559,7 +559,7 @@ public class EventListener implements Listener {
     }
 
     /**
-     * Handle Ender Dragon death - fill fountain and spawn egg
+     * Handle Ender Dragon death - spawn egg on fountain
      */
     @EventHandler
     public void onDragonDeath(EntityDeathEvent event) {
@@ -568,58 +568,16 @@ public class EventListener implements Listener {
         World world = event.getEntity().getWorld();
         if (world.getEnvironment() != World.Environment.THE_END) return;
 
-        // Fill in the End fountain at 0, 0
-        fillEndFountain(world);
+        // Let vanilla handle the exit portal, just spawn the dragon egg on top
+        // Delay slightly to ensure portal is generated first
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Location eggLocation = new Location(world, 0, 64, 0);
+            eggLocation.getBlock().setType(Material.DRAGON_EGG);
 
-        // Spawn dragon egg on top of fountain
-        Location eggLocation = new Location(world, 0, 65, 0);
-        eggLocation.getBlock().setType(Material.DRAGON_EGG);
-
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
-        Bukkit.broadcastMessage("§7The fountain has been restored...");
-        Bukkit.broadcastMessage("");
-    }
-
-    /**
-     * Fill in the End fountain structure at 0, 0
-     */
-    private void fillEndFountain(World world) {
-        // The vanilla End portal structure - fill it all with bedrock
-        int baseY = 61;
-
-        // Layer 1 (y=61) - the portal frame base
-        // Pattern: cross shape with corners
-        int[][] layer1 = {
-            {-1, -3}, {0, -3}, {1, -3},
-            {-2, -2}, {-1, -2}, {0, -2}, {1, -2}, {2, -2},
-            {-3, -1}, {-2, -1}, {-1, -1}, {0, -1}, {1, -1}, {2, -1}, {3, -1},
-            {-3, 0}, {-2, 0}, {-1, 0}, {0, 0}, {1, 0}, {2, 0}, {3, 0},
-            {-3, 1}, {-2, 1}, {-1, 1}, {0, 1}, {1, 1}, {2, 1}, {3, 1},
-            {-2, 2}, {-1, 2}, {0, 2}, {1, 2}, {2, 2},
-            {-1, 3}, {0, 3}, {1, 3}
-        };
-
-        for (int[] pos : layer1) {
-            world.getBlockAt(pos[0], baseY, pos[1]).setType(Material.BEDROCK);
-        }
-
-        // Layer 2 (y=62) - fill the center
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -1; z <= 1; z++) {
-                world.getBlockAt(x, baseY + 1, z).setType(Material.BEDROCK);
-            }
-        }
-
-        // Layer 3 (y=63) - smaller platform
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -1; z <= 1; z++) {
-                world.getBlockAt(x, baseY + 2, z).setType(Material.BEDROCK);
-            }
-        }
-
-        // Layer 4 (y=64) - top platform for egg
-        world.getBlockAt(0, baseY + 3, 0).setType(Material.BEDROCK);
+            Bukkit.broadcastMessage("");
+            Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
+            Bukkit.broadcastMessage("");
+        }, 20L); // 1 second delay
     }
 
     /**
