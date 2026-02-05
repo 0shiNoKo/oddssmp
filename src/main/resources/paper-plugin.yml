@@ -1,6 +1,6 @@
 name: OddSMP
 version: '1.0.0'
-main: com.oddsmp.OddSMP
+main: com.oddssmp.OddSMP
 description: A comprehensive attribute and ability system for Minecraft
 api-version: '1.21'
 author: OddSMP Team
