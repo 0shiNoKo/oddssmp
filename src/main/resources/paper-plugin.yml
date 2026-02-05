@@ -1,0 +1,14 @@
+name: OddSMP
+version: '1.0.0'
+main: com.oddsmp.OddSMP
+description: A comprehensive attribute and ability system for Minecraft
+api-version: '1.21'
+author: OddSMP Team
+
+permissions:
+  oddsmp.admin:
+    description: Access to admin commands
+    default: op
+  oddsmp.player:
+    description: Access to player commands
+    default: true
