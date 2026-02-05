@@ -17,6 +17,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
@@ -98,6 +100,40 @@ public class EventListener implements Listener {
         if (event.getItemDrop().getItemStack().getType() == Material.DRAGON_EGG) {
             event.setCancelled(true);
             event.getPlayer().sendMessage("§cYou cannot drop the Dragon Egg!");
+        }
+    }
+
+    /**
+     * Prevent putting dragon egg in containers
+     */
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
+
+        // Only check if clicking in a non-player inventory
+        InventoryType topType = event.getView().getTopInventory().getType();
+        if (topType == InventoryType.PLAYER || topType == InventoryType.CRAFTING) return;
+
+        // Check if trying to place dragon egg in container
+        ItemStack cursor = event.getCursor();
+        ItemStack current = event.getCurrentItem();
+
+        // Shift-clicking dragon egg from player inventory into container
+        if (event.isShiftClick() && current != null && current.getType() == Material.DRAGON_EGG) {
+            if (event.getClickedInventory() == player.getInventory()) {
+                event.setCancelled(true);
+                player.sendMessage("§cYou cannot store the Dragon Egg!");
+                return;
+            }
+        }
+
+        // Placing dragon egg directly into container slot
+        if (cursor != null && cursor.getType() == Material.DRAGON_EGG) {
+            if (event.getClickedInventory() != null && event.getClickedInventory() != player.getInventory()) {
+                event.setCancelled(true);
+                player.sendMessage("§cYou cannot store the Dragon Egg!");
+            }
         }
     }
 
