@@ -44,8 +44,30 @@ public class EventListener implements Listener {
         // Update tab display
         plugin.updatePlayerTab(player);
 
-        // Check if player has Dragon Egg
+        // Check if player has Dragon Egg in inventory but not the attribute
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
+        if (data != null && data.getAttribute() != AttributeType.DRAGON_EGG) {
+            if (player.getInventory().contains(Material.DRAGON_EGG)) {
+                // Grant Dragon Egg attribute
+                PlayerData newData = new PlayerData(AttributeType.DRAGON_EGG, Tier.EXTREME);
+                plugin.setPlayerData(player.getUniqueId(), newData);
+
+                ParticleManager.playSupportParticles(player, AttributeType.DRAGON_EGG, Tier.EXTREME, 1);
+
+                Bukkit.broadcastMessage("");
+                Bukkit.broadcastMessage("§c§l⚠ §6§lDRAGON EGG OBTAINED §c§l⚠");
+                Bukkit.broadcastMessage("§e" + player.getName() + " §7has claimed the");
+                Bukkit.broadcastMessage("  §6§lLEGENDARY DRAGON EGG!");
+                Bukkit.broadcastMessage("");
+
+                applyDragonEggEffects(player);
+                plugin.updatePlayerTab(player);
+                player.sendMessage("§6§l§kA§r §c§lYOU RECEIVED THE DRAGON EGG §6§l§kA");
+                return;
+            }
+        }
+
+        // Check if player has Dragon Egg attribute
         if (data != null && data.getAttribute() == AttributeType.DRAGON_EGG) {
             applyDragonEggEffects(player);
         }
