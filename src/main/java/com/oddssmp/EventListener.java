@@ -12,6 +12,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -87,6 +88,17 @@ public class EventListener implements Listener {
         plugin.updatePlayerTab(player);
 
         player.sendMessage("§6§l§kA§r §c§lYOU RECEIVED THE DRAGON EGG §6§l§kA");
+    }
+
+    /**
+     * Prevent dropping dragon egg
+     */
+    @EventHandler
+    public void onItemDrop(PlayerDropItemEvent event) {
+        if (event.getItemDrop().getItemStack().getType() == Material.DRAGON_EGG) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cYou cannot drop the Dragon Egg!");
+        }
     }
 
     /**
