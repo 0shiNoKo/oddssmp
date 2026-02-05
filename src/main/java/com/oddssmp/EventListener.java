@@ -1,8 +1,12 @@
 package com.oddssmp;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.block.Block;
+import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
@@ -550,6 +554,69 @@ public class EventListener implements Listener {
             for (ItemStack drop : event.getDrops()) {
                 int bonusAmount = (int)Math.ceil(drop.getAmount() * bonus);
                 drop.setAmount(drop.getAmount() + bonusAmount);
+            }
+        }
+    }
+
+    /**
+     * Handle Ender Dragon death - fill fountain and spawn egg
+     */
+    @EventHandler
+    public void onDragonDeath(EntityDeathEvent event) {
+        if (!(event.getEntity() instanceof EnderDragon)) return;
+
+        World world = event.getEntity().getWorld();
+        if (world.getEnvironment() != World.Environment.THE_END) return;
+
+        // Fill in the End fountain at 0, 0
+        fillEndFountain(world);
+
+        // Spawn dragon egg on top of fountain
+        Location eggLocation = new Location(world, 0, 65, 0);
+        eggLocation.getBlock().setType(Material.DRAGON_EGG);
+
+        Bukkit.broadcastMessage("");
+        Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
+        Bukkit.broadcastMessage("§7The fountain has been restored...");
+        Bukkit.broadcastMessage("");
+    }
+
+    /**
+     * Fill in the End fountain structure at 0, 0
+     */
+    private void fillEndFountain(World world) {
+        // Base layer at y=60
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                world.getBlockAt(x, 60, z).setType(Material.BEDROCK);
+            }
+        }
+
+        // Pillar layers y=61-64
+        for (int y = 61; y <= 64; y++) {
+            world.getBlockAt(0, y, 0).setType(Material.BEDROCK);
+            // Corner pillars
+            world.getBlockAt(-2, y, -2).setType(Material.BEDROCK);
+            world.getBlockAt(-2, y, 2).setType(Material.BEDROCK);
+            world.getBlockAt(2, y, -2).setType(Material.BEDROCK);
+            world.getBlockAt(2, y, 2).setType(Material.BEDROCK);
+        }
+
+        // Fill center area y=61-63
+        for (int y = 61; y <= 63; y++) {
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x != 0 || z != 0) {
+                        world.getBlockAt(x, y, z).setType(Material.BEDROCK);
+                    }
+                }
+            }
+        }
+
+        // Top platform at y=64
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                world.getBlockAt(x, 64, z).setType(Material.BEDROCK);
             }
         }
     }
