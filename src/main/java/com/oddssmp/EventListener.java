@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
@@ -53,6 +54,45 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.savePlayerData(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * Handle dragon egg pickup - grants Dragon Egg attribute
+     */
+    @EventHandler
+    public void onItemPickup(EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+        Player player = (Player) event.getEntity();
+
+        if (event.getItem().getItemStack().getType() != Material.DRAGON_EGG) return;
+
+        // Cancel the pickup - we'll handle it ourselves
+        event.setCancelled(true);
+
+        // Remove the item from the world
+        event.getItem().remove();
+
+        // Grant Dragon Egg attribute
+        PlayerData data = new PlayerData(AttributeType.DRAGON_EGG, Tier.EXTREME);
+        plugin.setPlayerData(player.getUniqueId(), data);
+
+        // Play effects
+        ParticleManager.playSupportParticles(player, AttributeType.DRAGON_EGG, Tier.EXTREME, 1);
+
+        // Broadcast announcement
+        Bukkit.broadcastMessage("");
+        Bukkit.broadcastMessage("§c§l⚠ §6§lDRAGON EGG OBTAINED §c§l⚠");
+        Bukkit.broadcastMessage("§e" + player.getName() + " §7has claimed the");
+        Bukkit.broadcastMessage("  §6§lLEGENDARY DRAGON EGG!");
+        Bukkit.broadcastMessage("");
+
+        // Apply Dragon Egg effects
+        applyDragonEggEffects(player);
+
+        // Update tab
+        plugin.updatePlayerTab(player);
+
+        player.sendMessage("§6§l§kA§r §c§lYOU RECEIVED THE DRAGON EGG §6§l§kA");
     }
 
     /**
