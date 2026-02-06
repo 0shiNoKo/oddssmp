@@ -602,41 +602,47 @@ public class EventListener implements Listener {
             }
         }
 
-        // North arm - portal (3 wide, 1 deep)
+        // North arm - portal (3 wide, 1 deep) at z=-2
         for (int x = -1; x <= 1; x++) {
             world.getBlockAt(centerX + x, baseY, centerZ - 2).setType(Material.END_PORTAL);
         }
-        // North arm - bedrock (3 wide, 1 deep)
+        // North arm - bedrock (3 wide, 1 deep) at z=-3
         for (int x = -1; x <= 1; x++) {
             world.getBlockAt(centerX + x, baseY, centerZ - 3).setType(Material.BEDROCK);
         }
 
-        // South arm - portal (3 wide, 1 deep)
+        // South arm - portal (3 wide, 1 deep) at z=2
         for (int x = -1; x <= 1; x++) {
             world.getBlockAt(centerX + x, baseY, centerZ + 2).setType(Material.END_PORTAL);
         }
-        // South arm - bedrock (3 wide, 1 deep)
+        // South arm - bedrock (3 wide, 1 deep) at z=3
         for (int x = -1; x <= 1; x++) {
             world.getBlockAt(centerX + x, baseY, centerZ + 3).setType(Material.BEDROCK);
         }
 
-        // West arm - portal (1 wide, 3 deep)
+        // West arm - portal (1 wide, 3 deep) at x=-2
         for (int z = -1; z <= 1; z++) {
             world.getBlockAt(centerX - 2, baseY, centerZ + z).setType(Material.END_PORTAL);
         }
-        // West arm - bedrock (1 wide, 3 deep)
+        // West arm - bedrock (1 wide, 3 deep) at x=-3
         for (int z = -1; z <= 1; z++) {
             world.getBlockAt(centerX - 3, baseY, centerZ + z).setType(Material.BEDROCK);
         }
 
-        // East arm - portal (1 wide, 3 deep)
+        // East arm - portal (1 wide, 3 deep) at x=2
         for (int z = -1; z <= 1; z++) {
             world.getBlockAt(centerX + 2, baseY, centerZ + z).setType(Material.END_PORTAL);
         }
-        // East arm - bedrock (1 wide, 3 deep)
+        // East arm - bedrock (1 wide, 3 deep) at x=3
         for (int z = -1; z <= 1; z++) {
             world.getBlockAt(centerX + 3, baseY, centerZ + z).setType(Material.BEDROCK);
         }
+
+        // Corner bedrock blocks
+        world.getBlockAt(centerX - 2, baseY, centerZ - 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 2, baseY, centerZ - 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX - 2, baseY, centerZ + 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 2, baseY, centerZ + 2).setType(Material.BEDROCK);
 
         // Build bedrock pillar in center (y=71 to y=73)
         for (int y = baseY + 1; y <= baseY + 3; y++) {
