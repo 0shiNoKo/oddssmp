@@ -559,7 +559,7 @@ public class EventListener implements Listener {
     }
 
     /**
-     * Handle Ender Dragon death - spawn egg on fountain
+     * Handle Ender Dragon death - spawn exit portal and egg
      */
     @EventHandler
     public void onDragonDeath(EntityDeathEvent event) {
@@ -568,16 +568,48 @@ public class EventListener implements Listener {
         World world = event.getEntity().getWorld();
         if (world.getEnvironment() != World.Environment.THE_END) return;
 
-        // Let vanilla handle the exit portal, just spawn the dragon egg on top
-        // Delay slightly to ensure portal is generated first
+        // Generate the exit portal structure
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Location eggLocation = new Location(world, 0, 64, 0);
+            generateEndPortal(world);
+
+            // Spawn dragon egg on top
+            Location eggLocation = new Location(world, 0, 65, 0);
             eggLocation.getBlock().setType(Material.DRAGON_EGG);
 
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
             Bukkit.broadcastMessage("");
-        }, 20L); // 1 second delay
+        }, 20L);
+    }
+
+    /**
+     * Generate the End exit portal structure
+     */
+    private void generateEndPortal(World world) {
+        // Bedrock frame - bottom layer (y=61)
+        for (int x = -3; x <= 3; x++) {
+            for (int z = -3; z <= 3; z++) {
+                // Create the cross/plus shape
+                if (Math.abs(x) <= 1 || Math.abs(z) <= 1) {
+                    world.getBlockAt(x, 61, z).setType(Material.BEDROCK);
+                }
+            }
+        }
+
+        // End portal blocks in center (y=61)
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                world.getBlockAt(x, 61, z).setType(Material.END_PORTAL);
+            }
+        }
+
+        // Bedrock pillar in center (y=62-64)
+        for (int y = 62; y <= 64; y++) {
+            world.getBlockAt(0, y, 0).setType(Material.BEDROCK);
+        }
+
+        // Torch on top
+        world.getBlockAt(0, 65, 0).setType(Material.TORCH);
     }
 
     /**
