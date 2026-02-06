@@ -21,6 +21,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.potion.PotionEffect;
@@ -580,6 +581,51 @@ public class EventListener implements Listener {
             Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
             Bukkit.broadcastMessage("");
         }, 20L);
+    }
+
+    /**
+     * Handle Ender Dragon spawn - start block destruction task
+     */
+    @EventHandler
+    public void onDragonSpawn(CreatureSpawnEvent event) {
+        if (!(event.getEntity() instanceof EnderDragon)) return;
+
+        EnderDragon dragon = (EnderDragon) event.getEntity();
+        startDragonBlockDestruction(dragon);
+    }
+
+    /**
+     * Start a repeating task to destroy blocks around the dragon
+     */
+    private void startDragonBlockDestruction(EnderDragon dragon) {
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            if (dragon.isDead() || !dragon.isValid()) {
+                task.cancel();
+                return;
+            }
+
+            // Destroy blocks around the dragon
+            Location loc = dragon.getLocation();
+            int radius = 4;
+
+            for (int x = -radius; x <= radius; x++) {
+                for (int y = -radius; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        Block block = loc.clone().add(x, y, z).getBlock();
+                        Material type = block.getType();
+
+                        // Don't destroy bedrock, end portal, or air
+                        if (type != Material.AIR &&
+                            type != Material.BEDROCK &&
+                            type != Material.END_PORTAL &&
+                            type != Material.END_PORTAL_FRAME &&
+                            type != Material.END_GATEWAY) {
+                            block.breakNaturally();
+                        }
+                    }
+                }
+            }
+        }, 0L, 5L); // Run every 5 ticks (0.25 seconds)
     }
 
     /**
