@@ -1,6 +1,7 @@
 package com.oddssmp;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -46,8 +47,9 @@ public class AbilityManager {
         // Get nearby allies
         List<Player> allies = getNearbyAllies(player, getSupportRadius(data.getAttribute()));
 
-        // Play particles
+        // Play particles and sound
         ParticleManager.playSupportParticles(player, data.getAttribute(), data.getTier(), data.getLevel());
+        playSupportSound(player, data.getAttribute());
 
         // Apply support effects
         applySupportEffect(player, allies, data);
@@ -101,8 +103,9 @@ public class AbilityManager {
         PlayerData data = plugin.getPlayerData(attacker.getUniqueId());
         if (data == null || data.getAttribute() == null) return;
 
-        // Play particles
+        // Play particles and sound
         ParticleManager.playMeleeParticles(attacker, target, data.getAttribute(), data.getTier());
+        playMeleeSound(attacker, data.getAttribute());
 
         // Apply melee effects
         applyMeleeEffect(attacker, target, data);
@@ -153,6 +156,165 @@ public class AbilityManager {
                 return 3.0;
             default:
                 return 6.0;
+        }
+    }
+
+    /**
+     * Play sound for support ability activation
+     */
+    private void playSupportSound(Player player, AttributeType attr) {
+        switch (attr) {
+            case MELEE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 1.0f, 1.2f);
+                break;
+            case HEALTH:
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.5f);
+                break;
+            case DEFENSE:
+                player.getWorld().playSound(player.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.0f, 0.8f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.5f, 1.2f);
+                break;
+            case WEALTH:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.0f, 1.0f);
+                break;
+            case SPEED:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.5f);
+                break;
+            case CONTROL:
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, 0.8f, 1.5f);
+                break;
+            case RANGE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1.0f, 0.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1.0f, 1.0f);
+                break;
+            case PRESSURE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 0.5f, 1.5f);
+                break;
+            case TEMPO:
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
+                break;
+            case DISRUPTION:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.8f, 1.2f);
+                break;
+            case VISION:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 1.0f, 0.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 1.5f);
+                break;
+            case PERSISTENCE:
+                player.getWorld().playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 0.8f, 1.2f);
+                break;
+            case ANCHOR:
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ANVIL_PLACE, 1.0f, 0.8f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0f, 0.8f);
+                break;
+            case TRANSFER:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.2f);
+                break;
+            case RISK:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_TNT_PRIMED, 1.0f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1.0f, 0.5f);
+                break;
+            case WITHER:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_SHOOT, 0.8f, 0.8f);
+                break;
+            case WARDEN:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_ROAR, 0.8f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_HEARTBEAT, 1.0f, 1.0f);
+                break;
+            case BREEZE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_WIND_BURST, 1.0f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_CHARGE, 1.0f, 1.2f);
+                break;
+            case DRAGON_EGG:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 1.2f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_END_PORTAL_SPAWN, 0.5f, 1.5f);
+                break;
+            default:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+                break;
+        }
+    }
+
+    /**
+     * Play sound for melee ability hit
+     */
+    private void playMeleeSound(Player player, AttributeType attr) {
+        switch (attr) {
+            case MELEE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.8f);
+                player.getWorld().playSound(player.getLocation(), Sound.ITEM_MACE_SMASH_GROUND, 0.8f, 1.0f);
+                break;
+            case HEALTH:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 1.0f, 1.2f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_BURP, 0.5f, 1.5f);
+                break;
+            case DEFENSE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_HURT, 0.8f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.0f, 1.0f);
+                break;
+            case WEALTH:
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, 1.0f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 0.8f);
+                break;
+            case SPEED:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.5f, 1.2f);
+                break;
+            case CONTROL:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.5f);
+                break;
+            case RANGE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 0.8f);
+                break;
+            case PRESSURE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_RAVAGER_ATTACK, 1.0f, 1.0f);
+                break;
+            case TEMPO:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.8f, 2.0f);
+                break;
+            case DISRUPTION:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.5f, 2.0f);
+                break;
+            case VISION:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_BITE, 1.0f, 1.2f);
+                break;
+            case PERSISTENCE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 0.8f, 1.0f);
+                break;
+            case ANCHOR:
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_CHAIN_PLACE, 1.0f, 0.8f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_ATTACK, 0.8f, 0.8f);
+                break;
+            case TRANSFER:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_SHULKER_SHOOT, 1.0f, 1.0f);
+                break;
+            case RISK:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 0.5f, 1.0f);
+                break;
+            case WITHER:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_HURT, 0.8f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_SKELETON_HURT, 1.0f, 0.8f);
+                break;
+            case WARDEN:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_ATTACK_IMPACT, 1.0f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 0.3f, 1.5f);
+                break;
+            case BREEZE:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_INHALE, 1.0f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_WIND_BURST, 0.8f, 1.2f);
+                break;
+            case DRAGON_EGG:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_HURT, 0.8f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 0.5f, 1.5f);
+                break;
+            default:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_STRONG, 1.0f, 1.0f);
+                break;
         }
     }
 
