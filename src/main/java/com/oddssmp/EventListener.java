@@ -568,13 +568,9 @@ public class EventListener implements Listener {
         World world = event.getEntity().getWorld();
         if (world.getEnvironment() != World.Environment.THE_END) return;
 
-        // Generate the exit portal structure
+        // Generate the exit portal structure after short delay
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            generateEndPortal(world);
-
-            // Spawn dragon egg on top
-            Location eggLocation = new Location(world, 0, 65, 0);
-            eggLocation.getBlock().setType(Material.DRAGON_EGG);
+            generateEndExitPortal(world);
 
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
@@ -583,33 +579,80 @@ public class EventListener implements Listener {
     }
 
     /**
-     * Generate the End exit portal structure
+     * Generate the End exit portal structure at 0, 0
      */
-    private void generateEndPortal(World world) {
-        // Bedrock frame - bottom layer (y=61)
-        for (int x = -3; x <= 3; x++) {
-            for (int z = -3; z <= 3; z++) {
-                // Create the cross/plus shape
-                if (Math.abs(x) <= 1 || Math.abs(z) <= 1) {
-                    world.getBlockAt(x, 61, z).setType(Material.BEDROCK);
+    private void generateEndExitPortal(World world) {
+        int centerX = 0;
+        int centerZ = 0;
+        int baseY = 61;
+
+        // Clear area first
+        for (int x = -4; x <= 4; x++) {
+            for (int z = -4; z <= 4; z++) {
+                for (int y = baseY; y <= baseY + 5; y++) {
+                    world.getBlockAt(centerX + x, y, centerZ + z).setType(Material.AIR);
                 }
             }
         }
 
-        // End portal blocks in center (y=61)
+        // Build bedrock base - layer 1 (y=61)
+        // Row z=-3
+        world.getBlockAt(centerX - 1, baseY, centerZ - 3).setType(Material.BEDROCK);
+        world.getBlockAt(centerX, baseY, centerZ - 3).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 1, baseY, centerZ - 3).setType(Material.BEDROCK);
+
+        // Row z=-2
+        world.getBlockAt(centerX - 2, baseY, centerZ - 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX - 1, baseY, centerZ - 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX, baseY, centerZ - 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 1, baseY, centerZ - 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 2, baseY, centerZ - 2).setType(Material.BEDROCK);
+
+        // Row z=-1
+        world.getBlockAt(centerX - 3, baseY, centerZ - 1).setType(Material.BEDROCK);
+        world.getBlockAt(centerX - 2, baseY, centerZ - 1).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 2, baseY, centerZ - 1).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 3, baseY, centerZ - 1).setType(Material.BEDROCK);
+
+        // Row z=0
+        world.getBlockAt(centerX - 3, baseY, centerZ).setType(Material.BEDROCK);
+        world.getBlockAt(centerX - 2, baseY, centerZ).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 2, baseY, centerZ).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 3, baseY, centerZ).setType(Material.BEDROCK);
+
+        // Row z=1
+        world.getBlockAt(centerX - 3, baseY, centerZ + 1).setType(Material.BEDROCK);
+        world.getBlockAt(centerX - 2, baseY, centerZ + 1).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 2, baseY, centerZ + 1).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 3, baseY, centerZ + 1).setType(Material.BEDROCK);
+
+        // Row z=2
+        world.getBlockAt(centerX - 2, baseY, centerZ + 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX - 1, baseY, centerZ + 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX, baseY, centerZ + 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 1, baseY, centerZ + 2).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 2, baseY, centerZ + 2).setType(Material.BEDROCK);
+
+        // Row z=3
+        world.getBlockAt(centerX - 1, baseY, centerZ + 3).setType(Material.BEDROCK);
+        world.getBlockAt(centerX, baseY, centerZ + 3).setType(Material.BEDROCK);
+        world.getBlockAt(centerX + 1, baseY, centerZ + 3).setType(Material.BEDROCK);
+
+        // Place end portal blocks in center 3x3 (must be placed AFTER bedrock frame)
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
-                world.getBlockAt(x, 61, z).setType(Material.END_PORTAL);
+                Block portalBlock = world.getBlockAt(centerX + x, baseY, centerZ + z);
+                portalBlock.setType(Material.END_PORTAL);
             }
         }
 
-        // Bedrock pillar in center (y=62-64)
-        for (int y = 62; y <= 64; y++) {
-            world.getBlockAt(0, y, 0).setType(Material.BEDROCK);
+        // Build bedrock pillar in center (y=62 to y=64)
+        for (int y = baseY + 1; y <= baseY + 3; y++) {
+            world.getBlockAt(centerX, y, centerZ).setType(Material.BEDROCK);
         }
 
-        // Torch on top
-        world.getBlockAt(0, 65, 0).setType(Material.TORCH);
+        // Place dragon egg on top (y=65)
+        world.getBlockAt(centerX, baseY + 4, centerZ).setType(Material.DRAGON_EGG);
     }
 
     /**
