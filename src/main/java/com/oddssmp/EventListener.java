@@ -584,7 +584,7 @@ public class EventListener implements Listener {
     private void generateEndExitPortal(World world) {
         int centerX = 0;
         int centerZ = 0;
-        int baseY = 61;
+        int baseY = 70;
 
         // Clear area first
         for (int x = -4; x <= 4; x++) {
@@ -595,7 +595,7 @@ public class EventListener implements Listener {
             }
         }
 
-        // Build bedrock base - layer 1 (y=61)
+        // Build bedrock base - layer 1 (y=70)
         // Row z=-3
         world.getBlockAt(centerX - 1, baseY, centerZ - 3).setType(Material.BEDROCK);
         world.getBlockAt(centerX, baseY, centerZ - 3).setType(Material.BEDROCK);
@@ -638,20 +638,44 @@ public class EventListener implements Listener {
         world.getBlockAt(centerX, baseY, centerZ + 3).setType(Material.BEDROCK);
         world.getBlockAt(centerX + 1, baseY, centerZ + 3).setType(Material.BEDROCK);
 
-        // Place end portal blocks in center 3x3 (must be placed AFTER bedrock frame)
+        // Place end portal blocks in cross/plus pattern
+        // Center 3x3
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
-                Block portalBlock = world.getBlockAt(centerX + x, baseY, centerZ + z);
-                portalBlock.setType(Material.END_PORTAL);
+                world.getBlockAt(centerX + x, baseY, centerZ + z).setType(Material.END_PORTAL);
+            }
+        }
+        // North arm (z negative)
+        for (int z = -4; z <= -2; z++) {
+            for (int x = -1; x <= 1; x++) {
+                world.getBlockAt(centerX + x, baseY, centerZ + z).setType(Material.END_PORTAL);
+            }
+        }
+        // South arm (z positive)
+        for (int z = 2; z <= 4; z++) {
+            for (int x = -1; x <= 1; x++) {
+                world.getBlockAt(centerX + x, baseY, centerZ + z).setType(Material.END_PORTAL);
+            }
+        }
+        // West arm (x negative)
+        for (int x = -4; x <= -2; x++) {
+            for (int z = -1; z <= 1; z++) {
+                world.getBlockAt(centerX + x, baseY, centerZ + z).setType(Material.END_PORTAL);
+            }
+        }
+        // East arm (x positive)
+        for (int x = 2; x <= 4; x++) {
+            for (int z = -1; z <= 1; z++) {
+                world.getBlockAt(centerX + x, baseY, centerZ + z).setType(Material.END_PORTAL);
             }
         }
 
-        // Build bedrock pillar in center (y=62 to y=64)
+        // Build bedrock pillar in center (y=71 to y=73)
         for (int y = baseY + 1; y <= baseY + 3; y++) {
             world.getBlockAt(centerX, y, centerZ).setType(Material.BEDROCK);
         }
 
-        // Place dragon egg on top (y=65)
+        // Place dragon egg on top (y=74)
         world.getBlockAt(centerX, baseY + 4, centerZ).setType(Material.DRAGON_EGG);
     }
 
