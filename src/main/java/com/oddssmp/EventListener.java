@@ -587,8 +587,8 @@ public class EventListener implements Listener {
         int baseY = 70;
 
         // Clear area first
-        for (int x = -7; x <= 7; x++) {
-            for (int z = -7; z <= 7; z++) {
+        for (int x = -5; x <= 5; x++) {
+            for (int z = -5; z <= 5; z++) {
                 for (int y = baseY; y <= baseY + 5; y++) {
                     world.getBlockAt(centerX + x, y, centerZ + z).setType(Material.AIR);
                 }
@@ -602,40 +602,40 @@ public class EventListener implements Listener {
             }
         }
 
-        // North arm - portal (1 wide, 3 long)
-        for (int z = -4; z <= -2; z++) {
-            world.getBlockAt(centerX, baseY, centerZ + z).setType(Material.END_PORTAL);
+        // North arm - portal (3 wide, 1 deep)
+        for (int x = -1; x <= 1; x++) {
+            world.getBlockAt(centerX + x, baseY, centerZ - 2).setType(Material.END_PORTAL);
         }
-        // North arm - bedrock (1 wide, 3 long)
-        for (int z = -7; z <= -5; z++) {
-            world.getBlockAt(centerX, baseY, centerZ + z).setType(Material.BEDROCK);
-        }
-
-        // South arm - portal (1 wide, 3 long)
-        for (int z = 2; z <= 4; z++) {
-            world.getBlockAt(centerX, baseY, centerZ + z).setType(Material.END_PORTAL);
-        }
-        // South arm - bedrock (1 wide, 3 long)
-        for (int z = 5; z <= 7; z++) {
-            world.getBlockAt(centerX, baseY, centerZ + z).setType(Material.BEDROCK);
+        // North arm - bedrock (3 wide, 1 deep)
+        for (int x = -1; x <= 1; x++) {
+            world.getBlockAt(centerX + x, baseY, centerZ - 3).setType(Material.BEDROCK);
         }
 
-        // West arm - portal (1 wide, 3 long)
-        for (int x = -4; x <= -2; x++) {
-            world.getBlockAt(centerX + x, baseY, centerZ).setType(Material.END_PORTAL);
+        // South arm - portal (3 wide, 1 deep)
+        for (int x = -1; x <= 1; x++) {
+            world.getBlockAt(centerX + x, baseY, centerZ + 2).setType(Material.END_PORTAL);
         }
-        // West arm - bedrock (1 wide, 3 long)
-        for (int x = -7; x <= -5; x++) {
-            world.getBlockAt(centerX + x, baseY, centerZ).setType(Material.BEDROCK);
+        // South arm - bedrock (3 wide, 1 deep)
+        for (int x = -1; x <= 1; x++) {
+            world.getBlockAt(centerX + x, baseY, centerZ + 3).setType(Material.BEDROCK);
         }
 
-        // East arm - portal (1 wide, 3 long)
-        for (int x = 2; x <= 4; x++) {
-            world.getBlockAt(centerX + x, baseY, centerZ).setType(Material.END_PORTAL);
+        // West arm - portal (1 wide, 3 deep)
+        for (int z = -1; z <= 1; z++) {
+            world.getBlockAt(centerX - 2, baseY, centerZ + z).setType(Material.END_PORTAL);
         }
-        // East arm - bedrock (1 wide, 3 long)
-        for (int x = 5; x <= 7; x++) {
-            world.getBlockAt(centerX + x, baseY, centerZ).setType(Material.BEDROCK);
+        // West arm - bedrock (1 wide, 3 deep)
+        for (int z = -1; z <= 1; z++) {
+            world.getBlockAt(centerX - 3, baseY, centerZ + z).setType(Material.BEDROCK);
+        }
+
+        // East arm - portal (1 wide, 3 deep)
+        for (int z = -1; z <= 1; z++) {
+            world.getBlockAt(centerX + 2, baseY, centerZ + z).setType(Material.END_PORTAL);
+        }
+        // East arm - bedrock (1 wide, 3 deep)
+        for (int z = -1; z <= 1; z++) {
+            world.getBlockAt(centerX + 3, baseY, centerZ + z).setType(Material.BEDROCK);
         }
 
         // Build bedrock pillar in center (y=71 to y=73)
