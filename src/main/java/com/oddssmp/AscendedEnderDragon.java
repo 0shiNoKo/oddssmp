@@ -2,6 +2,7 @@ package com.oddssmp;
 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.block.Block;
 import org.bukkit.boss.BossBar;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
@@ -95,6 +96,9 @@ public class AscendedEnderDragon {
 
         // Start boss AI
         startBossAI();
+
+        // Start block destruction task
+        startBlockDestruction();
 
         // Broadcast
         Bukkit.broadcastMessage("");
@@ -742,6 +746,43 @@ public class AscendedEnderDragon {
         List<UUID> players = new ArrayList<>(playersInArena);
         UUID randomUUID = players.get((int)(Math.random() * players.size()));
         return Bukkit.getPlayer(randomUUID);
+    }
+
+    /**
+     * Start block destruction task - dragon destroys blocks it flies through
+     */
+    private void startBlockDestruction() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!isActive || dragon == null || dragon.isDead() || !dragon.isValid()) {
+                    cancel();
+                    return;
+                }
+
+                // Destroy blocks around the dragon
+                Location loc = dragon.getLocation();
+                int radius = 4;
+
+                for (int x = -radius; x <= radius; x++) {
+                    for (int y = -radius; y <= radius; y++) {
+                        for (int z = -radius; z <= radius; z++) {
+                            Block block = loc.clone().add(x, y, z).getBlock();
+                            Material type = block.getType();
+
+                            // Don't destroy bedrock, end portal, or air
+                            if (type != Material.AIR &&
+                                type != Material.BEDROCK &&
+                                type != Material.END_PORTAL &&
+                                type != Material.END_PORTAL_FRAME &&
+                                type != Material.END_GATEWAY) {
+                                block.breakNaturally();
+                            }
+                        }
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 5L); // Run every 5 ticks (0.25 seconds)
     }
 
     /**
