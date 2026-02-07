@@ -48,25 +48,31 @@ public class EventListener implements Listener {
         // Update tab display
         plugin.updatePlayerTab(player);
 
-        // Check if player has Dragon Egg in inventory but not the attribute
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
-        if (data != null && data.getAttribute() != AttributeType.DRAGON_EGG) {
-            if (player.getInventory().contains(Material.DRAGON_EGG)) {
-                // Grant Dragon Egg attribute
-                PlayerData newData = new PlayerData(AttributeType.DRAGON_EGG, Tier.EXTREME);
-                plugin.setPlayerData(player.getUniqueId(), newData);
 
-                ParticleManager.playSupportParticles(player, AttributeType.DRAGON_EGG, Tier.EXTREME, 1);
+        // Check if player has boss items in inventory but not the attribute
+        if (data != null) {
+            // Dragon Egg
+            if (data.getAttribute() != AttributeType.DRAGON_EGG && player.getInventory().contains(Material.DRAGON_EGG)) {
+                grantBossAttribute(player, AttributeType.DRAGON_EGG, "DRAGON EGG", "§6");
+                return;
+            }
 
-                Bukkit.broadcastMessage("");
-                Bukkit.broadcastMessage("§c§l⚠ §6§lDRAGON EGG OBTAINED §c§l⚠");
-                Bukkit.broadcastMessage("§e" + player.getName() + " §7has claimed the");
-                Bukkit.broadcastMessage("  §6§lLEGENDARY DRAGON EGG!");
-                Bukkit.broadcastMessage("");
+            // Wither Bone (Coal Block with special name)
+            if (data.getAttribute() != AttributeType.WITHER && hasWitherBone(player)) {
+                grantBossAttribute(player, AttributeType.WITHER, "WITHER BONE", "§8");
+                return;
+            }
 
-                applyDragonEggEffects(player);
-                plugin.updatePlayerTab(player);
-                player.sendMessage("§6§l§kA§r §c§lYOU RECEIVED THE DRAGON EGG §6§l§kA");
+            // Warden Brain (Sculk Catalyst with special name)
+            if (data.getAttribute() != AttributeType.WARDEN && hasWardenBrain(player)) {
+                grantBossAttribute(player, AttributeType.WARDEN, "WARDEN BRAIN", "§3");
+                return;
+            }
+
+            // Breeze Heart (Wind Charge with special name)
+            if (data.getAttribute() != AttributeType.BREEZE && hasBreezeHeart(player)) {
+                grantBossAttribute(player, AttributeType.BREEZE, "BREEZE HEART", "§b");
                 return;
             }
         }
@@ -80,57 +86,102 @@ public class EventListener implements Listener {
         applyMaxHealthBonus(player);
     }
 
+    /**
+     * Grant boss attribute and broadcast
+     */
+    private void grantBossAttribute(Player player, AttributeType attribute, String itemName, String color) {
+        PlayerData newData = new PlayerData(attribute, Tier.EXTREME);
+        plugin.setPlayerData(player.getUniqueId(), newData);
+
+        ParticleManager.playSupportParticles(player, attribute, Tier.EXTREME, 1);
+
+        Bukkit.broadcastMessage("");
+        Bukkit.broadcastMessage("§c§l⚠ " + color + "§l" + itemName + " OBTAINED §c§l⚠");
+        Bukkit.broadcastMessage("§e" + player.getName() + " §7has claimed the");
+        Bukkit.broadcastMessage("  " + color + "§lLEGENDARY " + itemName + "!");
+        Bukkit.broadcastMessage("");
+
+        if (attribute == AttributeType.DRAGON_EGG) {
+            applyDragonEggEffects(player);
+        }
+
+        plugin.updatePlayerTab(player);
+        player.sendMessage(color + "§l§kA§r §c§lYOU RECEIVED THE " + itemName + " " + color + "§l§kA");
+    }
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.savePlayerData(event.getPlayer().getUniqueId());
     }
 
     /**
-     * Handle dragon egg pickup - grants Dragon Egg attribute
+     * Handle boss item pickup - grants respective attribute
      */
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
+        ItemStack item = event.getItem().getItemStack();
 
-        if (event.getItem().getItemStack().getType() != Material.DRAGON_EGG) return;
+        // Dragon Egg
+        if (item.getType() == Material.DRAGON_EGG) {
+            grantBossAttribute(player, AttributeType.DRAGON_EGG, "DRAGON EGG", "§6");
+            applyDragonEggEffects(player);
+            return;
+        }
 
-        // Grant Dragon Egg attribute (player keeps the egg item)
-        PlayerData data = new PlayerData(AttributeType.DRAGON_EGG, Tier.EXTREME);
-        plugin.setPlayerData(player.getUniqueId(), data);
+        // Wither Bone
+        if (isWitherBone(item)) {
+            grantBossAttribute(player, AttributeType.WITHER, "WITHER BONE", "§8");
+            return;
+        }
 
-        // Play effects
-        ParticleManager.playSupportParticles(player, AttributeType.DRAGON_EGG, Tier.EXTREME, 1);
+        // Warden Brain
+        if (isWardenBrain(item)) {
+            grantBossAttribute(player, AttributeType.WARDEN, "WARDEN BRAIN", "§3");
+            return;
+        }
 
-        // Broadcast announcement
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§c§l⚠ §6§lDRAGON EGG OBTAINED §c§l⚠");
-        Bukkit.broadcastMessage("§e" + player.getName() + " §7has claimed the");
-        Bukkit.broadcastMessage("  §6§lLEGENDARY DRAGON EGG!");
-        Bukkit.broadcastMessage("");
-
-        // Apply Dragon Egg effects
-        applyDragonEggEffects(player);
-
-        // Update tab
-        plugin.updatePlayerTab(player);
-
-        player.sendMessage("§6§l§kA§r §c§lYOU RECEIVED THE DRAGON EGG §6§l§kA");
-    }
-
-    /**
-     * Prevent dropping dragon egg
-     */
-    @EventHandler
-    public void onItemDrop(PlayerDropItemEvent event) {
-        if (event.getItemDrop().getItemStack().getType() == Material.DRAGON_EGG) {
-            event.setCancelled(true);
-            event.getPlayer().sendMessage("§cYou cannot drop the Dragon Egg!");
+        // Breeze Heart
+        if (isBreezeHeart(item)) {
+            grantBossAttribute(player, AttributeType.BREEZE, "BREEZE HEART", "§b");
+            return;
         }
     }
 
     /**
-     * Prevent putting dragon egg in containers
+     * Prevent dropping boss items
+     */
+    @EventHandler
+    public void onItemDrop(PlayerDropItemEvent event) {
+        ItemStack item = event.getItemDrop().getItemStack();
+
+        if (item.getType() == Material.DRAGON_EGG) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cYou cannot drop the Dragon Egg!");
+            return;
+        }
+
+        if (isWitherBone(item)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cYou cannot drop the Wither Bone!");
+            return;
+        }
+
+        if (isWardenBrain(item)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cYou cannot drop the Warden Brain!");
+            return;
+        }
+
+        if (isBreezeHeart(item)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cYou cannot drop the Breeze Heart!");
+        }
+    }
+
+    /**
+     * Prevent putting boss items in containers
      */
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -141,24 +192,23 @@ public class EventListener implements Listener {
         InventoryType topType = event.getView().getTopInventory().getType();
         if (topType == InventoryType.PLAYER || topType == InventoryType.CRAFTING) return;
 
-        // Check if trying to place dragon egg in container
         ItemStack cursor = event.getCursor();
         ItemStack current = event.getCurrentItem();
 
-        // Shift-clicking dragon egg from player inventory into container
-        if (event.isShiftClick() && current != null && current.getType() == Material.DRAGON_EGG) {
-            if (event.getClickedInventory() == player.getInventory()) {
+        // Shift-clicking boss item from player inventory into container
+        if (event.isShiftClick() && current != null && event.getClickedInventory() == player.getInventory()) {
+            if (isBossItem(current)) {
                 event.setCancelled(true);
-                player.sendMessage("§cYou cannot store the Dragon Egg!");
+                player.sendMessage("§cYou cannot store this item!");
                 return;
             }
         }
 
-        // Placing dragon egg directly into container slot
-        if (cursor != null && cursor.getType() == Material.DRAGON_EGG) {
+        // Placing boss item directly into container slot
+        if (cursor != null && isBossItem(cursor)) {
             if (event.getClickedInventory() != null && event.getClickedInventory() != player.getInventory()) {
                 event.setCancelled(true);
-                player.sendMessage("§cYou cannot store the Dragon Egg!");
+                player.sendMessage("§cYou cannot store this item!");
             }
         }
     }
@@ -421,16 +471,52 @@ public class EventListener implements Listener {
         Player player = event.getPlayer();
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
 
-        // If player has dragon egg attribute and drops the egg, remove the attribute
-        if (data != null && data.getAttribute() == AttributeType.DRAGON_EGG) {
-            boolean droppingEgg = event.getDrops().stream()
-                    .anyMatch(item -> item.getType() == Material.DRAGON_EGG);
-            if (droppingEgg) {
-                removeDragonEggEffects(player);
-                plugin.setPlayerData(player.getUniqueId(), new PlayerData());
-                player.sendMessage("§c§lYou have lost the Dragon Egg!");
-                Bukkit.broadcastMessage("§c§l⚠ §6§lDRAGON EGG DROPPED §c§l⚠");
-                Bukkit.broadcastMessage("§e" + player.getName() + " §7has lost the Dragon Egg!");
+        // Handle boss item drops
+        if (data != null) {
+            // Dragon Egg
+            if (data.getAttribute() == AttributeType.DRAGON_EGG) {
+                boolean droppingEgg = event.getDrops().stream()
+                        .anyMatch(item -> item.getType() == Material.DRAGON_EGG);
+                if (droppingEgg) {
+                    removeDragonEggEffects(player);
+                    plugin.setPlayerData(player.getUniqueId(), new PlayerData());
+                    player.sendMessage("§c§lYou have lost the Dragon Egg!");
+                    Bukkit.broadcastMessage("§c§l⚠ §6§lDRAGON EGG DROPPED §c§l⚠");
+                    Bukkit.broadcastMessage("§e" + player.getName() + " §7has lost the Dragon Egg!");
+                }
+            }
+
+            // Wither Bone
+            if (data.getAttribute() == AttributeType.WITHER) {
+                boolean droppingBone = event.getDrops().stream().anyMatch(this::isWitherBone);
+                if (droppingBone) {
+                    plugin.setPlayerData(player.getUniqueId(), new PlayerData());
+                    player.sendMessage("§c§lYou have lost the Wither Bone!");
+                    Bukkit.broadcastMessage("§c§l⚠ §8§lWITHER BONE DROPPED §c§l⚠");
+                    Bukkit.broadcastMessage("§e" + player.getName() + " §7has lost the Wither Bone!");
+                }
+            }
+
+            // Warden Brain
+            if (data.getAttribute() == AttributeType.WARDEN) {
+                boolean droppingBrain = event.getDrops().stream().anyMatch(this::isWardenBrain);
+                if (droppingBrain) {
+                    plugin.setPlayerData(player.getUniqueId(), new PlayerData());
+                    player.sendMessage("§c§lYou have lost the Warden Brain!");
+                    Bukkit.broadcastMessage("§c§l⚠ §3§lWARDEN BRAIN DROPPED §c§l⚠");
+                    Bukkit.broadcastMessage("§e" + player.getName() + " §7has lost the Warden Brain!");
+                }
+            }
+
+            // Breeze Heart
+            if (data.getAttribute() == AttributeType.BREEZE) {
+                boolean droppingHeart = event.getDrops().stream().anyMatch(this::isBreezeHeart);
+                if (droppingHeart) {
+                    plugin.setPlayerData(player.getUniqueId(), new PlayerData());
+                    player.sendMessage("§c§lYou have lost the Breeze Heart!");
+                    Bukkit.broadcastMessage("§c§l⚠ §b§lBREEZE HEART DROPPED §c§l⚠");
+                    Bukkit.broadcastMessage("§e" + player.getName() + " §7has lost the Breeze Heart!");
+                }
             }
         }
 
@@ -870,5 +956,78 @@ public class EventListener implements Listener {
                 type == PotionEffectType.LEVITATION ||
                 type == PotionEffectType.UNLUCK ||
                 type == PotionEffectType.DARKNESS;
+    }
+
+    // ========== BOSS ITEM HELPERS ==========
+
+    /**
+     * Check if item is a boss item (cannot be dropped/stored)
+     */
+    private boolean isBossItem(ItemStack item) {
+        if (item == null) return false;
+        return item.getType() == Material.DRAGON_EGG ||
+                isWitherBone(item) ||
+                isWardenBrain(item) ||
+                isBreezeHeart(item);
+    }
+
+    /**
+     * Check if item is Wither Bone
+     */
+    private boolean isWitherBone(ItemStack item) {
+        if (item == null || item.getType() != Material.COAL_BLOCK) return false;
+        if (!item.hasItemMeta()) return false;
+        String name = item.getItemMeta().getDisplayName();
+        return name != null && name.contains("Wither Bone");
+    }
+
+    /**
+     * Check if player has Wither Bone in inventory
+     */
+    private boolean hasWitherBone(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (isWitherBone(item)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if item is Warden Brain
+     */
+    private boolean isWardenBrain(ItemStack item) {
+        if (item == null || item.getType() != Material.SCULK_CATALYST) return false;
+        if (!item.hasItemMeta()) return false;
+        String name = item.getItemMeta().getDisplayName();
+        return name != null && name.contains("Warden Brain");
+    }
+
+    /**
+     * Check if player has Warden Brain in inventory
+     */
+    private boolean hasWardenBrain(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (isWardenBrain(item)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if item is Breeze Heart
+     */
+    private boolean isBreezeHeart(ItemStack item) {
+        if (item == null || item.getType() != Material.WIND_CHARGE) return false;
+        if (!item.hasItemMeta()) return false;
+        String name = item.getItemMeta().getDisplayName();
+        return name != null && name.contains("Breeze Heart");
+    }
+
+    /**
+     * Check if player has Breeze Heart in inventory
+     */
+    private boolean hasBreezeHeart(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (isBreezeHeart(item)) return true;
+        }
+        return false;
     }
 }
