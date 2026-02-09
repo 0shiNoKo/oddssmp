@@ -16,7 +16,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -142,6 +144,100 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.savePlayerData(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * Handle right-click with Upgrader/Reroller items
+     */
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        ItemStack item = event.getItem();
+        if (item == null) return;
+
+        PlayerData data = plugin.getPlayerData(player.getUniqueId());
+
+        // Handle Upgrader
+        if (OddsSMP.isUpgrader(item)) {
+            event.setCancelled(true);
+
+            if (data == null || data.getAttribute() == null) {
+                player.sendMessage("§cYou don't have an attribute to upgrade!");
+                return;
+            }
+
+            if (data.getLevel() >= 5) {
+                player.sendMessage("§cYour attribute is already at max level (5)!");
+                return;
+            }
+
+            // Consume item
+            item.setAmount(item.getAmount() - 1);
+
+            // Upgrade level
+            int oldLevel = data.getLevel();
+            data.incrementLevel();
+
+            // Effects
+            ParticleManager.playSupportParticles(player, data.getAttribute(), data.getTier(), data.getLevel());
+            player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
+
+            // Save and update
+            plugin.savePlayerData(player.getUniqueId());
+            plugin.updatePlayerTab(player);
+
+            player.sendMessage("§a§l✦ UPGRADED! §7" + data.getAttribute().getDisplayName() +
+                    " §aLevel " + oldLevel + " → " + data.getLevel() + "!");
+            return;
+        }
+
+        // Handle Reroller
+        if (OddsSMP.isReroller(item)) {
+            event.setCancelled(true);
+
+            if (data == null || data.getAttribute() == null) {
+                player.sendMessage("§cYou don't have an attribute to reroll!");
+                return;
+            }
+
+            // Don't allow rerolling boss attributes
+            if (data.getAttribute().isBossAttribute() || data.getAttribute().isDragonEgg()) {
+                player.sendMessage("§cYou cannot reroll boss attributes!");
+                return;
+            }
+
+            // Consume item
+            item.setAmount(item.getAmount() - 1);
+
+            // Get old attribute for message
+            AttributeType oldAttr = data.getAttribute();
+
+            // Remove old effects
+            removeAttributeEffects(player, oldAttr);
+
+            // Get new random attribute
+            AttributeType newAttr = AttributeType.getRandomAttribute(false);
+            Tier newTier = Tier.getRandomTier();
+
+            // Set new data (level resets to 1)
+            PlayerData newData = new PlayerData(newAttr, newTier);
+            plugin.setPlayerData(player.getUniqueId(), newData);
+
+            // Effects
+            ParticleManager.playSupportParticles(player, newAttr, newTier, 1);
+            player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.0f, 1.2f);
+
+            // Update tab
+            plugin.updatePlayerTab(player);
+
+            player.sendMessage("§d§l✦ REROLLED! §7" + oldAttr.getDisplayName() + " §d→ " +
+                    newTier.getColor() + newTier.name() + " " + newAttr.getIcon() + " " + newAttr.getDisplayName() + "§d!");
+            return;
+        }
     }
 
     /**
