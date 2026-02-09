@@ -27,6 +27,7 @@ public class OddsSMP extends JavaPlugin {
     private CommandHandler commandHandler;
     private EventListener eventListener;
     private AdminGUI adminGUI;
+    private WeaponGUI weaponGUI;
     private GUIListener guiListener;
 
     // Auto-assign settings
@@ -52,7 +53,8 @@ public class OddsSMP extends JavaPlugin {
         commandHandler = new CommandHandler(this);
         eventListener = new EventListener(this);
         adminGUI = new AdminGUI(this);
-        guiListener = new GUIListener(this, adminGUI);
+        weaponGUI = new WeaponGUI(this);
+        guiListener = new GUIListener(this, adminGUI, weaponGUI);
 
         // Register commands
         getCommand("smp").setExecutor(commandHandler);
@@ -454,6 +456,13 @@ public class OddsSMP extends JavaPlugin {
      */
     public AdminGUI getAdminGUI() {
         return adminGUI;
+    }
+
+    /**
+     * Get weapon GUI
+     */
+    public WeaponGUI getWeaponGUI() {
+        return weaponGUI;
     }
 
     /**
