@@ -512,6 +512,50 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Give upgrader command
+        if (args[0].equalsIgnoreCase("giveupgrader")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cOnly players can receive items!");
+                return true;
+            }
+            Player player = (Player) sender;
+            int amount = 1;
+            if (args.length >= 2) {
+                try {
+                    amount = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    amount = 1;
+                }
+            }
+            for (int i = 0; i < amount; i++) {
+                player.getInventory().addItem(OddsSMP.createUpgrader());
+            }
+            player.sendMessage("§aYou received " + amount + "x §6§lAttribute Upgrader§a!");
+            return true;
+        }
+
+        // Give reroller command
+        if (args[0].equalsIgnoreCase("givereroller")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cOnly players can receive items!");
+                return true;
+            }
+            Player player = (Player) sender;
+            int amount = 1;
+            if (args.length >= 2) {
+                try {
+                    amount = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    amount = 1;
+                }
+            }
+            for (int i = 0; i < amount; i++) {
+                player.getInventory().addItem(OddsSMP.createReroller());
+            }
+            player.sendMessage("§aYou received " + amount + "x §d§lAttribute Reroller§a!");
+            return true;
+        }
+
         // Test command
         if (args.length < 3) {
             sender.sendMessage("§cUsage: /admin <gui|test|boss|weapon|autoassign|assignall> [args]");
@@ -812,6 +856,8 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/admin weapon §7- Open attribute weapons GUI");
             sender.sendMessage("§e/admin spwe <weapon> §7- Spawn weapon crafting altar");
             sender.sendMessage("§e/admin givehandle §7- Give yourself a Weapon Handle");
+            sender.sendMessage("§e/admin giveupgrader [amount] §7- Give yourself Upgrader(s)");
+            sender.sendMessage("§e/admin givereroller [amount] §7- Give yourself Reroller(s)");
             sender.sendMessage("§e/admin autoassign <on|off> [delay] §7- Toggle auto-assign on join");
             sender.sendMessage("§e/admin assignall §7- Give attributes to all players");
         }
@@ -861,6 +907,8 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.add("spwe");
                 completions.add("spawnweapon");
                 completions.add("givehandle");
+                completions.add("giveupgrader");
+                completions.add("givereroller");
                 completions.add("autoassign");
                 completions.add("assignall");
                 completions.add("debugdragon");
