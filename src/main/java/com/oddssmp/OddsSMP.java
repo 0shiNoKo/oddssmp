@@ -18,6 +18,10 @@ public class OddsSMP extends JavaPlugin {
     private AdminGUI adminGUI;
     private GUIListener guiListener;
 
+    // Auto-assign settings
+    private boolean autoAssignEnabled = false;
+    private int autoAssignDelaySeconds = 10; // Default 10 seconds
+
     @Override
     public void onEnable() {
         getLogger().info("OddsSMP Plugin Enabled!");
@@ -205,5 +209,33 @@ public class OddsSMP extends JavaPlugin {
      */
     public AdminGUI getAdminGUI() {
         return adminGUI;
+    }
+
+    /**
+     * Check if auto-assign is enabled
+     */
+    public boolean isAutoAssignEnabled() {
+        return autoAssignEnabled;
+    }
+
+    /**
+     * Set auto-assign enabled
+     */
+    public void setAutoAssignEnabled(boolean enabled) {
+        this.autoAssignEnabled = enabled;
+    }
+
+    /**
+     * Get auto-assign delay in seconds
+     */
+    public int getAutoAssignDelaySeconds() {
+        return autoAssignDelaySeconds;
+    }
+
+    /**
+     * Set auto-assign delay in seconds
+     */
+    public void setAutoAssignDelaySeconds(int seconds) {
+        this.autoAssignDelaySeconds = seconds;
     }
 }
