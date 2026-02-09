@@ -1,15 +1,22 @@
 package com.oddssmp;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,6 +63,9 @@ public class OddsSMP extends JavaPlugin {
         // Register events
         Bukkit.getPluginManager().registerEvents(eventListener, this);
         Bukkit.getPluginManager().registerEvents(guiListener, this);
+
+        // Register custom recipes
+        registerRecipes();
 
         // Start passive ability tick
         startPassiveTicker();
@@ -168,6 +178,87 @@ public class OddsSMP extends JavaPlugin {
         } catch (IOException e) {
             getLogger().severe("Could not save playerdata.yml: " + e.getMessage());
         }
+    }
+
+    /**
+     * Register custom crafting recipes
+     */
+    private void registerRecipes() {
+        // Upgrader Recipe: 4 Netherite Ingots, 4 Diamond Blocks, Wither Skull in middle
+        ItemStack upgrader = createUpgrader();
+        NamespacedKey upgraderKey = new NamespacedKey(this, "upgrader");
+        ShapedRecipe upgraderRecipe = new ShapedRecipe(upgraderKey, upgrader);
+        upgraderRecipe.shape("NDN", "DWD", "NDN");
+        upgraderRecipe.setIngredient('N', Material.NETHERITE_INGOT);
+        upgraderRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
+        upgraderRecipe.setIngredient('W', Material.WITHER_SKELETON_SKULL);
+        Bukkit.addRecipe(upgraderRecipe);
+
+        // Reroller Recipe: 4 Netherite Ingots, 4 Diamond Blocks, Nether Star in middle
+        ItemStack reroller = createReroller();
+        NamespacedKey rerollerKey = new NamespacedKey(this, "reroller");
+        ShapedRecipe rerollerRecipe = new ShapedRecipe(rerollerKey, reroller);
+        rerollerRecipe.shape("NDN", "DSN", "NDN");
+        rerollerRecipe.setIngredient('N', Material.NETHERITE_INGOT);
+        rerollerRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
+        rerollerRecipe.setIngredient('S', Material.NETHER_STAR);
+        Bukkit.addRecipe(rerollerRecipe);
+
+        getLogger().info("Registered custom recipes: Upgrader, Reroller");
+    }
+
+    /**
+     * Create Upgrader item
+     */
+    public static ItemStack createUpgrader() {
+        ItemStack item = new ItemStack(Material.NETHER_STAR);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§6§lAttribute Upgrader");
+        List<String> lore = new ArrayList<>();
+        lore.add("§7Right-click to upgrade your");
+        lore.add("§7attribute by one level!");
+        lore.add("");
+        lore.add("§e§oMax level: 5");
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Create Reroller item
+     */
+    public static ItemStack createReroller() {
+        ItemStack item = new ItemStack(Material.END_CRYSTAL);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§d§lAttribute Reroller");
+        List<String> lore = new ArrayList<>();
+        lore.add("§7Right-click to reroll your");
+        lore.add("§7attribute to a new random one!");
+        lore.add("");
+        lore.add("§c§oWarning: Resets level to 1");
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Check if item is an Upgrader
+     */
+    public static boolean isUpgrader(ItemStack item) {
+        if (item == null || item.getType() != Material.NETHER_STAR) return false;
+        if (!item.hasItemMeta()) return false;
+        String name = item.getItemMeta().getDisplayName();
+        return name != null && name.contains("Attribute Upgrader");
+    }
+
+    /**
+     * Check if item is a Reroller
+     */
+    public static boolean isReroller(ItemStack item) {
+        if (item == null || item.getType() != Material.END_CRYSTAL) return false;
+        if (!item.hasItemMeta()) return false;
+        String name = item.getItemMeta().getDisplayName();
+        return name != null && name.contains("Attribute Reroller");
     }
 
     /**
