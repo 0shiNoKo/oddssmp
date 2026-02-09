@@ -3,16 +3,11 @@ package com.oddssmp;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.Transformation;
-import org.joml.AxisAngle4f;
-import org.joml.Vector3f;
 
 import java.util.*;
 
@@ -22,7 +17,7 @@ public class WeaponAltar {
     private final AttributeWeapon weapon;
     private final Location location;
     private ArmorStand weaponDisplay;
-    private TextDisplay textDisplay;
+    private List<ArmorStand> hologramLines = new ArrayList<>();
     private boolean active = true;
 
     // Crafting costs for each weapon
@@ -52,8 +47,8 @@ public class WeaponAltar {
         // Spawn the floating weapon display
         spawnWeaponDisplay();
 
-        // Spawn the text display with requirements
-        spawnTextDisplay();
+        // Spawn the hologram text with requirements
+        spawnHologramText();
 
         // Start rotation animation
         startRotationAnimation();
@@ -118,7 +113,7 @@ public class WeaponAltar {
         weaponDisplay.setSmall(false);
         weaponDisplay.setMarker(true);
         weaponDisplay.setCustomNameVisible(true);
-        weaponDisplay.customName(net.kyori.adventure.text.Component.text(weapon.getColor() + "§l" + weapon.getName()));
+        weaponDisplay.setCustomName(weapon.getColor() + "§l" + weapon.getName());
 
         // Give it the weapon
         ItemStack weaponItem = weapon.createItem();
@@ -126,52 +121,55 @@ public class WeaponAltar {
     }
 
     /**
-     * Spawn the text display showing requirements
+     * Spawn hologram text using armor stands
      */
-    private void spawnTextDisplay() {
+    private void spawnHologramText() {
         World world = location.getWorld();
         if (world == null) return;
 
-        Location textLoc = location.clone().add(0.5, 4.5, 0.5);
-
-        textDisplay = (TextDisplay) world.spawnEntity(textLoc, EntityType.TEXT_DISPLAY);
-        textDisplay.setBillboard(Display.Billboard.CENTER);
-        textDisplay.setAlignment(TextDisplay.TextAlignment.CENTER);
-        textDisplay.setSeeThrough(false);
-        textDisplay.setShadowed(true);
+        List<String> lines = new ArrayList<>();
 
         // Build requirements text
-        StringBuilder text = new StringBuilder();
-
         Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
         List<String> customItems = CUSTOM_ITEMS.get(weapon);
 
         if (costs != null) {
             for (Map.Entry<Material, Integer> entry : costs.entrySet()) {
                 String materialName = formatMaterialName(entry.getKey());
-                text.append("§f").append(entry.getValue()).append("x §7").append(materialName).append("\n");
+                lines.add("§f" + entry.getValue() + "x §7" + materialName);
             }
         }
 
         if (customItems != null) {
-            for (String customItem : customItems) {
-                text.append(customItem).append("\n");
-            }
+            lines.addAll(customItems);
         }
 
         // Add weapon name at bottom
-        text.append("\n").append(weapon.getColor()).append("§l").append(weapon.getName());
+        lines.add(weapon.getColor() + "§l" + weapon.getName());
 
-        textDisplay.setText(text.toString().trim());
+        // Spawn hologram lines (from top to bottom)
+        double startY = location.getY() + 5.0 + (lines.size() * 0.25);
 
-        // Scale the text
-        Transformation transform = textDisplay.getTransformation();
-        textDisplay.setTransformation(new Transformation(
-            transform.getTranslation(),
-            transform.getLeftRotation(),
-            new Vector3f(0.8f, 0.8f, 0.8f),
-            transform.getRightRotation()
-        ));
+        for (int i = 0; i < lines.size(); i++) {
+            Location lineLoc = location.clone().add(0.5, startY - (i * 0.25), 0.5);
+            ArmorStand hologram = createHologramLine(lineLoc, lines.get(i));
+            hologramLines.add(hologram);
+        }
+    }
+
+    /**
+     * Create a single hologram line using an armor stand
+     */
+    private ArmorStand createHologramLine(Location location, String text) {
+        ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
+        stand.setVisible(false);
+        stand.setGravity(false);
+        stand.setInvulnerable(true);
+        stand.setMarker(true);
+        stand.setSmall(true);
+        stand.setCustomName(text);
+        stand.setCustomNameVisible(true);
+        return stand;
     }
 
     /**
@@ -241,7 +239,12 @@ public class WeaponAltar {
         String[] parts = cleanName.split("x ", 2);
         if (parts.length != 2) return true; // Invalid format, skip
 
-        int quantity = Integer.parseInt(parts[0].trim());
+        int quantity;
+        try {
+            quantity = Integer.parseInt(parts[0].trim());
+        } catch (NumberFormatException e) {
+            return true; // Skip if we can't parse
+        }
         String itemName = parts[1].trim();
 
         int found = 0;
@@ -324,7 +327,12 @@ public class WeaponAltar {
         String[] parts = cleanName.split("x ", 2);
         if (parts.length != 2) return;
 
-        int quantity = Integer.parseInt(parts[0].trim());
+        int quantity;
+        try {
+            quantity = Integer.parseInt(parts[0].trim());
+        } catch (NumberFormatException e) {
+            return;
+        }
         String itemName = parts[1].trim();
 
         int remaining = quantity;
@@ -353,9 +361,12 @@ public class WeaponAltar {
             weaponDisplay.remove();
         }
 
-        if (textDisplay != null && !textDisplay.isDead()) {
-            textDisplay.remove();
+        for (ArmorStand hologram : hologramLines) {
+            if (hologram != null && !hologram.isDead()) {
+                hologram.remove();
+            }
         }
+        hologramLines.clear();
     }
 
     public Location getLocation() {
@@ -415,6 +426,27 @@ public class WeaponAltar {
         meta.setLore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * Get crafting requirements as formatted strings
+     */
+    public static List<String> getCraftingRequirements(AttributeWeapon weapon) {
+        List<String> requirements = new ArrayList<>();
+
+        Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
+        if (costs != null) {
+            for (Map.Entry<Material, Integer> entry : costs.entrySet()) {
+                requirements.add("§f" + entry.getValue() + "x §7" + formatMaterialName(entry.getKey()));
+            }
+        }
+
+        List<String> customItems = CUSTOM_ITEMS.get(weapon);
+        if (customItems != null) {
+            requirements.addAll(customItems);
+        }
+
+        return requirements;
     }
 
     /**
@@ -599,26 +631,5 @@ public class WeaponAltar {
         dominionCost.put(Material.DRAGON_BREATH, 64);
         CRAFTING_COSTS.put(AttributeWeapon.DOMINION_BLADE, dominionCost);
         CUSTOM_ITEMS.put(AttributeWeapon.DOMINION_BLADE, Arrays.asList("§c1x §lWeapon Handle", "§5§l1x Dragon Heart"));
-    }
-
-    /**
-     * Get crafting requirements as formatted strings
-     */
-    public static List<String> getCraftingRequirements(AttributeWeapon weapon) {
-        List<String> requirements = new ArrayList<>();
-
-        Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
-        if (costs != null) {
-            for (Map.Entry<Material, Integer> entry : costs.entrySet()) {
-                requirements.add("§f" + entry.getValue() + "x §7" + formatMaterialName(entry.getKey()));
-            }
-        }
-
-        List<String> customItems = CUSTOM_ITEMS.get(weapon);
-        if (customItems != null) {
-            requirements.addAll(customItems);
-        }
-
-        return requirements;
     }
 }

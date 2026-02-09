@@ -5,7 +5,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.inventory.EquipmentSlotGroup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -145,16 +144,16 @@ public enum AttributeWeapon {
 
         // Set attack damage and speed via attributes
         try {
-            // Remove default attack damage
+            // Using older API for compatibility
             meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE,
                 new AttributeModifier(UUID.randomUUID(), "weapon_damage",
-                    baseDamage - 1, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.MAINHAND));
+                    baseDamage - 1, AttributeModifier.Operation.ADD_NUMBER));
 
             meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED,
                 new AttributeModifier(UUID.randomUUID(), "weapon_speed",
-                    attackSpeed - 4, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.MAINHAND));
+                    attackSpeed - 4, AttributeModifier.Operation.ADD_NUMBER));
         } catch (Exception e) {
-            // Fallback for older API
+            // Fallback for API differences
         }
 
         item.setItemMeta(meta);
