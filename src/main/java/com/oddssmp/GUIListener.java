@@ -12,10 +12,12 @@ public class GUIListener implements Listener {
 
     private final OddsSMP plugin;
     private final AdminGUI adminGUI;
+    private final WeaponGUI weaponGUI;
 
-    public GUIListener(OddsSMP plugin, AdminGUI adminGUI) {
+    public GUIListener(OddsSMP plugin, AdminGUI adminGUI, WeaponGUI weaponGUI) {
         this.plugin = plugin;
         this.adminGUI = adminGUI;
+        this.weaponGUI = weaponGUI;
     }
 
     @EventHandler
@@ -30,7 +32,8 @@ public class GUIListener implements Listener {
                 !title.contains("Operations") && !title.contains("Settings") &&
                 !title.contains("Cooldown") && !title.contains("Details") &&
                 !title.contains("Encyclopedia") && !title.contains("Editor") &&
-                !title.contains("Edit:") && !isAttributeDetailsGUI(title)) {
+                !title.contains("Edit:") && !title.contains("Weapons") &&
+                !isAttributeDetailsGUI(title)) {
             return;
         }
 
@@ -102,6 +105,14 @@ public class GUIListener implements Listener {
         // Detailed Attribute Info (when viewing a specific attribute)
         else if (isAttributeDetailsGUI(title)) {
             handleDetailedAttributeInfo(player, itemName);
+        }
+        // Weapon Menu
+        else if (title.equals(WeaponGUI.WEAPON_MENU_TITLE)) {
+            handleWeaponMenu(player, clicked, itemName);
+        }
+        // Boss Weapon Menu
+        else if (title.equals(WeaponGUI.BOSS_WEAPON_MENU_TITLE)) {
+            handleBossWeaponMenu(player, clicked, itemName);
         }
     }
 
@@ -767,5 +778,57 @@ public class GUIListener implements Listener {
         }
 
         admin.sendMessage("§aTested abilities for " + target.getName());
+    }
+
+    // Weapon GUI Handlers
+
+    private void handleWeaponMenu(Player player, ItemStack clicked, String itemName) {
+        // Boss weapons button
+        if (itemName.contains("Boss Weapons")) {
+            weaponGUI.openBossWeaponsMenu(player);
+            return;
+        }
+
+        // Give all weapons button
+        if (itemName.contains("Give All Weapons")) {
+            weaponGUI.giveAllWeapons(player);
+            return;
+        }
+
+        // Check if clicking on a weapon
+        for (AttributeWeapon weapon : AttributeWeapon.values()) {
+            // Skip boss weapons (they're in the boss menu)
+            if (weapon.getRequiredAttribute().isBossAttribute() ||
+                weapon.getRequiredAttribute().isDragonEgg()) {
+                continue;
+            }
+
+            if (itemName.contains(weapon.getName())) {
+                weaponGUI.giveWeapon(player, weapon);
+                return;
+            }
+        }
+    }
+
+    private void handleBossWeaponMenu(Player player, ItemStack clicked, String itemName) {
+        // Back button
+        if (itemName.contains("Back")) {
+            weaponGUI.openMainMenu(player);
+            return;
+        }
+
+        // Check if clicking on a boss weapon
+        for (AttributeWeapon weapon : AttributeWeapon.values()) {
+            // Only process boss weapons
+            if (!weapon.getRequiredAttribute().isBossAttribute() &&
+                !weapon.getRequiredAttribute().isDragonEgg()) {
+                continue;
+            }
+
+            if (itemName.contains(weapon.getName())) {
+                weaponGUI.giveWeapon(player, weapon);
+                return;
+            }
+        }
     }
 }

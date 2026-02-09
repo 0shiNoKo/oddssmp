@@ -156,6 +156,38 @@ public class EventListener implements Listener {
         }
 
         Player player = event.getPlayer();
+
+        // Check for weapon altar interaction (right-click block near altar)
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock() != null) {
+            Location clickLoc = event.getClickedBlock().getLocation();
+            WeaponAltar altar = plugin.findAltarNear(clickLoc, 3.0);
+
+            if (altar != null) {
+                event.setCancelled(true);
+
+                // Check if sneaking to view requirements, otherwise try to craft
+                if (player.isSneaking()) {
+                    // Show requirements
+                    player.sendMessage("");
+                    player.sendMessage(altar.getWeapon().getColor() + "§l" + altar.getWeapon().getName() + " §7Requirements:");
+                    for (String req : WeaponAltar.getCraftingRequirements(altar.getWeapon())) {
+                        player.sendMessage("  " + req);
+                    }
+                    player.sendMessage("");
+                    player.sendMessage("§7Right-click (without sneaking) to craft!");
+                } else {
+                    // Try to craft
+                    if (altar.hasRequiredMaterials(player)) {
+                        altar.craftWeapon(player);
+                    } else {
+                        player.sendMessage("§cYou don't have the required materials!");
+                        player.sendMessage("§7Hold SHIFT and right-click to see requirements.");
+                    }
+                }
+                return;
+            }
+        }
+
         ItemStack item = event.getItem();
         if (item == null) return;
 

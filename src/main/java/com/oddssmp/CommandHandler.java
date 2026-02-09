@@ -485,9 +485,36 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             return handleBossCommand(sender, args);
         }
 
+        // Weapon command
+        if (args[0].equalsIgnoreCase("weapon")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cOnly players can use the weapon GUI!");
+                return true;
+            }
+            plugin.getWeaponGUI().openMainMenu((Player) sender);
+            return true;
+        }
+
+        // Spawn weapon altar command
+        if (args[0].equalsIgnoreCase("spwe") || args[0].equalsIgnoreCase("spawnweapon")) {
+            return handleSpawnWeaponCommand(sender, args);
+        }
+
+        // Give weapon handle command
+        if (args[0].equalsIgnoreCase("givehandle")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cOnly players can receive items!");
+                return true;
+            }
+            Player player = (Player) sender;
+            player.getInventory().addItem(WeaponAltar.createWeaponHandle());
+            player.sendMessage("§aYou received a §c§lWeapon Handle§a!");
+            return true;
+        }
+
         // Test command
         if (args.length < 3) {
-            sender.sendMessage("§cUsage: /admin <gui|test|boss|autoassign|assignall|debugdragon> [args]");
+            sender.sendMessage("§cUsage: /admin <gui|test|boss|weapon|autoassign|assignall> [args]");
             return true;
         }
 
@@ -731,11 +758,60 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * Handle /admin spwe [weapon] - Spawn a weapon altar
+     */
+    private boolean handleSpawnWeaponCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§cOnly players can spawn weapon altars!");
+            return true;
+        }
+
+        Player player = (Player) sender;
+
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /admin spwe <weapon_name>");
+            sender.sendMessage("§7Available weapons:");
+            StringBuilder weapons = new StringBuilder();
+            for (AttributeWeapon weapon : AttributeWeapon.values()) {
+                weapons.append("§e").append(weapon.name().toLowerCase()).append("§7, ");
+            }
+            sender.sendMessage(weapons.substring(0, weapons.length() - 2));
+            return true;
+        }
+
+        String weaponName = args[1].toUpperCase().replace(" ", "_");
+        AttributeWeapon weapon;
+
+        try {
+            weapon = AttributeWeapon.valueOf(weaponName);
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage("§cUnknown weapon: " + args[1]);
+            sender.sendMessage("§7Use tab completion to see available weapons.");
+            return true;
+        }
+
+        // Spawn the altar at the player's location
+        WeaponAltar altar = new WeaponAltar(plugin, weapon, player.getLocation());
+        altar.spawn();
+
+        // Register the altar with the plugin
+        plugin.registerAltar(altar);
+
+        sender.sendMessage("§aSpawned " + weapon.getColor() + "§l" + weapon.getName() + " §aaltar!");
+        sender.sendMessage("§7Players can interact with it to craft the weapon.");
+
+        return true;
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage("§6§l=== OddsSMP Commands ===");
         if (sender.hasPermission("oddssmp.admin")) {
             sender.sendMessage("§e/admin gui §7- Open admin control panel");
             sender.sendMessage("§e/admin boss <type> §7- Spawn boss (wither/warden/breeze/enderdragon)");
+            sender.sendMessage("§e/admin weapon §7- Open attribute weapons GUI");
+            sender.sendMessage("§e/admin spwe <weapon> §7- Spawn weapon crafting altar");
+            sender.sendMessage("§e/admin givehandle §7- Give yourself a Weapon Handle");
             sender.sendMessage("§e/admin autoassign <on|off> [delay] §7- Toggle auto-assign on join");
             sender.sendMessage("§e/admin assignall §7- Give attributes to all players");
         }
@@ -781,9 +857,17 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.add("gui");
                 completions.add("test");
                 completions.add("boss");
+                completions.add("weapon");
+                completions.add("spwe");
+                completions.add("spawnweapon");
+                completions.add("givehandle");
                 completions.add("autoassign");
                 completions.add("assignall");
                 completions.add("debugdragon");
+            } else if (args.length == 2 && (args[0].equalsIgnoreCase("spwe") || args[0].equalsIgnoreCase("spawnweapon"))) {
+                for (AttributeWeapon weapon : AttributeWeapon.values()) {
+                    completions.add(weapon.name().toLowerCase());
+                }
             } else if (args.length == 2 && args[0].equalsIgnoreCase("test")) {
                 return Bukkit.getOnlinePlayers().stream()
                         .map(Player::getName)
