@@ -210,7 +210,7 @@ public class WeaponAltar {
     /**
      * Check if a block location is part of this altar
      */
-    public boolean isProtectedBlock(Location blockLoc) {
+    public boolean isProtectedBlock(org.bukkit.Location blockLoc) {
         for (Location protected_loc : protectedBlocks) {
             if (protected_loc.getBlockX() == blockLoc.getBlockX() &&
                 protected_loc.getBlockY() == blockLoc.getBlockY() &&
