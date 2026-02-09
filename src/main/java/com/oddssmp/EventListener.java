@@ -86,37 +86,117 @@ public class EventListener implements Listener {
         // Apply passive max health bonuses
         applyMaxHealthBonus(player);
 
-        // Auto-assign attribute if enabled and player doesn't have one
+        // Auto-assign attribute if enabled and player doesn't have one (INSTANT with animation)
         if (plugin.isAutoAssignEnabled() && (data == null || data.getAttribute() == null)) {
-            int delayTicks = plugin.getAutoAssignDelaySeconds() * 20; // Convert seconds to ticks
-
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                // Re-check if player is still online and still has no attribute
-                if (!player.isOnline()) return;
-
-                PlayerData currentData = plugin.getPlayerData(player.getUniqueId());
-                if (currentData != null && currentData.getAttribute() != null) return;
-
-                // Assign random attribute
-                AttributeType attribute = AttributeType.getRandomAttribute(false);
-                Tier tier = Tier.getRandomTier();
-
-                PlayerData newData = new PlayerData(attribute, tier);
-                plugin.setPlayerData(player.getUniqueId(), newData);
-
-                // Play particles
-                ParticleManager.playSupportParticles(player, attribute, tier, 1);
-
-                // Update tab
-                plugin.updatePlayerTab(player);
-
-                // Notify player
-                player.sendMessage("");
-                player.sendMessage("§6§l✦ §aYou have been assigned an attribute! §6§l✦");
-                player.sendMessage("  " + tier.getColor() + tier.name() + " " + attribute.getIcon() + " " + attribute.getDisplayName());
-                player.sendMessage("");
-            }, delayTicks);
+            // Run slot animation and assign
+            playSlotAnimationAndAssign(player);
         }
+    }
+
+    /**
+     * Play slot machine animation and assign random attribute
+     */
+    public void playSlotAnimationAndAssign(Player player) {
+        // Pre-determine the final result
+        AttributeType finalAttribute = AttributeType.getRandomAttribute(false);
+        Tier finalTier = Tier.getRandomTier();
+
+        // Get all possible attributes for animation
+        AttributeType[] allAttributes = AttributeType.values();
+
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int tick = 0;
+            int delay = 1; // Start fast
+            int nextSwitch = 0;
+            int currentIndex = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    cancel();
+                    return;
+                }
+
+                tick++;
+
+                // Check if it's time to switch attribute
+                if (tick >= nextSwitch) {
+                    // Show current attribute
+                    AttributeType showAttr;
+                    Tier showTier;
+
+                    // After 40 ticks, start slowing down and eventually show final
+                    if (tick > 60) {
+                        // Final reveal
+                        showAttr = finalAttribute;
+                        showTier = finalTier;
+
+                        // Show final result
+                        player.sendTitle(
+                            showTier.getColor() + "§l" + showAttr.getIcon() + " " + showAttr.getDisplayName(),
+                            "§7Your attribute has been chosen!",
+                            0, 60, 20
+                        );
+
+                        // Play success sound
+                        player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+
+                        // Actually assign the attribute
+                        PlayerData newData = new PlayerData(finalAttribute, finalTier);
+                        plugin.setPlayerData(player.getUniqueId(), newData);
+
+                        // Play particles
+                        ParticleManager.playSupportParticles(player, finalAttribute, finalTier, 1);
+
+                        // Update tab
+                        plugin.updatePlayerTab(player);
+
+                        // Send chat message
+                        player.sendMessage("");
+                        player.sendMessage("§6§l✦ §aYou have been assigned an attribute! §6§l✦");
+                        player.sendMessage("  " + finalTier.getColor() + finalTier.name() + " " + finalAttribute.getIcon() + " " + finalAttribute.getDisplayName());
+                        player.sendMessage("");
+
+                        cancel();
+                        return;
+                    }
+
+                    // Still spinning - show random attribute
+                    currentIndex = (currentIndex + 1) % allAttributes.length;
+                    // Skip boss attributes in animation
+                    while (allAttributes[currentIndex].isBossAttribute() || allAttributes[currentIndex].isDragonEgg()) {
+                        currentIndex = (currentIndex + 1) % allAttributes.length;
+                    }
+
+                    showAttr = allAttributes[currentIndex];
+                    showTier = Tier.values()[(int)(Math.random() * 3)];
+
+                    // Show spinning title
+                    player.sendTitle(
+                        showTier.getColor() + showAttr.getIcon() + " " + showAttr.getDisplayName(),
+                        "§e§l« ROLLING »",
+                        0, 10, 0
+                    );
+
+                    // Play tick sound
+                    player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.0f + (tick * 0.01f));
+
+                    // Calculate next switch time (slows down over time)
+                    if (tick < 20) {
+                        delay = 2; // Fast
+                    } else if (tick < 35) {
+                        delay = 4; // Medium
+                    } else if (tick < 50) {
+                        delay = 6; // Slow
+                    } else {
+                        delay = 10; // Very slow
+                    }
+
+                    nextSwitch = tick + delay;
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 
     /**
