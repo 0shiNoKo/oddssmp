@@ -1,10 +1,14 @@
 package com.oddssmp;
 
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -22,9 +26,19 @@ public class OddsSMP extends JavaPlugin {
     private boolean autoAssignEnabled = false;
     private int autoAssignDelaySeconds = 10; // Default 10 seconds
 
+    // Data file
+    private File dataFile;
+    private FileConfiguration dataConfig;
+
     @Override
     public void onEnable() {
         getLogger().info("OddsSMP Plugin Enabled!");
+
+        // Create data folder and file
+        setupDataFile();
+
+        // Load all saved player data
+        loadAllPlayerData();
 
         // Initialize managers
         abilityManager = new AbilityManager(this);
@@ -61,9 +75,98 @@ public class OddsSMP extends JavaPlugin {
     public void onDisable() {
         getLogger().info("OddsSMP Plugin Disabled!");
 
-        // Save all player data
-        for (UUID uuid : playerDataMap.keySet()) {
-            savePlayerData(uuid);
+        // Save all player data to file
+        saveAllPlayerData();
+    }
+
+    /**
+     * Setup data file for persistence
+     */
+    private void setupDataFile() {
+        if (!getDataFolder().exists()) {
+            getDataFolder().mkdirs();
+        }
+
+        dataFile = new File(getDataFolder(), "playerdata.yml");
+        if (!dataFile.exists()) {
+            try {
+                dataFile.createNewFile();
+            } catch (IOException e) {
+                getLogger().severe("Could not create playerdata.yml: " + e.getMessage());
+            }
+        }
+
+        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+    }
+
+    /**
+     * Load all player data from file
+     */
+    private void loadAllPlayerData() {
+        if (dataConfig == null) return;
+
+        for (String uuidStr : dataConfig.getKeys(false)) {
+            try {
+                UUID uuid = UUID.fromString(uuidStr);
+                String attrName = dataConfig.getString(uuidStr + ".attribute");
+                String tierName = dataConfig.getString(uuidStr + ".tier");
+                int level = dataConfig.getInt(uuidStr + ".level", 1);
+                int kills = dataConfig.getInt(uuidStr + ".kills", 0);
+                int deaths = dataConfig.getInt(uuidStr + ".deaths", 0);
+
+                PlayerData data = new PlayerData();
+
+                if (attrName != null && !attrName.isEmpty()) {
+                    try {
+                        AttributeType attr = AttributeType.valueOf(attrName);
+                        Tier tier = tierName != null ? Tier.valueOf(tierName) : Tier.STABLE;
+                        data = new PlayerData(attr, tier);
+                        data.setLevel(level);
+                        for (int i = 0; i < kills; i++) data.incrementKills();
+                        for (int i = 0; i < deaths; i++) data.incrementDeaths();
+                    } catch (IllegalArgumentException e) {
+                        getLogger().warning("Invalid attribute/tier for " + uuidStr + ": " + attrName);
+                    }
+                }
+
+                playerDataMap.put(uuid, data);
+            } catch (IllegalArgumentException e) {
+                getLogger().warning("Invalid UUID in playerdata: " + uuidStr);
+            }
+        }
+
+        getLogger().info("Loaded " + playerDataMap.size() + " player data entries.");
+    }
+
+    /**
+     * Save all player data to file
+     */
+    private void saveAllPlayerData() {
+        if (dataConfig == null || dataFile == null) return;
+
+        for (Map.Entry<UUID, PlayerData> entry : playerDataMap.entrySet()) {
+            UUID uuid = entry.getKey();
+            PlayerData data = entry.getValue();
+
+            String path = uuid.toString();
+
+            if (data.getAttribute() != null) {
+                dataConfig.set(path + ".attribute", data.getAttribute().name());
+                dataConfig.set(path + ".tier", data.getTier().name());
+                dataConfig.set(path + ".level", data.getLevel());
+                dataConfig.set(path + ".kills", data.getKills());
+                dataConfig.set(path + ".deaths", data.getDeaths());
+            } else {
+                // Clear the entry if no attribute
+                dataConfig.set(path, null);
+            }
+        }
+
+        try {
+            dataConfig.save(dataFile);
+            getLogger().info("Saved " + playerDataMap.size() + " player data entries.");
+        } catch (IOException e) {
+            getLogger().severe("Could not save playerdata.yml: " + e.getMessage());
         }
     }
 
@@ -135,26 +238,77 @@ public class OddsSMP extends JavaPlugin {
     }
 
     /**
-     * Set player data
+     * Set player data and save to file
      */
     public void setPlayerData(UUID uuid, PlayerData data) {
         playerDataMap.put(uuid, data);
+        savePlayerData(uuid); // Auto-save when data changes
     }
 
     /**
-     * Save player data (for persistence - can be extended to save to file/database)
+     * Save player data to file
      */
     public void savePlayerData(UUID uuid) {
-        // TODO: Implement file/database saving if needed
-        // For now, data is stored in memory only
+        if (dataConfig == null || dataFile == null) return;
+
+        PlayerData data = playerDataMap.get(uuid);
+        if (data == null) return;
+
+        String path = uuid.toString();
+
+        if (data.getAttribute() != null) {
+            dataConfig.set(path + ".attribute", data.getAttribute().name());
+            dataConfig.set(path + ".tier", data.getTier().name());
+            dataConfig.set(path + ".level", data.getLevel());
+            dataConfig.set(path + ".kills", data.getKills());
+            dataConfig.set(path + ".deaths", data.getDeaths());
+        } else {
+            dataConfig.set(path, null);
+        }
+
+        try {
+            dataConfig.save(dataFile);
+        } catch (IOException e) {
+            getLogger().severe("Could not save player data for " + uuid + ": " + e.getMessage());
+        }
     }
 
     /**
-     * Load player data (for persistence - can be extended to load from file/database)
+     * Load player data from file
      */
     public void loadPlayerData(UUID uuid) {
-        // TODO: Implement file/database loading if needed
-        // For now, creates new PlayerData if not exists
+        if (dataConfig == null) {
+            if (!playerDataMap.containsKey(uuid)) {
+                playerDataMap.put(uuid, new PlayerData());
+            }
+            return;
+        }
+
+        String path = uuid.toString();
+        if (dataConfig.contains(path)) {
+            String attrName = dataConfig.getString(path + ".attribute");
+            String tierName = dataConfig.getString(path + ".tier");
+            int level = dataConfig.getInt(path + ".level", 1);
+            int kills = dataConfig.getInt(path + ".kills", 0);
+            int deaths = dataConfig.getInt(path + ".deaths", 0);
+
+            if (attrName != null && !attrName.isEmpty()) {
+                try {
+                    AttributeType attr = AttributeType.valueOf(attrName);
+                    Tier tier = tierName != null ? Tier.valueOf(tierName) : Tier.STABLE;
+                    PlayerData data = new PlayerData(attr, tier);
+                    data.setLevel(level);
+                    for (int i = 0; i < kills; i++) data.incrementKills();
+                    for (int i = 0; i < deaths; i++) data.incrementDeaths();
+                    playerDataMap.put(uuid, data);
+                    return;
+                } catch (IllegalArgumentException e) {
+                    getLogger().warning("Invalid attribute for " + uuid + ": " + attrName);
+                }
+            }
+        }
+
+        // No saved data, create new
         if (!playerDataMap.containsKey(uuid)) {
             playerDataMap.put(uuid, new PlayerData());
         }
