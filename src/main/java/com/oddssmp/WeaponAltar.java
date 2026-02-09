@@ -18,6 +18,7 @@ public class WeaponAltar {
     private final Location location;
     private ArmorStand weaponDisplay;
     private List<ArmorStand> hologramLines = new ArrayList<>();
+    private Set<Location> protectedBlocks = new HashSet<>();
     private boolean active = true;
 
     // Crafting costs for each weapon
@@ -50,8 +51,8 @@ public class WeaponAltar {
         // Spawn the hologram text with requirements
         spawnHologramText();
 
-        // Start rotation animation
-        startRotationAnimation();
+        // Start ambient particle effects (no spinning)
+        startAmbientEffects();
     }
 
     /**
@@ -92,9 +93,9 @@ public class WeaponAltar {
 
     private void setBlock(Location loc, Material material) {
         Block block = loc.getBlock();
-        if (block.getType() == Material.AIR || block.getType() == Material.CAVE_AIR) {
-            block.setType(material);
-        }
+        block.setType(material);
+        // Track this block as protected
+        protectedBlocks.add(block.getLocation());
     }
 
     /**
@@ -173,11 +174,11 @@ public class WeaponAltar {
     }
 
     /**
-     * Start the weapon rotation animation
+     * Start ambient particle effects (no spinning)
      */
-    private void startRotationAnimation() {
+    private void startAmbientEffects() {
         new BukkitRunnable() {
-            double angle = 0;
+            int tick = 0;
 
             @Override
             public void run() {
@@ -186,22 +187,32 @@ public class WeaponAltar {
                     return;
                 }
 
-                angle += 5;
-                if (angle >= 360) angle = 0;
+                tick++;
 
-                Location newLoc = location.clone().add(0.5, 3.2 + Math.sin(Math.toRadians(angle * 2)) * 0.1, 0.5);
-                newLoc.setYaw((float) angle);
-                weaponDisplay.teleport(newLoc);
-
-                // Particle effects
+                // Particle effects every second
                 World world = location.getWorld();
-                if (world != null && angle % 30 == 0) {
+                if (world != null && tick % 20 == 0) {
                     world.spawnParticle(Particle.ENCHANT,
                         location.clone().add(0.5, 3.5, 0.5),
-                        5, 0.3, 0.3, 0.3, 0.05);
+                        10, 0.3, 0.5, 0.3, 0.05);
                 }
             }
-        }.runTaskTimer(plugin, 0L, 2L);
+        }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /**
+     * Check if a block location is part of this altar
+     */
+    public boolean isProtectedBlock(Location blockLoc) {
+        for (Location protected_loc : protectedBlocks) {
+            if (protected_loc.getBlockX() == blockLoc.getBlockX() &&
+                protected_loc.getBlockY() == blockLoc.getBlockY() &&
+                protected_loc.getBlockZ() == blockLoc.getBlockZ() &&
+                protected_loc.getWorld().equals(blockLoc.getWorld())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

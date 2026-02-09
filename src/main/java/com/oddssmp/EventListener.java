@@ -17,6 +17,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -144,6 +145,17 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.savePlayerData(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * Prevent breaking altar blocks
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (plugin.isAltarProtectedBlock(event.getBlock().getLocation())) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("§cThis block is part of a weapon altar and cannot be broken!");
+        }
     }
 
     /**
