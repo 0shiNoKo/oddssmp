@@ -15,7 +15,10 @@ import java.util.stream.Collectors;
 public class CommandHandler implements CommandExecutor, TabCompleter {
 
     private final OddsSMP plugin;
-    private AscendedEnderDragon activeBoss = null;
+    private AscendedEnderDragon activeDragon = null;
+    private AscendedWither activeWither = null;
+    private AscendedWarden activeWarden = null;
+    private AscendedBreeze activeBreeze = null;
 
     public CommandHandler(OddsSMP plugin) {
         this.plugin = plugin;
@@ -542,52 +545,100 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
      */
     private boolean handleBossCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("§cUsage: /admin boss <enderdragon|stop>");
+            sender.sendMessage("§cUsage: /admin boss <wither|warden|breeze|enderdragon|stop|stopall>");
             return true;
         }
 
         String bossType = args[1].toLowerCase();
 
-        if (bossType.equals("enderdragon")) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("§cOnly players can spawn bosses!");
-                return true;
-            }
-
-            Player player = (Player) sender;
-
-            // Check if boss is already active
-            if (activeBoss != null && activeBoss.isActive()) {
-                sender.sendMessage("§cAscended Ender Dragon is already active!");
-                return true;
-            }
-
-            // Spawn the boss
-            activeBoss = new AscendedEnderDragon(plugin, player.getWorld(), player.getLocation());
-            activeBoss.spawn();
-
-            sender.sendMessage("§5§lAscended Ender Dragon spawned!");
+        if (!(sender instanceof Player) && !bossType.equals("stop") && !bossType.equals("stopall")) {
+            sender.sendMessage("§cOnly players can spawn bosses!");
             return true;
         }
 
-        if (bossType.equals("stop")) {
-            if (activeBoss == null || !activeBoss.isActive()) {
-                sender.sendMessage("§cNo active boss to stop!");
+        Player player = sender instanceof Player ? (Player) sender : null;
+
+        switch (bossType) {
+            case "wither":
+                if (activeWither != null && activeWither.isActive()) {
+                    sender.sendMessage("§cAscended Wither is already active!");
+                    return true;
+                }
+                activeWither = new AscendedWither(plugin);
+                activeWither.spawn(player.getLocation());
+                sender.sendMessage("§8§lAscended Wither spawned!");
                 return true;
-            }
 
-            // Kill the dragon
-            if (activeBoss.getDragon() != null && !activeBoss.getDragon().isDead()) {
-                activeBoss.getDragon().setHealth(0);
-            }
+            case "warden":
+                if (activeWarden != null && activeWarden.isActive()) {
+                    sender.sendMessage("§cAscended Warden is already active!");
+                    return true;
+                }
+                activeWarden = new AscendedWarden(plugin);
+                activeWarden.spawn(player.getLocation());
+                sender.sendMessage("§3§lAscended Warden spawned!");
+                return true;
 
-            activeBoss = null;
-            sender.sendMessage("§aBoss fight stopped!");
-            return true;
+            case "breeze":
+                if (activeBreeze != null && activeBreeze.isActive()) {
+                    sender.sendMessage("§cAscended Breeze is already active!");
+                    return true;
+                }
+                activeBreeze = new AscendedBreeze(plugin);
+                activeBreeze.spawn(player.getLocation());
+                sender.sendMessage("§b§lAscended Breeze spawned!");
+                return true;
+
+            case "enderdragon":
+                if (activeDragon != null && activeDragon.isActive()) {
+                    sender.sendMessage("§cAscended Ender Dragon is already active!");
+                    return true;
+                }
+                activeDragon = new AscendedEnderDragon(plugin, player.getWorld(), player.getLocation());
+                activeDragon.spawn();
+                sender.sendMessage("§5§lAscended Ender Dragon spawned!");
+                return true;
+
+            case "stop":
+                int stopped = 0;
+                if (activeDragon != null && activeDragon.isActive()) {
+                    if (activeDragon.getDragon() != null && !activeDragon.getDragon().isDead()) {
+                        activeDragon.getDragon().setHealth(0);
+                    }
+                    activeDragon = null;
+                    stopped++;
+                }
+                if (activeWither != null && activeWither.isActive()) {
+                    activeWither = null;
+                    stopped++;
+                }
+                if (activeWarden != null && activeWarden.isActive()) {
+                    activeWarden = null;
+                    stopped++;
+                }
+                if (activeBreeze != null && activeBreeze.isActive()) {
+                    activeBreeze = null;
+                    stopped++;
+                }
+                if (stopped > 0) {
+                    sender.sendMessage("§aStopped " + stopped + " boss fight(s)!");
+                } else {
+                    sender.sendMessage("§cNo active bosses to stop!");
+                }
+                return true;
+
+            case "stopall":
+                activeDragon = null;
+                activeWither = null;
+                activeWarden = null;
+                activeBreeze = null;
+                sender.sendMessage("§aAll boss fights cleared!");
+                return true;
+
+            default:
+                sender.sendMessage("§cUsage: /admin boss <wither|warden|breeze|enderdragon|stop|stopall>");
+                return true;
         }
-
-        sender.sendMessage("§cUsage: /admin boss <enderdragon|stop>");
-        return true;
     }
 
     /**
@@ -684,7 +735,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         sender.sendMessage("§6§l=== OddsSMP Commands ===");
         if (sender.hasPermission("oddssmp.admin")) {
             sender.sendMessage("§e/admin gui §7- Open admin control panel");
-            sender.sendMessage("§e/admin boss enderdragon §7- Spawn Ascended Ender Dragon");
+            sender.sendMessage("§e/admin boss <type> §7- Spawn boss (wither/warden/breeze/enderdragon)");
             sender.sendMessage("§e/admin autoassign <on|off> [delay] §7- Toggle auto-assign on join");
             sender.sendMessage("§e/admin assignall §7- Give attributes to all players");
         }
@@ -740,7 +791,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             } else if (args.length == 3 && args[0].equalsIgnoreCase("test")) {
                 completions.addAll(Arrays.asList("support", "melee", "passive"));
             } else if (args.length == 2 && args[0].equalsIgnoreCase("boss")) {
-                completions.addAll(Arrays.asList("enderdragon", "stop"));
+                completions.addAll(Arrays.asList("wither", "warden", "breeze", "enderdragon", "stop", "stopall"));
             } else if (args.length == 2 && args[0].equalsIgnoreCase("autoassign")) {
                 completions.addAll(Arrays.asList("on", "off"));
             } else if (args.length == 3 && args[0].equalsIgnoreCase("autoassign")) {
