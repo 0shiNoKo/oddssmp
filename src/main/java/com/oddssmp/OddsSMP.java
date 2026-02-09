@@ -535,4 +535,16 @@ public class OddsSMP extends JavaPlugin {
         altar.remove();
         activeAltars.remove(altar);
     }
+
+    /**
+     * Check if a block is protected by any altar
+     */
+    public boolean isAltarProtectedBlock(org.bukkit.Location blockLoc) {
+        for (WeaponAltar altar : activeAltars) {
+            if (altar.isActive() && altar.isProtectedBlock(blockLoc)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
