@@ -40,10 +40,8 @@ public class EventListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        // Initialize player data if not exists
-        if (plugin.getPlayerData(player.getUniqueId()) == null) {
-            plugin.setPlayerData(player.getUniqueId(), new PlayerData());
-        }
+        // Load player data from file (creates new if not exists)
+        plugin.loadPlayerData(player.getUniqueId());
 
         // Update tab display
         plugin.updatePlayerTab(player);
