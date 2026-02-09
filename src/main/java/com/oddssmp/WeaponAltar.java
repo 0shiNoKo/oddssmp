@@ -112,16 +112,16 @@ public class WeaponAltar {
         World world = location.getWorld();
         if (world == null) return;
 
-        Location displayLoc = location.clone().add(0.5, 3.2, 0.5);
+        // Center the weapon above the pedestal (pedestal top is at y+2)
+        Location displayLoc = location.clone().add(0.5, 2.5, 0.5);
 
         weaponDisplay = (ArmorStand) world.spawnEntity(displayLoc, EntityType.ARMOR_STAND);
         weaponDisplay.setVisible(false);
         weaponDisplay.setGravity(false);
         weaponDisplay.setInvulnerable(true);
-        weaponDisplay.setSmall(false);
+        weaponDisplay.setSmall(true);  // Small armor stand for better centering
         weaponDisplay.setMarker(true);
-        weaponDisplay.setCustomNameVisible(true);
-        weaponDisplay.setCustomName(weapon.getColor() + "§l" + weapon.getName());
+        weaponDisplay.setCustomNameVisible(false);  // Don't show name on weapon itself
 
         // Give it the weapon
         ItemStack weaponItem = weapon.createItem();
@@ -136,6 +136,10 @@ public class WeaponAltar {
         if (world == null) return;
 
         List<String> lines = new ArrayList<>();
+
+        // Add weapon name at TOP
+        lines.add(weapon.getColor() + "§l" + weapon.getName());
+        lines.add(""); // Empty line for spacing
 
         // Build requirements text
         Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
@@ -152,11 +156,9 @@ public class WeaponAltar {
             lines.addAll(customItems);
         }
 
-        // Add weapon name at bottom
-        lines.add(weapon.getColor() + "§l" + weapon.getName());
-
-        // Spawn hologram lines (from top to bottom)
-        double startY = location.getY() + 5.0 + (lines.size() * 0.25);
+        // Spawn hologram lines ABOVE the weapon (weapon is at y+2.5)
+        // Start from top and go down
+        double startY = location.getY() + 3.5 + (lines.size() * 0.25);
 
         for (int i = 0; i < lines.size(); i++) {
             Location lineLoc = location.clone().add(0.5, startY - (i * 0.25), 0.5);
