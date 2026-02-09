@@ -441,7 +441,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            sender.sendMessage("§cUsage: /admin <gui|test|boss|debugdragon> [args]");
+            sender.sendMessage("§cUsage: /admin <gui|test|boss|autoassign|assignall|debugdragon> [args]");
             return true;
         }
 
@@ -453,6 +453,16 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             }
             plugin.getAdminGUI().openMainMenu((Player) sender);
             return true;
+        }
+
+        // Auto-assign command
+        if (args[0].equalsIgnoreCase("autoassign")) {
+            return handleAutoAssignCommand(sender, args);
+        }
+
+        // Assign all command
+        if (args[0].equalsIgnoreCase("assignall")) {
+            return handleAssignAllCommand(sender);
         }
 
         // Debug dragon command
@@ -474,7 +484,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 
         // Test command
         if (args.length < 3) {
-            sender.sendMessage("§cUsage: /admin <gui|test|boss|debugdragon> [args]");
+            sender.sendMessage("§cUsage: /admin <gui|test|boss|autoassign|assignall|debugdragon> [args]");
             return true;
         }
 
@@ -580,11 +590,103 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * Handle /admin autoassign <on|off> [delay_seconds]
+     */
+    private boolean handleAutoAssignCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            boolean enabled = plugin.isAutoAssignEnabled();
+            int delay = plugin.getAutoAssignDelaySeconds();
+            sender.sendMessage("§6Auto-Assign Status:");
+            sender.sendMessage("  §7Enabled: " + (enabled ? "§aON" : "§cOFF"));
+            sender.sendMessage("  §7Delay: §e" + delay + " seconds");
+            sender.sendMessage("§7Usage: /admin autoassign <on|off> [delay_seconds]");
+            return true;
+        }
+
+        String toggle = args[1].toLowerCase();
+        if (toggle.equals("on")) {
+            plugin.setAutoAssignEnabled(true);
+
+            // Optional delay argument
+            if (args.length >= 3) {
+                try {
+                    int delay = Integer.parseInt(args[2]);
+                    if (delay < 0) delay = 0;
+                    plugin.setAutoAssignDelaySeconds(delay);
+                    sender.sendMessage("§aAuto-assign §lENABLED§a with §e" + delay + "s §adelay!");
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("§cInvalid delay! Using current: " + plugin.getAutoAssignDelaySeconds() + "s");
+                    sender.sendMessage("§aAuto-assign §lENABLED§a!");
+                }
+            } else {
+                sender.sendMessage("§aAuto-assign §lENABLED§a with §e" + plugin.getAutoAssignDelaySeconds() + "s §adelay!");
+            }
+
+            Bukkit.broadcastMessage("§6§l[OddsSMP] §aAuto-assign is now §lON§a!");
+            Bukkit.broadcastMessage("§7New players will receive random attributes after " + plugin.getAutoAssignDelaySeconds() + " seconds.");
+
+        } else if (toggle.equals("off")) {
+            plugin.setAutoAssignEnabled(false);
+            sender.sendMessage("§cAuto-assign §lDISABLED§c!");
+            Bukkit.broadcastMessage("§6§l[OddsSMP] §cAuto-assign is now §lOFF§c!");
+
+        } else {
+            sender.sendMessage("§cUsage: /admin autoassign <on|off> [delay_seconds]");
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle /admin assignall - Assign random attributes to all players without one
+     */
+    private boolean handleAssignAllCommand(CommandSender sender) {
+        int assigned = 0;
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerData data = plugin.getPlayerData(player.getUniqueId());
+
+            // Skip if player already has an attribute
+            if (data != null && data.getAttribute() != null) {
+                continue;
+            }
+
+            // Assign random attribute
+            AttributeType attribute = AttributeType.getRandomAttribute(false);
+            Tier tier = Tier.getRandomTier();
+
+            PlayerData newData = new PlayerData(attribute, tier);
+            plugin.setPlayerData(player.getUniqueId(), newData);
+
+            // Play particles
+            ParticleManager.playSupportParticles(player, attribute, tier, 1);
+
+            // Update tab
+            plugin.updatePlayerTab(player);
+
+            // Notify player
+            player.sendMessage("§a§l✦ You received " + tier.getColor() + tier.name() + " " +
+                    attribute.getIcon() + " " + attribute.getDisplayName() + "§a! ✦");
+
+            assigned++;
+        }
+
+        if (assigned > 0) {
+            Bukkit.broadcastMessage("§6§l[OddsSMP] §a" + assigned + " player(s) received random attributes!");
+        }
+
+        sender.sendMessage("§aAssigned attributes to §e" + assigned + "§a player(s).");
+        return true;
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage("§6§l=== OddsSMP Commands ===");
         if (sender.hasPermission("oddssmp.admin")) {
             sender.sendMessage("§e/admin gui §7- Open admin control panel");
             sender.sendMessage("§e/admin boss enderdragon §7- Spawn Ascended Ender Dragon");
+            sender.sendMessage("§e/admin autoassign <on|off> [delay] §7- Toggle auto-assign on join");
+            sender.sendMessage("§e/admin assignall §7- Give attributes to all players");
         }
         sender.sendMessage("§e/smp info §7- View all attributes info");
         sender.sendMessage("§e/smp support §7- Activate support ability");
@@ -628,6 +730,8 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.add("gui");
                 completions.add("test");
                 completions.add("boss");
+                completions.add("autoassign");
+                completions.add("assignall");
                 completions.add("debugdragon");
             } else if (args.length == 2 && args[0].equalsIgnoreCase("test")) {
                 return Bukkit.getOnlinePlayers().stream()
@@ -637,6 +741,10 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.addAll(Arrays.asList("support", "melee", "passive"));
             } else if (args.length == 2 && args[0].equalsIgnoreCase("boss")) {
                 completions.addAll(Arrays.asList("enderdragon", "stop"));
+            } else if (args.length == 2 && args[0].equalsIgnoreCase("autoassign")) {
+                completions.addAll(Arrays.asList("on", "off"));
+            } else if (args.length == 3 && args[0].equalsIgnoreCase("autoassign")) {
+                completions.addAll(Arrays.asList("5", "10", "15", "30", "60"));
             }
         }
 

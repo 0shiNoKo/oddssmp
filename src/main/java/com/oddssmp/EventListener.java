@@ -84,6 +84,38 @@ public class EventListener implements Listener {
 
         // Apply passive max health bonuses
         applyMaxHealthBonus(player);
+
+        // Auto-assign attribute if enabled and player doesn't have one
+        if (plugin.isAutoAssignEnabled() && (data == null || data.getAttribute() == null)) {
+            int delayTicks = plugin.getAutoAssignDelaySeconds() * 20; // Convert seconds to ticks
+
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                // Re-check if player is still online and still has no attribute
+                if (!player.isOnline()) return;
+
+                PlayerData currentData = plugin.getPlayerData(player.getUniqueId());
+                if (currentData != null && currentData.getAttribute() != null) return;
+
+                // Assign random attribute
+                AttributeType attribute = AttributeType.getRandomAttribute(false);
+                Tier tier = Tier.getRandomTier();
+
+                PlayerData newData = new PlayerData(attribute, tier);
+                plugin.setPlayerData(player.getUniqueId(), newData);
+
+                // Play particles
+                ParticleManager.playSupportParticles(player, attribute, tier, 1);
+
+                // Update tab
+                plugin.updatePlayerTab(player);
+
+                // Notify player
+                player.sendMessage("");
+                player.sendMessage("§6§l✦ §aYou have been assigned an attribute! §6§l✦");
+                player.sendMessage("  " + tier.getColor() + tier.name() + " " + attribute.getIcon() + " " + attribute.getDisplayName());
+                player.sendMessage("");
+            }, delayTicks);
+        }
     }
 
     /**
