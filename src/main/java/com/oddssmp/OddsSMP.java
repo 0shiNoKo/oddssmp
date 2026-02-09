@@ -30,6 +30,9 @@ public class OddsSMP extends JavaPlugin {
     private WeaponGUI weaponGUI;
     private GUIListener guiListener;
 
+    // Weapon altars
+    private final List<WeaponAltar> activeAltars = new ArrayList<>();
+
     // Auto-assign settings
     private boolean autoAssignEnabled = false;
     private int autoAssignDelaySeconds = 10; // Default 10 seconds
@@ -89,6 +92,12 @@ public class OddsSMP extends JavaPlugin {
 
         // Save all player data to file
         saveAllPlayerData();
+
+        // Remove all active altars
+        for (WeaponAltar altar : activeAltars) {
+            altar.remove();
+        }
+        activeAltars.clear();
     }
 
     /**
@@ -491,5 +500,39 @@ public class OddsSMP extends JavaPlugin {
      */
     public void setAutoAssignDelaySeconds(int seconds) {
         this.autoAssignDelaySeconds = seconds;
+    }
+
+    /**
+     * Register a weapon altar
+     */
+    public void registerAltar(WeaponAltar altar) {
+        activeAltars.add(altar);
+    }
+
+    /**
+     * Get all active altars
+     */
+    public List<WeaponAltar> getActiveAltars() {
+        return activeAltars;
+    }
+
+    /**
+     * Find altar near location
+     */
+    public WeaponAltar findAltarNear(org.bukkit.Location location, double radius) {
+        for (WeaponAltar altar : activeAltars) {
+            if (altar.isActive() && altar.getLocation().distance(location) <= radius) {
+                return altar;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Remove an altar
+     */
+    public void removeAltar(WeaponAltar altar) {
+        altar.remove();
+        activeAltars.remove(altar);
     }
 }
