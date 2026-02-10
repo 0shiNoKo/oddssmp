@@ -2,10 +2,19 @@ package com.oddssmp;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +33,7 @@ public class WeaponAltar {
     private final Location location;
     private Set<Location> protectedBlocks = new HashSet<>();
     private boolean active = true;
-    private String hologramId; // For DecentHolograms
+    private List<Entity> displayEntities = new ArrayList<>(); // Track spawned display entities
 
     // Crafting costs for each weapon
     private static final Map<AttributeWeapon, Map<Material, Integer>> CRAFTING_COSTS = new HashMap<>();
@@ -50,7 +59,7 @@ public class WeaponAltar {
         // Build the pedestal structure
         buildPedestal();
 
-        // Spawn the hologram (weapon icon + text) using DecentHolograms
+        // Spawn display entities (background, text, weapon item)
         spawnHologramText();
 
         // Start ambient particle effects
@@ -101,82 +110,97 @@ public class WeaponAltar {
     }
 
     /**
-     * Spawn hologram with weapon icon and text using DecentHolograms
+     * Spawn display entities for weapon altar (using Minecraft Display Entities)
      */
     private void spawnHologramText() {
         World world = location.getWorld();
         if (world == null) return;
 
-        List<String> lines = new ArrayList<>();
+        // ONE ANCHOR POINT - never change X or Z
+        double anchorX = location.getBlockX() + 0.5;
+        double anchorZ = location.getBlockZ() + 0.5;
+        double baseY = location.getBlockY() + 3.5; // Above the pedestal
 
-        // Add weapon name at TOP
-        lines.add(weapon.getColor() + "§l" + weapon.getName());
+        // 1. SPAWN BACKGROUND BLOCK DISPLAY (Ancient Debris, 3x3 flat)
+        Location bgLoc = new Location(world, anchorX, baseY + 1.5, anchorZ);
+        BlockDisplay blockDisplay = world.spawn(bgLoc, BlockDisplay.class, display -> {
+            BlockData blockData = Material.ANCIENT_DEBRIS.createBlockData();
+            display.setBlock(blockData);
+            display.setBillboard(Display.Billboard.FIXED);
+            // Scale: 3x3 flat wall (X=3, Y=3, Z=0.1)
+            // Translation: recenter from corner (-1.5, -1.5, 0)
+            Transformation transform = new Transformation(
+                new Vector3f(-1.5f, -1.5f, 0f),  // translation
+                new AxisAngle4f(0, 0, 0, 1),     // left rotation
+                new Vector3f(3f, 3f, 0.1f),      // scale
+                new AxisAngle4f(0, 0, 0, 1)      // right rotation
+            );
+            display.setTransformation(transform);
+        });
+        displayEntities.add(blockDisplay);
 
-        // Empty line for spacing
-        lines.add("");
+        // 2. BUILD TEXT LINES
+        List<String> textLines = new ArrayList<>();
 
-        // Build requirements text (recipe above the weapon icon)
+        // Title
+        textLines.add(weapon.getColor() + "§l" + weapon.getName());
+
+        // Recipe requirements
         Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
         List<String> customItems = CUSTOM_ITEMS.get(weapon);
 
         if (costs != null) {
             for (Map.Entry<Material, Integer> entry : costs.entrySet()) {
                 String materialName = formatMaterialName(entry.getKey());
-                lines.add("§f" + entry.getValue() + "x §7" + materialName);
+                textLines.add("§f" + entry.getValue() + "x §7" + materialName);
             }
         }
 
         if (customItems != null) {
-            lines.addAll(customItems);
+            textLines.addAll(customItems);
         }
 
-        // Empty line before icon
-        lines.add("");
+        // 3. SPAWN TEXT DISPLAYS - same X/Z, only Y changes
+        double textY = baseY + 2.4; // Start from top
+        double lineSpacing = 0.3;
 
-        // Add weapon icon at BOTTOM with larger scale (DecentHolograms #ICON: format)
-        // Format: #ICON: MATERIAL (scale) - using 3.0 scale for big display
-        lines.add("#ICON: " + weapon.getMaterial().name() + " (3.0)");
+        for (int i = 0; i < textLines.size(); i++) {
+            String line = textLines.get(i);
+            double yOffset = textY - (i * lineSpacing);
 
-        spawnDecentHologram(lines);
-    }
+            // Tiny Z offset for depth (text in front of background)
+            Location textLoc = new Location(world, anchorX, yOffset, anchorZ + 0.06);
 
-    /**
-     * Spawn hologram using DecentHolograms API (via reflection to avoid compile-time dependency)
-     */
-    private void spawnDecentHologram(List<String> lines) {
-        // Check if DecentHolograms is installed
-        if (Bukkit.getPluginManager().getPlugin("DecentHolograms") == null) {
-            plugin.getLogger().warning("DecentHolograms plugin not installed! Altar holograms require DecentHolograms.");
-            return;
+            TextDisplay textDisplay = world.spawn(textLoc, TextDisplay.class, display -> {
+                display.setText(line);
+                display.setBillboard(Display.Billboard.FIXED);
+                display.setAlignment(TextDisplay.TextAlignment.CENTER);
+                display.setBackgroundColor(Color.fromARGB(0, 0, 0, 0)); // Transparent background
+                display.setShadowed(true);
+            });
+            displayEntities.add(textDisplay);
         }
 
-        try {
-            // Generate unique ID for this hologram
-            hologramId = "oddssmp_altar_" + UUID.randomUUID().toString().substring(0, 8);
+        // 4. SPAWN ITEM DISPLAY - weapon below text, centered
+        double itemY = baseY + 0.8;
+        Location itemLoc = new Location(world, anchorX, itemY, anchorZ + 0.08); // Slight Z offset
 
-            // Hologram location - centered above the pedestal (pedestal top is at y+2)
-            // Raised higher since weapon icon is now at bottom of hologram
-            Location holoLoc = location.clone().add(0.5, 5.5, 0.5);
+        ItemDisplay itemDisplay = world.spawn(itemLoc, ItemDisplay.class, display -> {
+            ItemStack weaponItem = new ItemStack(weapon.getMaterial());
+            display.setItemStack(weaponItem);
+            display.setBillboard(Display.Billboard.FIXED);
+            // Scale up the item (0.8 for good visibility)
+            Transformation transform = new Transformation(
+                new Vector3f(-0.4f, -0.4f, 0f),  // translation to center
+                new AxisAngle4f(0, 0, 0, 1),     // left rotation
+                new Vector3f(0.8f, 0.8f, 0.8f),  // scale
+                new AxisAngle4f(0, 0, 0, 1)      // right rotation
+            );
+            display.setTransformation(transform);
+        });
+        displayEntities.add(itemDisplay);
 
-            // Use reflection to call DHAPI.createHologram(String, Location, boolean, List<String>)
-            Class<?> dhapiClass = Class.forName("eu.decentsoftware.holograms.api.DHAPI");
-            java.lang.reflect.Method createMethod = dhapiClass.getMethod("createHologram",
-                String.class, Location.class, boolean.class, java.util.List.class);
-
-            Object hologram = createMethod.invoke(null, hologramId, holoLoc, false, lines);
-
-            if (hologram != null) {
-                // Call hologram.setDefaultVisibleState(true) and hologram.showAll()
-                Class<?> hologramClass = hologram.getClass();
-                hologramClass.getMethod("setDefaultVisibleState", boolean.class).invoke(hologram, true);
-                hologramClass.getMethod("showAll").invoke(hologram);
-                plugin.getLogger().info("Created DecentHolograms hologram for " + weapon.getName());
-            }
-        } catch (ClassNotFoundException e) {
-            plugin.getLogger().warning("DecentHolograms API class not found. Make sure DecentHolograms is installed correctly.");
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to create DecentHolograms hologram: " + e.getMessage());
-        }
+        plugin.getLogger().info("Created display entities for " + weapon.getName() + " altar");
     }
 
     /**
@@ -195,11 +219,11 @@ public class WeaponAltar {
 
                 tick++;
 
-                // Particle effects every second (around the weapon icon at bottom of hologram)
+                // Particle effects every second (around the weapon display)
                 World world = location.getWorld();
                 if (world != null && tick % 20 == 0) {
                     world.spawnParticle(Particle.ENCHANT,
-                        location.clone().add(0.5, 3.0, 0.5),
+                        location.clone().add(0.5, 4.5, 0.5),
                         10, 0.3, 0.5, 0.3, 0.05);
                 }
             }
@@ -374,16 +398,13 @@ public class WeaponAltar {
     public void remove() {
         active = false;
 
-        // Remove DecentHolograms hologram (via reflection)
-        if (hologramId != null) {
-            try {
-                Class<?> dhapiClass = Class.forName("eu.decentsoftware.holograms.api.DHAPI");
-                java.lang.reflect.Method removeMethod = dhapiClass.getMethod("removeHologram", String.class);
-                removeMethod.invoke(null, hologramId);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to remove DecentHolograms hologram: " + e.getMessage());
+        // Remove all display entities
+        for (Entity entity : displayEntities) {
+            if (entity != null && !entity.isDead()) {
+                entity.remove();
             }
         }
+        displayEntities.clear();
     }
 
     public Location getLocation() {
