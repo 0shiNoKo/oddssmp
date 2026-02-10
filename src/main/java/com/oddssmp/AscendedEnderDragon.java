@@ -28,7 +28,7 @@ public class AscendedEnderDragon implements Listener {
     private BossBar bossBar;
 
     // Boss stats
-    private final double maxHealth = 1024.0; // 512 hearts (max allowed by Minecraft)
+    private final double maxHealth = 2400.0; // 1200 hearts
     private int currentPhase = 1;
     private boolean isActive = false;
     private long lastPhaseShift = 0;
