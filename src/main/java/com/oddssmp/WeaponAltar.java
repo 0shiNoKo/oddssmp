@@ -134,8 +134,8 @@ public class WeaponAltar {
         lines.add("");
 
         // Add weapon icon at BOTTOM with larger scale (DecentHolograms #ICON: format)
-        // Format: #ICON: MATERIAL (scale) - using 1.5 scale for bigger display
-        lines.add("#ICON: " + weapon.getMaterial().name() + " (1.5)");
+        // Format: #ICON: MATERIAL (scale) - using 3.0 scale for big display
+        lines.add("#ICON: " + weapon.getMaterial().name() + " (3.0)");
 
         spawnDecentHologram(lines);
     }
