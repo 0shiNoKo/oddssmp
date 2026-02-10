@@ -26,6 +26,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.PrepareAnvilEvent;
+import org.bukkit.event.enchantment.EnchantItemEvent;
+import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
@@ -1068,6 +1071,43 @@ public class EventListener implements Listener {
             if (isHarmfulEffect(event.getNewEffect().getType())) {
                 event.setCancelled(true);
             }
+        }
+    }
+
+    /**
+     * Prevent enchanting attribute weapons via enchantment table
+     */
+    @EventHandler
+    public void onPrepareEnchant(PrepareItemEnchantEvent event) {
+        ItemStack item = event.getItem();
+        if (AttributeWeapon.isAttributeWeapon(item)) {
+            event.setCancelled(true);
+        }
+    }
+
+    /**
+     * Prevent enchanting attribute weapons via enchantment table (backup)
+     */
+    @EventHandler
+    public void onEnchantItem(EnchantItemEvent event) {
+        ItemStack item = event.getItem();
+        if (AttributeWeapon.isAttributeWeapon(item)) {
+            event.setCancelled(true);
+            event.getEnchanter().sendMessage("§cAttribute weapons cannot be enchanted!");
+        }
+    }
+
+    /**
+     * Prevent enchanting/repairing attribute weapons via anvil
+     */
+    @EventHandler
+    public void onPrepareAnvil(PrepareAnvilEvent event) {
+        ItemStack firstItem = event.getInventory().getItem(0);
+        ItemStack secondItem = event.getInventory().getItem(1);
+
+        // Cancel if trying to modify an attribute weapon
+        if (AttributeWeapon.isAttributeWeapon(firstItem) || AttributeWeapon.isAttributeWeapon(secondItem)) {
+            event.setResult(null);
         }
     }
 
