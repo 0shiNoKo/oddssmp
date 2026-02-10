@@ -29,7 +29,7 @@ public class AscendedBreeze implements Listener {
     private World world;
 
     // Stats
-    private final double maxHealth = 600.0; // 300 hearts
+    private final double maxHealth = 850.0; // 425 hearts
     private final double armorReduction = 0.25; // 25% damage reduction
     private final double knockbackResistance = 0.40; // 40%
 

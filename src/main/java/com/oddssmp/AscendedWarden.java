@@ -36,11 +36,11 @@ public class AscendedWarden implements Listener {
 
     // Deep Dark Zone
     private double zoneRadius = 16.0;
-    private final double zoneDamage = 3.0; // per second
+    private final double zoneDamage = 2.5; // per second (nerfed)
 
     // Sonic Slam
-    private final double slamDamage = 16.0;
-    private final double slamAirborneDamage = 8.0; // extra damage
+    private final double slamDamage = 13.0; // nerfed from 16
+    private final double slamAirborneDamage = 6.0; // extra damage (nerfed from 8)
     private int slamCooldownTicks = 100; // 5 seconds base
 
     // Anti-zerg tracking
@@ -272,18 +272,18 @@ public class AscendedWarden implements Listener {
     }
 
     /**
-     * Get damage output based on HP percentage
+     * Get damage output based on HP percentage (nerfed values)
      */
     private double getDamageOutput() {
-        if (warden == null) return 14.0;
+        if (warden == null) return 12.0;
 
         double healthPercent = warden.getHealth() / maxHealth;
 
-        if (healthPercent > 0.8) return 14.0;
-        if (healthPercent > 0.6) return 18.0;
-        if (healthPercent > 0.4) return 22.0;
-        if (healthPercent > 0.2) return 26.0;
-        return 32.0;
+        if (healthPercent > 0.8) return 12.0;
+        if (healthPercent > 0.6) return 15.0;
+        if (healthPercent > 0.4) return 18.0;
+        if (healthPercent > 0.2) return 22.0;
+        return 26.0;
     }
 
     /**

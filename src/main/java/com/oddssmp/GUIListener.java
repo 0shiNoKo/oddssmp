@@ -423,20 +423,29 @@ public class GUIListener implements Listener {
 
         if (itemName.contains("Assign All Players")) {
             int count = 0;
+            int delay = 0;
             for (Player p : Bukkit.getOnlinePlayers()) {
                 PlayerData data = plugin.getPlayerData(p.getUniqueId());
                 if (data == null || data.getAttribute() == null) {
-                    AttributeType attr = AttributeType.getRandomAttribute(false);
-                    Tier tier = Tier.getRandomTier();
-                    plugin.setPlayerData(p.getUniqueId(), new PlayerData(attr, tier));
-                    ParticleManager.playSupportParticles(p, attr, tier, 1);
-                    plugin.updatePlayerTab(p);
-                    p.sendMessage("§aYou received " + tier.getColor() + attr.getDisplayName() + "§a!");
+                    // Get old attribute for cleanup (shouldn't have one, but just in case)
+                    PlayerData oldData = plugin.getPlayerData(p.getUniqueId());
+                    AttributeType oldAttribute = oldData != null ? oldData.getAttribute() : null;
+                    if (oldAttribute != null) {
+                        plugin.getEventListener().removeAttributeEffects(p, oldAttribute);
+                    }
+
+                    // Stagger the animations slightly so they don't all happen at once
+                    final int currentDelay = delay;
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        plugin.getEventListener().playSlotAnimationAndAssign(p);
+                    }, currentDelay);
+                    delay += 5; // 0.25 second stagger between players
                     count++;
                 }
             }
-            player.sendMessage("§aAssigned attributes to " + count + " players!");
+            player.sendMessage("§aStarted attribute roll for " + count + " players!");
         } else if (itemName.contains("Reroll All")) {
+            int delay = 0;
             for (Player p : Bukkit.getOnlinePlayers()) {
                 // Get old attribute for cleanup
                 PlayerData oldData = plugin.getPlayerData(p.getUniqueId());
@@ -447,21 +456,14 @@ public class GUIListener implements Listener {
                     plugin.getEventListener().removeAttributeEffects(p, oldAttribute);
                 }
 
-                // Assign new attribute
-                AttributeType attr = AttributeType.getRandomAttribute(false);
-                Tier tier = Tier.getRandomTier();
-                plugin.setPlayerData(p.getUniqueId(), new PlayerData(attr, tier));
-                ParticleManager.playSupportParticles(p, attr, tier, 1);
-                plugin.updatePlayerTab(p);
-
-                // Apply Dragon Egg effects if needed
-                if (attr == AttributeType.DRAGON_EGG) {
-                    plugin.getEventListener().applyDragonEggEffects(p);
-                }
-
-                p.sendMessage("§eYour attribute was rerolled to " + tier.getColor() + attr.getDisplayName() + "§e!");
+                // Stagger the animations slightly so they don't all happen at once
+                final int currentDelay = delay;
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    plugin.getEventListener().playSlotAnimationAndAssign(p);
+                }, currentDelay);
+                delay += 5; // 0.25 second stagger between players
             }
-            player.sendMessage("§aRerolled all player attributes!");
+            player.sendMessage("§eStarted attribute reroll for all players!");
         } else if (itemName.contains("Reset All")) {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 PlayerData data = plugin.getPlayerData(p.getUniqueId());
@@ -583,9 +585,18 @@ public class GUIListener implements Listener {
     // Helper methods
 
     private void assignRandomAttribute(Player admin, Player target) {
-        AttributeType attr = AttributeType.getRandomAttribute(false);
-        Tier tier = Tier.getRandomTier();
-        assignAttribute(admin, target, attr, tier);
+        // Get old attribute for cleanup
+        PlayerData oldData = plugin.getPlayerData(target.getUniqueId());
+        AttributeType oldAttribute = oldData != null ? oldData.getAttribute() : null;
+
+        // Remove old attribute effects
+        if (oldAttribute != null) {
+            plugin.getEventListener().removeAttributeEffects(target, oldAttribute);
+        }
+
+        // Use slot animation
+        plugin.getEventListener().playSlotAnimationAndAssign(target);
+        admin.sendMessage("§aStarted attribute roll for " + target.getName() + "!");
     }
 
     private void assignAttribute(Player admin, Player target, AttributeType attr, Tier tier) {
@@ -623,23 +634,9 @@ public class GUIListener implements Listener {
             plugin.getEventListener().removeAttributeEffects(target, oldAttribute);
         }
 
-        // Get new random attribute and tier
-        AttributeType attr = AttributeType.getRandomAttribute(false);
-        Tier tier = Tier.getRandomTier();
-
-        // Assign new attribute
-        PlayerData data = new PlayerData(attr, tier);
-        plugin.setPlayerData(target.getUniqueId(), data);
-        ParticleManager.playSupportParticles(target, attr, tier, 1);
-        plugin.updatePlayerTab(target);
-
-        // Apply Dragon Egg effects if needed
-        if (attr == AttributeType.DRAGON_EGG) {
-            plugin.getEventListener().applyDragonEggEffects(target);
-        }
-
-        admin.sendMessage("§aRerolled " + target.getName() + "'s attribute to " + tier.getColor() + tier.name() + " " + attr.getDisplayName());
-        target.sendMessage("§eYour attribute was rerolled to " + tier.getColor() + tier.name() + " " + attr.getIcon() + " " + attr.getDisplayName() + "§e!");
+        // Use slot animation for reroll
+        plugin.getEventListener().playSlotAnimationAndAssign(target);
+        admin.sendMessage("§eStarted attribute reroll for " + target.getName() + "!");
     }
 
     private void upgradeLevel(Player admin, Player target) {
