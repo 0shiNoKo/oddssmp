@@ -177,7 +177,7 @@ public class WeaponAltar {
     }
 
     /**
-     * Spawn hologram using DecentHolograms API
+     * Spawn hologram using DecentHolograms API (via reflection to avoid compile-time dependency)
      */
     private void spawnDecentHologram(List<String> lines) {
         try {
@@ -187,13 +187,18 @@ public class WeaponAltar {
             // Hologram location - above the weapon
             Location holoLoc = location.clone().add(0.5, 4.0, 0.5);
 
-            // Use DecentHolograms API
-            eu.decentsoftware.holograms.api.holograms.Hologram hologram =
-                eu.decentsoftware.holograms.api.DHAPI.createHologram(hologramId, holoLoc, false, lines);
+            // Use reflection to call DHAPI.createHologram(String, Location, boolean, List<String>)
+            Class<?> dhapiClass = Class.forName("eu.decentsoftware.holograms.api.DHAPI");
+            java.lang.reflect.Method createMethod = dhapiClass.getMethod("createHologram",
+                String.class, Location.class, boolean.class, java.util.List.class);
+
+            Object hologram = createMethod.invoke(null, hologramId, holoLoc, false, lines);
 
             if (hologram != null) {
-                hologram.setDefaultVisibleState(true);
-                hologram.showAll();
+                // Call hologram.setDefaultVisibleState(true) and hologram.showAll()
+                Class<?> hologramClass = hologram.getClass();
+                hologramClass.getMethod("setDefaultVisibleState", boolean.class).invoke(hologram, true);
+                hologramClass.getMethod("showAll").invoke(hologram);
                 plugin.getLogger().info("Created DecentHolograms hologram for " + weapon.getName());
             }
         } catch (Exception e) {
@@ -432,10 +437,12 @@ public class WeaponAltar {
             weaponDisplay.remove();
         }
 
-        // Remove DecentHolograms hologram if used
+        // Remove DecentHolograms hologram if used (via reflection)
         if (hologramId != null && isDecentHologramsAvailable()) {
             try {
-                eu.decentsoftware.holograms.api.DHAPI.removeHologram(hologramId);
+                Class<?> dhapiClass = Class.forName("eu.decentsoftware.holograms.api.DHAPI");
+                java.lang.reflect.Method removeMethod = dhapiClass.getMethod("removeHologram", String.class);
+                removeMethod.invoke(null, hologramId);
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to remove DecentHolograms hologram: " + e.getMessage());
             }
