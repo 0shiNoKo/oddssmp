@@ -1110,27 +1110,44 @@ public class EventListener implements Listener {
     public void removeAttributeEffects(Player player, AttributeType oldAttribute) {
         if (oldAttribute == null) return;
 
-        // Remove Health passive hearts
-        if (oldAttribute == AttributeType.HEALTH) {
-            try {
-                org.bukkit.attribute.AttributeInstance healthAttr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-                if (healthAttr != null) {
-                    healthAttr.setBaseValue(20.0);
-                }
-                // Reset health to max (but not above 20)
-                player.setHealth(Math.min(20.0, player.getHealth()));
-            } catch (Exception e) {
-                plugin.getLogger().warning("Could not reset health: " + e.getMessage());
+        // Always reset max health to default (20.0) when switching attributes
+        try {
+            org.bukkit.attribute.AttributeInstance healthAttr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+            if (healthAttr != null) {
+                healthAttr.setBaseValue(20.0);
             }
+            // Reset health to max (but not above 20)
+            if (player.getHealth() > 20.0) {
+                player.setHealth(20.0);
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Could not reset health: " + e.getMessage());
         }
+
+        // Remove all attribute-related potion effects
+        player.removePotionEffect(PotionEffectType.HEALTH_BOOST);
+        player.removePotionEffect(PotionEffectType.ABSORPTION);
+        player.removePotionEffect(PotionEffectType.SPEED);
+        player.removePotionEffect(PotionEffectType.STRENGTH);
+        player.removePotionEffect(PotionEffectType.RESISTANCE);
+        player.removePotionEffect(PotionEffectType.REGENERATION);
+        player.removePotionEffect(PotionEffectType.HASTE);
+        player.removePotionEffect(PotionEffectType.SLOW_FALLING);
+        player.removePotionEffect(PotionEffectType.JUMP_BOOST);
 
         // Remove Dragon Egg effects
         if (oldAttribute == AttributeType.DRAGON_EGG) {
             removeDragonEggEffects(player);
         }
 
-        // Clear ability flags
+        // Clear ability flags (this resets vitalityHearts and all other bonuses)
         plugin.getAbilityManager().removeAbilityFlags(player.getUniqueId());
+
+        // Clear cooldowns for fresh start
+        PlayerData data = plugin.getPlayerData(player.getUniqueId());
+        if (data != null) {
+            data.clearCooldowns();
+        }
     }
 
     /**
