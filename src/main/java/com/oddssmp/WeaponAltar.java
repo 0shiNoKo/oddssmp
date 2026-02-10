@@ -112,13 +112,10 @@ public class WeaponAltar {
         // Add weapon name at TOP
         lines.add(weapon.getColor() + "§l" + weapon.getName());
 
-        // Add weapon icon (DecentHolograms #ICON: format)
-        lines.add("#ICON: " + weapon.getMaterial().name());
-
         // Empty line for spacing
         lines.add("");
 
-        // Build requirements text
+        // Build requirements text (recipe above the weapon icon)
         Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
         List<String> customItems = CUSTOM_ITEMS.get(weapon);
 
@@ -132,6 +129,13 @@ public class WeaponAltar {
         if (customItems != null) {
             lines.addAll(customItems);
         }
+
+        // Empty line before icon
+        lines.add("");
+
+        // Add weapon icon at BOTTOM with larger scale (DecentHolograms #ICON: format)
+        // Format: #ICON: MATERIAL (scale) - using 1.5 scale for bigger display
+        lines.add("#ICON: " + weapon.getMaterial().name() + " (1.5)");
 
         spawnDecentHologram(lines);
     }
@@ -151,7 +155,8 @@ public class WeaponAltar {
             hologramId = "oddssmp_altar_" + UUID.randomUUID().toString().substring(0, 8);
 
             // Hologram location - centered above the pedestal (pedestal top is at y+2)
-            Location holoLoc = location.clone().add(0.5, 3.5, 0.5);
+            // Raised higher since weapon icon is now at bottom of hologram
+            Location holoLoc = location.clone().add(0.5, 5.5, 0.5);
 
             // Use reflection to call DHAPI.createHologram(String, Location, boolean, List<String>)
             Class<?> dhapiClass = Class.forName("eu.decentsoftware.holograms.api.DHAPI");
@@ -190,11 +195,11 @@ public class WeaponAltar {
 
                 tick++;
 
-                // Particle effects every second
+                // Particle effects every second (around the weapon icon at bottom of hologram)
                 World world = location.getWorld();
                 if (world != null && tick % 20 == 0) {
                     world.spawnParticle(Particle.ENCHANT,
-                        location.clone().add(0.5, 3.5, 0.5),
+                        location.clone().add(0.5, 3.0, 0.5),
                         10, 0.3, 0.5, 0.3, 0.05);
                 }
             }
