@@ -66,6 +66,8 @@ public class AdminGUI {
     public void openAttributeEditor(Player admin) {
         Inventory gui = Bukkit.createInventory(null, 54, "§6§lAttribute Editor");
 
+        AttributeSettings settings = plugin.getAttributeSettings();
+
         AttributeType[] attributes = AttributeType.values();
         Material[] materials = {
                 Material.IRON_SWORD,      // Melee
@@ -91,8 +93,14 @@ public class AdminGUI {
 
         for (int i = 0; i < attributes.length; i++) {
             AttributeType attr = attributes[i];
+            AttributeSettings.AttributeConfig config = settings.getConfig(attr);
+
             List<String> lore = new ArrayList<>();
             lore.add("§7Click to edit this attribute");
+            lore.add("");
+            lore.add("§7Support CD: §e" + String.format("%.1fx", config.supportCooldownModifier));
+            lore.add("§7Melee CD: §e" + String.format("%.1fx", config.meleeCooldownModifier));
+            lore.add("§7Damage: §e" + String.format("%.1fx", config.meleeDamageMultiplier));
             lore.add("");
             lore.add("§e§lLeft Click: §7Edit values");
             lore.add("§c§lRight Click: §7Reset to defaults");
@@ -102,25 +110,25 @@ public class AdminGUI {
 
         // Global settings
         gui.setItem(45, createItem(Material.CLOCK, "§e§lGlobal Cooldown Multiplier", Arrays.asList(
-                "§7Current: §ax1.0",
+                "§7Current: §a" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()),
                 "",
                 "§e§lLeft Click: §7-0.1x",
                 "§e§lRight Click: §7+0.1x",
-                "§e§lShift: §7Reset to 1.0x")));
+                "§e§lShift+Click: §7Reset to 1.0x")));
 
         gui.setItem(46, createItem(Material.DIAMOND_SWORD, "§c§lGlobal Damage Multiplier", Arrays.asList(
-                "§7Current: §ax1.0",
+                "§7Current: §a" + String.format("%.1fx", settings.getGlobalDamageMultiplier()),
                 "",
                 "§e§lLeft Click: §7-0.1x",
                 "§e§lRight Click: §7+0.1x",
-                "§e§lShift: §7Reset to 1.0x")));
+                "§e§lShift+Click: §7Reset to 1.0x")));
 
         gui.setItem(47, createItem(Material.EXPERIENCE_BOTTLE, "§b§lLevel Scaling", Arrays.asList(
-                "§7Current: §a+10% per level",
+                "§7Current: §a+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level",
                 "",
                 "§e§lLeft Click: §7-1%",
                 "§e§lRight Click: §7+1%",
-                "§e§lShift: §7Reset to 10%")));
+                "§e§lShift+Click: §7Reset to 10%")));
 
         // Back button
         gui.setItem(49, createItem(Material.BARRIER, "§c§lBack", Arrays.asList("§7Return to main menu")));
@@ -134,118 +142,130 @@ public class AdminGUI {
     public void openAttributeValueEditor(Player admin, AttributeType attribute) {
         Inventory gui = Bukkit.createInventory(null, 54, "§6§lEdit: " + attribute.getDisplayName());
 
+        AttributeSettings settings = plugin.getAttributeSettings();
+        AttributeSettings.AttributeConfig config = settings.getConfig(attribute);
+
         // Support Ability Settings
-        gui.setItem(10, createItem(Material.EMERALD, "§a§lSupport Cooldown", Arrays.asList(
-                "§7Stable: §e120s",
-                "§7Warped: §e90s",
-                "§7Extreme: §e60s",
+        gui.setItem(10, createItem(Material.EMERALD, "§a§lSupport Cooldown Modifier", Arrays.asList(
+                "§7Multiplier for support cooldown",
+                "§7Current: §e" + String.format("%.1fx", config.supportCooldownModifier),
                 "",
-                "§e§lClick to adjust")));
+                "§7Stable: §e" + (int)(settings.getStableCooldown() * config.supportCooldownModifier) + "s",
+                "§7Warped: §e" + (int)(settings.getWarpedCooldown() * config.supportCooldownModifier) + "s",
+                "§7Extreme: §e" + (int)(settings.getExtremeCooldown() * config.supportCooldownModifier) + "s",
+                "",
+                "§e§lLeft: §7-0.1x  §e§lRight: §7+0.1x")));
 
         gui.setItem(11, createItem(Material.EXPERIENCE_BOTTLE, "§a§lSupport Duration", Arrays.asList(
                 "§7Base duration of effect",
-                "§7Current: §e10s",
+                "§7Current: §e" + config.supportDuration + "s",
                 "",
-                "§e§lLeft: §7-1s",
-                "§e§lRight: §7+1s")));
+                "§e§lLeft: §7-1s  §e§lRight: §7+1s")));
 
         gui.setItem(12, createItem(Material.REDSTONE, "§a§lSupport Range", Arrays.asList(
                 "§7Radius of support effect",
-                "§7Current: §e10 blocks",
+                "§7Current: §e" + String.format("%.0f", config.supportRange) + " blocks",
                 "",
-                "§e§lLeft: §7-1 block",
-                "§e§lRight: §7+1 block")));
+                "§e§lLeft: §7-1 block  §e§lRight: §7+1 block")));
 
         // Melee Ability Settings
-        gui.setItem(19, createItem(Material.IRON_SWORD, "§c§lMelee Cooldown", Arrays.asList(
-                "§7Stable: §e120s",
-                "§7Warped: §e90s",
-                "§7Extreme: §e60s",
+        gui.setItem(19, createItem(Material.IRON_SWORD, "§c§lMelee Cooldown Modifier", Arrays.asList(
+                "§7Multiplier for melee cooldown",
+                "§7Current: §e" + String.format("%.1fx", config.meleeCooldownModifier),
                 "",
-                "§e§lClick to adjust")));
+                "§7Stable: §e" + (int)(settings.getStableCooldown() * config.meleeCooldownModifier) + "s",
+                "§7Warped: §e" + (int)(settings.getWarpedCooldown() * config.meleeCooldownModifier) + "s",
+                "§7Extreme: §e" + (int)(settings.getExtremeCooldown() * config.meleeCooldownModifier) + "s",
+                "",
+                "§e§lLeft: §7-0.1x  §e§lRight: §7+0.1x")));
 
-        gui.setItem(20, createItem(Material.DIAMOND_SWORD, "§c§lMelee Damage", Arrays.asList(
-                "§7Damage multiplier",
-                "§7Current: §e1.0x",
+        gui.setItem(20, createItem(Material.DIAMOND_SWORD, "§c§lMelee Damage Multiplier", Arrays.asList(
+                "§7Damage multiplier for this attribute",
+                "§7Current: §e" + String.format("%.1fx", config.meleeDamageMultiplier),
                 "",
-                "§e§lLeft: §7-0.1x",
-                "§e§lRight: §7+0.1x")));
+                "§e§lLeft: §7-0.1x  §e§lRight: §7+0.1x")));
 
         gui.setItem(21, createItem(Material.EXPERIENCE_BOTTLE, "§c§lMelee Duration", Arrays.asList(
-                "§7Effect duration",
-                "§7Current: §e5s",
+                "§7Effect duration after hit",
+                "§7Current: §e" + config.meleeDuration + "s",
                 "",
-                "§e§lLeft: §7-1s",
-                "§e§lRight: §7+1s")));
+                "§e§lLeft: §7-1s  §e§lRight: §7+1s")));
 
         // Passive Ability Settings
         gui.setItem(28, createItem(Material.BOOK, "§b§lPassive Strength", Arrays.asList(
                 "§7Passive effect multiplier",
-                "§7Current: §e1.0x",
+                "§7Current: §e" + String.format("%.1fx", config.passiveStrength),
                 "",
-                "§e§lLeft: §7-0.1x",
-                "§e§lRight: §7+0.1x")));
+                "§e§lLeft: §7-0.1x  §e§lRight: §7+0.1x")));
 
         gui.setItem(29, createItem(Material.CLOCK, "§b§lPassive Tick Rate", Arrays.asList(
                 "§7How often passive activates",
-                "§7Current: §e1s",
+                "§7Current: §e" + String.format("%.1fs", config.passiveTickRate),
                 "",
-                "§e§lLeft: §7-0.5s",
-                "§e§lRight: §7+0.5s")));
+                "§e§lLeft: §7-0.25s  §e§lRight: §7+0.25s")));
 
-        // Tier Multipliers
+        // Tier Multipliers (global settings)
         gui.setItem(37, createItem(Material.LIME_DYE, "§a§lStable Tier", Arrays.asList(
-                "§7Effect: §e100%",
-                "§7Cooldown: §e120s",
-                "§7Drawback: §eNone",
+                "§7Effect: §e" + (int)(settings.getStableMultiplier() * 100) + "%",
+                "§7Cooldown: §e" + settings.getStableCooldown() + "s",
+                "§7Drawback: §e" + (int)(settings.getStableDrawback() * 100) + "%",
                 "",
-                "§e§lClick to edit multipliers")));
+                "§e§lLeft: §7-10s CD  §e§lRight: §7+10s CD",
+                "§e§lShift+Left: §7-10% effect")));
 
         gui.setItem(38, createItem(Material.PURPLE_DYE, "§d§lWarped Tier", Arrays.asList(
-                "§7Effect: §e130%",
-                "§7Cooldown: §e90s",
-                "§7Drawback: §e15%",
+                "§7Effect: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%",
+                "§7Cooldown: §e" + settings.getWarpedCooldown() + "s",
+                "§7Drawback: §e" + (int)(settings.getWarpedDrawback() * 100) + "%",
                 "",
-                "§e§lClick to edit multipliers")));
+                "§e§lLeft: §7-10s CD  §e§lRight: §7+10s CD",
+                "§e§lShift+Left: §7-10% effect")));
 
         gui.setItem(39, createItem(Material.RED_DYE, "§c§lExtreme Tier", Arrays.asList(
-                "§7Effect: §e160%",
-                "§7Cooldown: §e60s",
-                "§7Drawback: §e35%",
+                "§7Effect: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%",
+                "§7Cooldown: §e" + settings.getExtremeCooldown() + "s",
+                "§7Drawback: §e" + (int)(settings.getExtremeDrawback() * 100) + "%",
                 "",
-                "§e§lClick to edit multipliers")));
+                "§e§lLeft: §7-10s CD  §e§lRight: §7+10s CD",
+                "§e§lShift+Left: §7-10% effect")));
 
         // Quick presets
         gui.setItem(45, createItem(Material.PAPER, "§e§lPreset: Balanced", Arrays.asList(
                 "§7Standard competitive values",
+                "§7All multipliers set to 1.0x",
                 "",
-                "§e§lClick to apply")));
+                "§e§lClick to apply to this attribute",
+                "§e§lShift+Click to apply to ALL")));
 
         gui.setItem(46, createItem(Material.REDSTONE, "§c§lPreset: High Power", Arrays.asList(
-                "§7Increased damage/effects",
-                "§7Lower cooldowns",
+                "§7Increased damage/effects (1.5x)",
+                "§7Lower cooldowns (0.7x)",
                 "",
-                "§e§lClick to apply")));
+                "§e§lClick to apply to this attribute",
+                "§e§lShift+Click to apply to ALL")));
 
         gui.setItem(47, createItem(Material.IRON_INGOT, "§7§lPreset: Low Power", Arrays.asList(
-                "§7Reduced effects",
-                "§7Higher cooldowns",
+                "§7Reduced effects (0.7x)",
+                "§7Higher cooldowns (1.5x)",
                 "",
-                "§e§lClick to apply")));
+                "§e§lClick to apply to this attribute",
+                "§e§lShift+Click to apply to ALL")));
 
         gui.setItem(48, createItem(Material.NETHER_STAR, "§d§lPreset: Chaos", Arrays.asList(
-                "§7Random extreme values",
-                "§7For fun game modes",
+                "§7Random extreme values!",
+                "§7For fun/event game modes",
                 "",
-                "§e§lClick to apply")));
+                "§e§lClick to apply to this attribute",
+                "§e§lShift+Click to apply to ALL")));
 
         // Save and back
         gui.setItem(50, createItem(Material.WRITABLE_BOOK, "§a§lSave Changes", Arrays.asList(
-                "§7Save current values",
+                "§7Save all current values",
                 "§7to config file")));
 
         gui.setItem(51, createItem(Material.BARRIER, "§c§lReset to Defaults", Arrays.asList(
                 "§7Restore original values",
+                "§7for this attribute",
                 "§cCannot be undone!")));
 
         gui.setItem(53, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to attribute list")));

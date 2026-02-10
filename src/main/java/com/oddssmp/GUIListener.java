@@ -56,7 +56,7 @@ public class GUIListener implements Listener {
         }
         // Edit Specific Attribute
         else if (title.startsWith("§6§lEdit: ")) {
-            handleAttributeValueEditor(player, title, itemName);
+            handleAttributeValueEditor(player, title, itemName, event.getClick());
         }
         // Cooldown Adjuster
         else if (title.contains("Cooldown: ")) {
@@ -142,17 +142,56 @@ public class GUIListener implements Listener {
         // Don't process empty slots
         if (clicked == null || !clicked.hasItemMeta()) return;
 
-        // Global settings
+        AttributeSettings settings = plugin.getAttributeSettings();
+
+        // Global Cooldown Multiplier
         if (itemName.contains("Global Cooldown")) {
-            player.sendMessage("§e§lGlobal cooldown editing coming soon!");
+            if (clickType.isShiftClick()) {
+                settings.setGlobalCooldownMultiplier(1.0);
+                player.sendMessage("§aReset global cooldown multiplier to §e1.0x");
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalCooldownMultiplier(settings.getGlobalCooldownMultiplier() - 0.1);
+                player.sendMessage("§aGlobal cooldown multiplier: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()));
+            } else if (clickType == ClickType.RIGHT) {
+                settings.setGlobalCooldownMultiplier(settings.getGlobalCooldownMultiplier() + 0.1);
+                player.sendMessage("§aGlobal cooldown multiplier: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()));
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeEditor(player);
             return;
         }
+
+        // Global Damage Multiplier
         if (itemName.contains("Global Damage")) {
-            player.sendMessage("§e§lGlobal damage editing coming soon!");
+            if (clickType.isShiftClick()) {
+                settings.setGlobalDamageMultiplier(1.0);
+                player.sendMessage("§aReset global damage multiplier to §e1.0x");
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalDamageMultiplier(settings.getGlobalDamageMultiplier() - 0.1);
+                player.sendMessage("§aGlobal damage multiplier: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()));
+            } else if (clickType == ClickType.RIGHT) {
+                settings.setGlobalDamageMultiplier(settings.getGlobalDamageMultiplier() + 0.1);
+                player.sendMessage("§aGlobal damage multiplier: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()));
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeEditor(player);
             return;
         }
+
+        // Level Scaling
         if (itemName.contains("Level Scaling")) {
-            player.sendMessage("§e§lLevel scaling editing coming soon!");
+            if (clickType.isShiftClick()) {
+                settings.setLevelScalingPercent(10.0);
+                player.sendMessage("§aReset level scaling to §e+10%");
+            } else if (clickType == ClickType.LEFT) {
+                settings.setLevelScalingPercent(settings.getLevelScalingPercent() - 1.0);
+                player.sendMessage("§aLevel scaling: §e+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level");
+            } else if (clickType == ClickType.RIGHT) {
+                settings.setLevelScalingPercent(settings.getLevelScalingPercent() + 1.0);
+                player.sendMessage("§aLevel scaling: §e+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeEditor(player);
             return;
         }
 
@@ -162,51 +201,271 @@ public class GUIListener implements Listener {
                 if (clickType == ClickType.LEFT) {
                     adminGUI.openAttributeValueEditor(player, attr);
                 } else if (clickType == ClickType.RIGHT) {
+                    settings.applyBalancedPreset(attr);
                     player.sendMessage("§aReset " + attr.getDisplayName() + " to defaults!");
-                    // TODO: Implement reset logic
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.0f);
+                    adminGUI.openAttributeEditor(player);
                 }
-                return; // Important: return after finding match
+                return;
             }
         }
     }
 
-    private void handleAttributeValueEditor(Player player, String title, String itemName) {
+    private void handleAttributeValueEditor(Player player, String title, String itemName, ClickType clickType) {
+        // Extract attribute name from title "§6§lEdit: AttributeName"
+        String attrName = title.replace("§6§lEdit: ", "");
+        AttributeType attribute = null;
+        for (AttributeType attr : AttributeType.values()) {
+            if (attr.getDisplayName().equals(attrName)) {
+                attribute = attr;
+                break;
+            }
+        }
+
+        if (attribute == null) {
+            player.sendMessage("§cError: Could not find attribute!");
+            return;
+        }
+
+        AttributeSettings settings = plugin.getAttributeSettings();
+        AttributeSettings.AttributeConfig config = settings.getConfig(attribute);
+
         if (itemName.contains("Back")) {
             adminGUI.openAttributeEditor(player);
             return;
         }
 
         if (itemName.contains("Save Changes")) {
-            player.sendMessage("§a§lChanges saved! (Feature coming soon)");
+            settings.saveConfig();
+            player.sendMessage("§a§lAll changes saved to config!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);
             return;
         }
 
         if (itemName.contains("Reset to Defaults")) {
-            player.sendMessage("§c§lReset to defaults! (Feature coming soon)");
+            settings.applyBalancedPreset(attribute);
+            player.sendMessage("§c§lReset " + attribute.getDisplayName() + " to defaults!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 0.8f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Support Cooldown Modifier
+        if (itemName.contains("Support Cooldown")) {
+            if (clickType == ClickType.LEFT) {
+                config.supportCooldownModifier = Math.max(0.1, config.supportCooldownModifier - 0.1);
+            } else if (clickType == ClickType.RIGHT) {
+                config.supportCooldownModifier = Math.min(3.0, config.supportCooldownModifier + 0.1);
+            }
+            player.sendMessage("§aSupport cooldown modifier: §e" + String.format("%.1fx", config.supportCooldownModifier));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Support Duration
+        if (itemName.contains("Support Duration")) {
+            if (clickType == ClickType.LEFT) {
+                config.supportDuration = Math.max(1, config.supportDuration - 1);
+            } else if (clickType == ClickType.RIGHT) {
+                config.supportDuration = Math.min(60, config.supportDuration + 1);
+            }
+            player.sendMessage("§aSupport duration: §e" + config.supportDuration + "s");
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Support Range
+        if (itemName.contains("Support Range")) {
+            if (clickType == ClickType.LEFT) {
+                config.supportRange = Math.max(1.0, config.supportRange - 1.0);
+            } else if (clickType == ClickType.RIGHT) {
+                config.supportRange = Math.min(50.0, config.supportRange + 1.0);
+            }
+            player.sendMessage("§aSupport range: §e" + String.format("%.0f", config.supportRange) + " blocks");
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Melee Cooldown Modifier
+        if (itemName.contains("Melee Cooldown")) {
+            if (clickType == ClickType.LEFT) {
+                config.meleeCooldownModifier = Math.max(0.1, config.meleeCooldownModifier - 0.1);
+            } else if (clickType == ClickType.RIGHT) {
+                config.meleeCooldownModifier = Math.min(3.0, config.meleeCooldownModifier + 0.1);
+            }
+            player.sendMessage("§cMelee cooldown modifier: §e" + String.format("%.1fx", config.meleeCooldownModifier));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Melee Damage Multiplier
+        if (itemName.contains("Melee Damage")) {
+            if (clickType == ClickType.LEFT) {
+                config.meleeDamageMultiplier = Math.max(0.1, config.meleeDamageMultiplier - 0.1);
+            } else if (clickType == ClickType.RIGHT) {
+                config.meleeDamageMultiplier = Math.min(5.0, config.meleeDamageMultiplier + 0.1);
+            }
+            player.sendMessage("§cMelee damage multiplier: §e" + String.format("%.1fx", config.meleeDamageMultiplier));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Melee Duration
+        if (itemName.contains("Melee Duration")) {
+            if (clickType == ClickType.LEFT) {
+                config.meleeDuration = Math.max(1, config.meleeDuration - 1);
+            } else if (clickType == ClickType.RIGHT) {
+                config.meleeDuration = Math.min(30, config.meleeDuration + 1);
+            }
+            player.sendMessage("§cMelee duration: §e" + config.meleeDuration + "s");
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Passive Strength
+        if (itemName.contains("Passive Strength")) {
+            if (clickType == ClickType.LEFT) {
+                config.passiveStrength = Math.max(0.1, config.passiveStrength - 0.1);
+            } else if (clickType == ClickType.RIGHT) {
+                config.passiveStrength = Math.min(5.0, config.passiveStrength + 0.1);
+            }
+            player.sendMessage("§bPassive strength: §e" + String.format("%.1fx", config.passiveStrength));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Passive Tick Rate
+        if (itemName.contains("Passive Tick Rate")) {
+            if (clickType == ClickType.LEFT) {
+                config.passiveTickRate = Math.max(0.25, config.passiveTickRate - 0.25);
+            } else if (clickType == ClickType.RIGHT) {
+                config.passiveTickRate = Math.min(5.0, config.passiveTickRate + 0.25);
+            }
+            player.sendMessage("§bPassive tick rate: §e" + String.format("%.2fs", config.passiveTickRate));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Stable Tier
+        if (itemName.contains("Stable Tier")) {
+            if (clickType.isShiftClick()) {
+                double newMult = Math.max(0.5, settings.getStableMultiplier() - 0.1);
+                settings.setTierMultiplier(Tier.STABLE, newMult);
+                player.sendMessage("§aStable tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.LEFT) {
+                int newCd = Math.max(10, settings.getStableCooldown() - 10);
+                settings.setTierCooldown(Tier.STABLE, newCd);
+                player.sendMessage("§aStable tier cooldown: §e" + newCd + "s");
+            } else if (clickType == ClickType.RIGHT) {
+                int newCd = Math.min(300, settings.getStableCooldown() + 10);
+                settings.setTierCooldown(Tier.STABLE, newCd);
+                player.sendMessage("§aStable tier cooldown: §e" + newCd + "s");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Warped Tier
+        if (itemName.contains("Warped Tier")) {
+            if (clickType.isShiftClick()) {
+                double newMult = Math.max(0.5, settings.getWarpedMultiplier() - 0.1);
+                settings.setTierMultiplier(Tier.WARPED, newMult);
+                player.sendMessage("§dWarped tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.LEFT) {
+                int newCd = Math.max(10, settings.getWarpedCooldown() - 10);
+                settings.setTierCooldown(Tier.WARPED, newCd);
+                player.sendMessage("§dWarped tier cooldown: §e" + newCd + "s");
+            } else if (clickType == ClickType.RIGHT) {
+                int newCd = Math.min(300, settings.getWarpedCooldown() + 10);
+                settings.setTierCooldown(Tier.WARPED, newCd);
+                player.sendMessage("§dWarped tier cooldown: §e" + newCd + "s");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        // Extreme Tier
+        if (itemName.contains("Extreme Tier")) {
+            if (clickType.isShiftClick()) {
+                double newMult = Math.max(0.5, settings.getExtremeMultiplier() - 0.1);
+                settings.setTierMultiplier(Tier.EXTREME, newMult);
+                player.sendMessage("§cExtreme tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.LEFT) {
+                int newCd = Math.max(10, settings.getExtremeCooldown() - 10);
+                settings.setTierCooldown(Tier.EXTREME, newCd);
+                player.sendMessage("§cExtreme tier cooldown: §e" + newCd + "s");
+            } else if (clickType == ClickType.RIGHT) {
+                int newCd = Math.min(300, settings.getExtremeCooldown() + 10);
+                settings.setTierCooldown(Tier.EXTREME, newCd);
+                player.sendMessage("§cExtreme tier cooldown: §e" + newCd + "s");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
             return;
         }
 
         // Preset handlers
         if (itemName.contains("Preset: Balanced")) {
-            player.sendMessage("§a§lApplied Balanced preset!");
-            return;
-        }
-        if (itemName.contains("Preset: High Power")) {
-            player.sendMessage("§c§lApplied High Power preset!");
-            return;
-        }
-        if (itemName.contains("Preset: Low Power")) {
-            player.sendMessage("§7§lApplied Low Power preset!");
-            return;
-        }
-        if (itemName.contains("Preset: Chaos")) {
-            player.sendMessage("§d§lApplied Chaos preset! Good luck!");
+            if (clickType.isShiftClick()) {
+                settings.applyPresetToAll("balanced");
+                player.sendMessage("§a§lApplied Balanced preset to ALL attributes!");
+            } else {
+                settings.applyBalancedPreset(attribute);
+                player.sendMessage("§a§lApplied Balanced preset to " + attribute.getDisplayName() + "!");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.0f);
+            adminGUI.openAttributeValueEditor(player, attribute);
             return;
         }
 
-        // Value editing
-        player.sendMessage("§e§lValue editing interface coming soon!");
-        player.sendMessage("§7You clicked: " + itemName);
+        if (itemName.contains("Preset: High Power")) {
+            if (clickType.isShiftClick()) {
+                settings.applyPresetToAll("highpower");
+                player.sendMessage("§c§lApplied High Power preset to ALL attributes!");
+            } else {
+                settings.applyHighPowerPreset(attribute);
+                player.sendMessage("§c§lApplied High Power preset to " + attribute.getDisplayName() + "!");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 0.8f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        if (itemName.contains("Preset: Low Power")) {
+            if (clickType.isShiftClick()) {
+                settings.applyPresetToAll("lowpower");
+                player.sendMessage("§7§lApplied Low Power preset to ALL attributes!");
+            } else {
+                settings.applyLowPowerPreset(attribute);
+                player.sendMessage("§7§lApplied Low Power preset to " + attribute.getDisplayName() + "!");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
+
+        if (itemName.contains("Preset: Chaos")) {
+            if (clickType.isShiftClick()) {
+                settings.applyPresetToAll("chaos");
+                player.sendMessage("§d§lApplied Chaos preset to ALL attributes! Good luck!");
+            } else {
+                settings.applyChaosPreset(attribute);
+                player.sendMessage("§d§lApplied Chaos preset to " + attribute.getDisplayName() + "! Good luck!");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.3f, 1.5f);
+            adminGUI.openAttributeValueEditor(player, attribute);
+            return;
+        }
     }
 
     private void handleCooldownAdjuster(Player player, String title, String itemName, ClickType clickType) {
