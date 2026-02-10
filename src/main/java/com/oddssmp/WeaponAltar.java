@@ -25,20 +25,9 @@ public class WeaponAltar {
     private final AttributeWeapon weapon;
     private final Location location;
     private ArmorStand weaponDisplay;
-    private List<ArmorStand> hologramLines = new ArrayList<>();
     private Set<Location> protectedBlocks = new HashSet<>();
     private boolean active = true;
     private String hologramId; // For DecentHolograms
-
-    // DecentHolograms availability check
-    private static Boolean decentHologramsAvailable = null;
-
-    private static boolean isDecentHologramsAvailable() {
-        if (decentHologramsAvailable == null) {
-            decentHologramsAvailable = Bukkit.getPluginManager().getPlugin("DecentHolograms") != null;
-        }
-        return decentHologramsAvailable;
-    }
 
     // Crafting costs for each weapon
     private static final Map<AttributeWeapon, Map<Material, Integer>> CRAFTING_COSTS = new HashMap<>();
@@ -141,7 +130,7 @@ public class WeaponAltar {
     }
 
     /**
-     * Spawn hologram text - uses DecentHolograms if available, otherwise armor stands
+     * Spawn hologram text using DecentHolograms
      */
     private void spawnHologramText() {
         World world = location.getWorld();
@@ -168,12 +157,7 @@ public class WeaponAltar {
             lines.addAll(customItems);
         }
 
-        // Try DecentHolograms first
-        if (isDecentHologramsAvailable()) {
-            spawnDecentHologram(lines);
-        } else {
-            spawnArmorStandHologram(lines);
-        }
+        spawnDecentHologram(lines);
     }
 
     /**
@@ -202,40 +186,8 @@ public class WeaponAltar {
                 plugin.getLogger().info("Created DecentHolograms hologram for " + weapon.getName());
             }
         } catch (Exception e) {
-            plugin.getLogger().warning("Failed to create DecentHolograms hologram, falling back to ArmorStands: " + e.getMessage());
-            decentHologramsAvailable = false;
-            spawnArmorStandHologram(lines);
+            plugin.getLogger().warning("Failed to create DecentHolograms hologram: " + e.getMessage());
         }
-    }
-
-    /**
-     * Spawn hologram using ArmorStands (fallback)
-     */
-    private void spawnArmorStandHologram(List<String> lines) {
-        // Spawn hologram lines ABOVE the weapon (weapon is at y+2.5)
-        // Start from top and go down
-        double startY = location.getY() + 3.5 + (lines.size() * 0.25);
-
-        for (int i = 0; i < lines.size(); i++) {
-            Location lineLoc = location.clone().add(0.5, startY - (i * 0.25), 0.5);
-            ArmorStand hologram = createHologramLine(lineLoc, lines.get(i));
-            hologramLines.add(hologram);
-        }
-    }
-
-    /**
-     * Create a single hologram line using an armor stand
-     */
-    private ArmorStand createHologramLine(Location location, String text) {
-        ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
-        stand.setVisible(false);
-        stand.setGravity(false);
-        stand.setInvulnerable(true);
-        stand.setMarker(true);
-        stand.setSmall(true);
-        stand.setCustomName(text);
-        stand.setCustomNameVisible(true);
-        return stand;
     }
 
     /**
@@ -437,8 +389,8 @@ public class WeaponAltar {
             weaponDisplay.remove();
         }
 
-        // Remove DecentHolograms hologram if used (via reflection)
-        if (hologramId != null && isDecentHologramsAvailable()) {
+        // Remove DecentHolograms hologram (via reflection)
+        if (hologramId != null) {
             try {
                 Class<?> dhapiClass = Class.forName("eu.decentsoftware.holograms.api.DHAPI");
                 java.lang.reflect.Method removeMethod = dhapiClass.getMethod("removeHologram", String.class);
@@ -447,14 +399,6 @@ public class WeaponAltar {
                 plugin.getLogger().warning("Failed to remove DecentHolograms hologram: " + e.getMessage());
             }
         }
-
-        // Remove ArmorStand holograms (fallback)
-        for (ArmorStand hologram : hologramLines) {
-            if (hologram != null && !hologram.isDead()) {
-                hologram.remove();
-            }
-        }
-        hologramLines.clear();
     }
 
     public Location getLocation() {
