@@ -403,6 +403,9 @@ public class AscendedWarden implements Listener {
 
         loc.getWorld().dropItemNaturally(loc, wardenBrain);
 
+        // Warden's Heart - for crafting Deepcore Maul
+        loc.getWorld().dropItemNaturally(loc, WeaponAltar.createWardensHeart());
+
         // Additional loot
         loc.getWorld().dropItemNaturally(loc, new ItemStack(Material.ECHO_SHARD, 8));
         loc.getWorld().dropItemNaturally(loc, new ItemStack(Material.SCULK_SHRIEKER, 4));
