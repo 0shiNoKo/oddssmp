@@ -2,8 +2,6 @@ package com.oddssmp;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -24,7 +22,6 @@ public class WeaponAltar {
     private final OddsSMP plugin;
     private final AttributeWeapon weapon;
     private final Location location;
-    private ArmorStand weaponDisplay;
     private Set<Location> protectedBlocks = new HashSet<>();
     private boolean active = true;
     private String hologramId; // For DecentHolograms
@@ -53,13 +50,10 @@ public class WeaponAltar {
         // Build the pedestal structure
         buildPedestal();
 
-        // Spawn the floating weapon display
-        spawnWeaponDisplay();
-
-        // Spawn the hologram text with requirements
+        // Spawn the hologram (weapon icon + text) using DecentHolograms
         spawnHologramText();
 
-        // Start ambient particle effects (no spinning)
+        // Start ambient particle effects
         startAmbientEffects();
     }
 
@@ -107,30 +101,7 @@ public class WeaponAltar {
     }
 
     /**
-     * Spawn the floating weapon armor stand
-     */
-    private void spawnWeaponDisplay() {
-        World world = location.getWorld();
-        if (world == null) return;
-
-        // Center the weapon above the pedestal (pedestal top is at y+2)
-        Location displayLoc = location.clone().add(0.5, 2.5, 0.5);
-
-        weaponDisplay = (ArmorStand) world.spawnEntity(displayLoc, EntityType.ARMOR_STAND);
-        weaponDisplay.setVisible(false);
-        weaponDisplay.setGravity(false);
-        weaponDisplay.setInvulnerable(true);
-        weaponDisplay.setSmall(true);  // Small armor stand for better centering
-        weaponDisplay.setMarker(true);
-        weaponDisplay.setCustomNameVisible(false);  // Don't show name on weapon itself
-
-        // Give it the weapon
-        ItemStack weaponItem = weapon.createItem();
-        weaponDisplay.getEquipment().setItemInMainHand(weaponItem);
-    }
-
-    /**
-     * Spawn hologram text using DecentHolograms
+     * Spawn hologram with weapon icon and text using DecentHolograms
      */
     private void spawnHologramText() {
         World world = location.getWorld();
@@ -140,7 +111,12 @@ public class WeaponAltar {
 
         // Add weapon name at TOP
         lines.add(weapon.getColor() + "§l" + weapon.getName());
-        lines.add(""); // Empty line for spacing
+
+        // Add weapon icon (DecentHolograms #ICON: format)
+        lines.add("#ICON: " + weapon.getMaterial().name());
+
+        // Empty line for spacing
+        lines.add("");
 
         // Build requirements text
         Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
@@ -174,8 +150,8 @@ public class WeaponAltar {
             // Generate unique ID for this hologram
             hologramId = "oddssmp_altar_" + UUID.randomUUID().toString().substring(0, 8);
 
-            // Hologram location - above the weapon
-            Location holoLoc = location.clone().add(0.5, 4.0, 0.5);
+            // Hologram location - centered above the pedestal (pedestal top is at y+2)
+            Location holoLoc = location.clone().add(0.5, 3.5, 0.5);
 
             // Use reflection to call DHAPI.createHologram(String, Location, boolean, List<String>)
             Class<?> dhapiClass = Class.forName("eu.decentsoftware.holograms.api.DHAPI");
@@ -199,7 +175,7 @@ public class WeaponAltar {
     }
 
     /**
-     * Start ambient particle effects (no spinning)
+     * Start ambient particle effects
      */
     private void startAmbientEffects() {
         new BukkitRunnable() {
@@ -207,7 +183,7 @@ public class WeaponAltar {
 
             @Override
             public void run() {
-                if (!active || weaponDisplay == null || weaponDisplay.isDead()) {
+                if (!active) {
                     cancel();
                     return;
                 }
@@ -392,10 +368,6 @@ public class WeaponAltar {
      */
     public void remove() {
         active = false;
-
-        if (weaponDisplay != null && !weaponDisplay.isDead()) {
-            weaponDisplay.remove();
-        }
 
         // Remove DecentHolograms hologram (via reflection)
         if (hologramId != null) {
