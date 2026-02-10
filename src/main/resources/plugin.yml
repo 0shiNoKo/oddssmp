@@ -5,6 +5,9 @@ description: A comprehensive attribute and ability system for Minecraft
 api-version: '1.21'
 author: OddSMP Team
 
+softdepend:
+  - DecentHolograms
+
 commands:
   smp:
     description: OddSMP player commands

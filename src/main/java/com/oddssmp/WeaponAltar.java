@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 public class WeaponAltar {
 
@@ -27,6 +28,17 @@ public class WeaponAltar {
     private List<ArmorStand> hologramLines = new ArrayList<>();
     private Set<Location> protectedBlocks = new HashSet<>();
     private boolean active = true;
+    private String hologramId; // For DecentHolograms
+
+    // DecentHolograms availability check
+    private static Boolean decentHologramsAvailable = null;
+
+    private static boolean isDecentHologramsAvailable() {
+        if (decentHologramsAvailable == null) {
+            decentHologramsAvailable = Bukkit.getPluginManager().getPlugin("DecentHolograms") != null;
+        }
+        return decentHologramsAvailable;
+    }
 
     // Crafting costs for each weapon
     private static final Map<AttributeWeapon, Map<Material, Integer>> CRAFTING_COSTS = new HashMap<>();
@@ -129,7 +141,7 @@ public class WeaponAltar {
     }
 
     /**
-     * Spawn hologram text using armor stands
+     * Spawn hologram text - uses DecentHolograms if available, otherwise armor stands
      */
     private void spawnHologramText() {
         World world = location.getWorld();
@@ -156,6 +168,45 @@ public class WeaponAltar {
             lines.addAll(customItems);
         }
 
+        // Try DecentHolograms first
+        if (isDecentHologramsAvailable()) {
+            spawnDecentHologram(lines);
+        } else {
+            spawnArmorStandHologram(lines);
+        }
+    }
+
+    /**
+     * Spawn hologram using DecentHolograms API
+     */
+    private void spawnDecentHologram(List<String> lines) {
+        try {
+            // Generate unique ID for this hologram
+            hologramId = "oddssmp_altar_" + UUID.randomUUID().toString().substring(0, 8);
+
+            // Hologram location - above the weapon
+            Location holoLoc = location.clone().add(0.5, 4.0, 0.5);
+
+            // Use DecentHolograms API
+            eu.decentsoftware.holograms.api.holograms.Hologram hologram =
+                eu.decentsoftware.holograms.api.DHAPI.createHologram(hologramId, holoLoc, false, lines);
+
+            if (hologram != null) {
+                hologram.setDefaultVisibleState(true);
+                hologram.showAll();
+                plugin.getLogger().info("Created DecentHolograms hologram for " + weapon.getName());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to create DecentHolograms hologram, falling back to ArmorStands: " + e.getMessage());
+            decentHologramsAvailable = false;
+            spawnArmorStandHologram(lines);
+        }
+    }
+
+    /**
+     * Spawn hologram using ArmorStands (fallback)
+     */
+    private void spawnArmorStandHologram(List<String> lines) {
         // Spawn hologram lines ABOVE the weapon (weapon is at y+2.5)
         // Start from top and go down
         double startY = location.getY() + 3.5 + (lines.size() * 0.25);
@@ -381,6 +432,16 @@ public class WeaponAltar {
             weaponDisplay.remove();
         }
 
+        // Remove DecentHolograms hologram if used
+        if (hologramId != null && isDecentHologramsAvailable()) {
+            try {
+                eu.decentsoftware.holograms.api.DHAPI.removeHologram(hologramId);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to remove DecentHolograms hologram: " + e.getMessage());
+            }
+        }
+
+        // Remove ArmorStand holograms (fallback)
         for (ArmorStand hologram : hologramLines) {
             if (hologram != null && !hologram.isDead()) {
                 hologram.remove();
