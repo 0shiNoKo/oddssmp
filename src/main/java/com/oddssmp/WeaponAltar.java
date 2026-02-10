@@ -34,6 +34,7 @@ public class WeaponAltar {
     private Set<Location> protectedBlocks = new HashSet<>();
     private boolean active = true;
     private List<Entity> displayEntities = new ArrayList<>(); // Track spawned display entities
+    private ItemDisplay weaponDisplay; // Track weapon display for rotation
 
     // Crafting costs for each weapon
     private static final Map<AttributeWeapon, Map<Material, Integer>> CRAFTING_COSTS = new HashMap<>();
@@ -160,27 +161,27 @@ public class WeaponAltar {
             displayEntities.add(textDisplay);
         }
 
-        // 3. SPAWN ITEM DISPLAY - weapon below text, centered
-        double itemY = baseY + 0.8;
-        Location itemLoc = new Location(world, anchorX, itemY, anchorZ + 0.10); // Slight Z offset
+        // 3. SPAWN ITEM DISPLAY - weapon below text, centered, MUCH BIGGER
+        double itemY = baseY + 0.5;
+        Location itemLoc = new Location(world, anchorX, itemY, anchorZ + 0.10);
 
-        ItemDisplay itemDisplay = world.spawn(itemLoc, ItemDisplay.class, display -> {
+        weaponDisplay = world.spawn(itemLoc, ItemDisplay.class, display -> {
             ItemStack weaponItem = new ItemStack(weapon.getMaterial());
             display.setItemStack(weaponItem);
             display.setBillboard(Display.Billboard.FIXED);
-            // Scale up the item (0.8 for good visibility)
+            // Scale up the item significantly (2.5x for big display)
             Transformation transform = new Transformation(
-                new Vector3f(-0.4f, -0.4f, 0f),  // translation to center
-                new AxisAngle4f(0, 0, 0, 1),     // left rotation
-                new Vector3f(0.8f, 0.8f, 0.8f),  // scale
-                new AxisAngle4f(0, 0, 0, 1)      // right rotation
+                new Vector3f(0f, 0f, 0f),         // translation
+                new AxisAngle4f(0, 0, 1, 0),      // left rotation (Y axis)
+                new Vector3f(2.5f, 2.5f, 2.5f),   // scale - MUCH BIGGER
+                new AxisAngle4f(0, 0, 0, 1)       // right rotation
             );
             display.setTransformation(transform);
         });
-        displayEntities.add(itemDisplay);
+        displayEntities.add(weaponDisplay);
 
-        // 4. SPAWN ANCIENT DEBRIS BLOCK DISPLAY - centered below everything (1.25x size)
-        double blockY = baseY + 0.0; // At base, below item and text
+        // 4. SPAWN ANCIENT DEBRIS BLOCK DISPLAY - centered, 2 blocks below (1.25x size)
+        double blockY = baseY - 1.5; // 2 blocks down from base
         Location bgLoc = new Location(world, anchorX, blockY, anchorZ);
         BlockDisplay blockDisplay = world.spawn(bgLoc, BlockDisplay.class, display -> {
             BlockData blockData = Material.ANCIENT_DEBRIS.createBlockData();
@@ -202,11 +203,12 @@ public class WeaponAltar {
     }
 
     /**
-     * Start ambient particle effects
+     * Start ambient effects (rotation + particles)
      */
     private void startAmbientEffects() {
         new BukkitRunnable() {
             int tick = 0;
+            float rotation = 0f;
 
             @Override
             public void run() {
@@ -216,6 +218,22 @@ public class WeaponAltar {
                 }
 
                 tick++;
+
+                // Rotate weapon display smoothly
+                if (weaponDisplay != null && !weaponDisplay.isDead()) {
+                    rotation += 0.05f; // Rotation speed
+                    if (rotation > (float)(Math.PI * 2)) {
+                        rotation -= (float)(Math.PI * 2);
+                    }
+
+                    Transformation transform = new Transformation(
+                        new Vector3f(0f, 0f, 0f),                    // translation
+                        new AxisAngle4f(rotation, 0, 1, 0),          // left rotation (around Y axis)
+                        new Vector3f(2.5f, 2.5f, 2.5f),              // scale
+                        new AxisAngle4f(0, 0, 0, 1)                  // right rotation
+                    );
+                    weaponDisplay.setTransformation(transform);
+                }
 
                 // Particle effects every second (around the display)
                 World world = location.getWorld();
