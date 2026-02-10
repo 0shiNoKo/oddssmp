@@ -164,6 +164,12 @@ public class WeaponAltar {
      * Spawn hologram using DecentHolograms API (via reflection to avoid compile-time dependency)
      */
     private void spawnDecentHologram(List<String> lines) {
+        // Check if DecentHolograms is installed
+        if (Bukkit.getPluginManager().getPlugin("DecentHolograms") == null) {
+            plugin.getLogger().warning("DecentHolograms plugin not installed! Altar holograms require DecentHolograms.");
+            return;
+        }
+
         try {
             // Generate unique ID for this hologram
             hologramId = "oddssmp_altar_" + UUID.randomUUID().toString().substring(0, 8);
@@ -185,6 +191,8 @@ public class WeaponAltar {
                 hologramClass.getMethod("showAll").invoke(hologram);
                 plugin.getLogger().info("Created DecentHolograms hologram for " + weapon.getName());
             }
+        } catch (ClassNotFoundException e) {
+            plugin.getLogger().warning("DecentHolograms API class not found. Make sure DecentHolograms is installed correctly.");
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to create DecentHolograms hologram: " + e.getMessage());
         }
