@@ -56,9 +56,6 @@ public class WeaponAltar {
         World world = location.getWorld();
         if (world == null) return;
 
-        // Build the pedestal structure
-        buildPedestal();
-
         // Spawn display entities (background, text, weapon item)
         spawnHologramText();
 
@@ -119,27 +116,9 @@ public class WeaponAltar {
         // ONE ANCHOR POINT - never change X or Z
         double anchorX = location.getBlockX() + 0.5;
         double anchorZ = location.getBlockZ() + 0.5;
-        double baseY = location.getBlockY() + 3.5; // Above the pedestal
+        double baseY = location.getBlockY() + 1.0; // Floating above ground
 
-        // 1. SPAWN BACKGROUND BLOCK DISPLAY (Ancient Debris, 3x3 flat)
-        Location bgLoc = new Location(world, anchorX, baseY + 1.5, anchorZ);
-        BlockDisplay blockDisplay = world.spawn(bgLoc, BlockDisplay.class, display -> {
-            BlockData blockData = Material.ANCIENT_DEBRIS.createBlockData();
-            display.setBlock(blockData);
-            display.setBillboard(Display.Billboard.FIXED);
-            // Scale: 3x3 flat wall (X=3, Y=3, Z=0.1)
-            // Translation: recenter from corner (-1.5, -1.5, 0)
-            Transformation transform = new Transformation(
-                new Vector3f(-1.5f, -1.5f, 0f),  // translation
-                new AxisAngle4f(0, 0, 0, 1),     // left rotation
-                new Vector3f(3f, 3f, 0.1f),      // scale
-                new AxisAngle4f(0, 0, 0, 1)      // right rotation
-            );
-            display.setTransformation(transform);
-        });
-        displayEntities.add(blockDisplay);
-
-        // 2. BUILD TEXT LINES
+        // 1. BUILD TEXT LINES
         List<String> textLines = new ArrayList<>();
 
         // Title
@@ -160,7 +139,7 @@ public class WeaponAltar {
             textLines.addAll(customItems);
         }
 
-        // 3. SPAWN TEXT DISPLAYS - same X/Z, only Y changes
+        // 2. SPAWN TEXT DISPLAYS - same X/Z, only Y changes
         double textY = baseY + 2.4; // Start from top
         double lineSpacing = 0.3;
 
@@ -168,8 +147,8 @@ public class WeaponAltar {
             String line = textLines.get(i);
             double yOffset = textY - (i * lineSpacing);
 
-            // Tiny Z offset for depth (text in front of background)
-            Location textLoc = new Location(world, anchorX, yOffset, anchorZ + 0.06);
+            // Tiny Z offset for depth (text in front of block)
+            Location textLoc = new Location(world, anchorX, yOffset, anchorZ + 0.08);
 
             TextDisplay textDisplay = world.spawn(textLoc, TextDisplay.class, display -> {
                 display.setText(line);
@@ -181,9 +160,9 @@ public class WeaponAltar {
             displayEntities.add(textDisplay);
         }
 
-        // 4. SPAWN ITEM DISPLAY - weapon below text, centered
+        // 3. SPAWN ITEM DISPLAY - weapon below text, centered
         double itemY = baseY + 0.8;
-        Location itemLoc = new Location(world, anchorX, itemY, anchorZ + 0.08); // Slight Z offset
+        Location itemLoc = new Location(world, anchorX, itemY, anchorZ + 0.10); // Slight Z offset
 
         ItemDisplay itemDisplay = world.spawn(itemLoc, ItemDisplay.class, display -> {
             ItemStack weaponItem = new ItemStack(weapon.getMaterial());
@@ -199,6 +178,25 @@ public class WeaponAltar {
             display.setTransformation(transform);
         });
         displayEntities.add(itemDisplay);
+
+        // 4. SPAWN ANCIENT DEBRIS BLOCK DISPLAY - centered below everything (1.25x size)
+        double blockY = baseY + 0.0; // At base, below item and text
+        Location bgLoc = new Location(world, anchorX, blockY, anchorZ);
+        BlockDisplay blockDisplay = world.spawn(bgLoc, BlockDisplay.class, display -> {
+            BlockData blockData = Material.ANCIENT_DEBRIS.createBlockData();
+            display.setBlock(blockData);
+            display.setBillboard(Display.Billboard.FIXED);
+            // Scale: 1.25x normal block size, centered
+            // Translation: recenter from corner (-0.625, -0.625, -0.625)
+            Transformation transform = new Transformation(
+                new Vector3f(-0.625f, -0.625f, -0.625f),  // translation to center
+                new AxisAngle4f(0, 0, 0, 1),              // left rotation
+                new Vector3f(1.25f, 1.25f, 1.25f),        // scale
+                new AxisAngle4f(0, 0, 0, 1)               // right rotation
+            );
+            display.setTransformation(transform);
+        });
+        displayEntities.add(blockDisplay);
 
         plugin.getLogger().info("Created display entities for " + weapon.getName() + " altar");
     }
@@ -219,11 +217,11 @@ public class WeaponAltar {
 
                 tick++;
 
-                // Particle effects every second (around the weapon display)
+                // Particle effects every second (around the display)
                 World world = location.getWorld();
                 if (world != null && tick % 20 == 0) {
                     world.spawnParticle(Particle.ENCHANT,
-                        location.clone().add(0.5, 4.5, 0.5),
+                        location.clone().add(0.5, 2.0, 0.5),
                         10, 0.3, 0.5, 0.3, 0.05);
                 }
             }
