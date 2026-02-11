@@ -1029,6 +1029,38 @@ public class AbilityManager {
                     data.setCooldown("support", data.getRemainingCooldown("support") + 1000);
                 }
             }
+
+            // Wealth Passive: Industrialist - Hero of the Village XII permanent
+            if (data.getAttribute() == AttributeType.WEALTH) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, 40, 11, true, false, false));
+            }
+
+            // Transfer Passive: Immunity - cannot receive debuffs (remove negative effects)
+            if (data.getAttribute() == AttributeType.TRANSFER) {
+                for (PotionEffect effect : player.getActivePotionEffects()) {
+                    if (isNegativeEffect(effect.getType())) {
+                        player.removePotionEffect(effect.getType());
+                    }
+                }
+            }
+
+            // Persistence Passive: Endure - damage resistance below 50% HP
+            if (data.getAttribute() == AttributeType.PERSISTENCE) {
+                double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
+                if (healthPercent < 0.5) {
+                    int resistLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Resistance I-V
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, resistLevel, true, false, false));
+                }
+            }
+
+            // Risk Passive: Gambler's Edge - damage boost below 40% HP
+            if (data.getAttribute() == AttributeType.RISK) {
+                double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
+                if (healthPercent < 0.4) {
+                    int strengthLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Strength I-V
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 40, strengthLevel, true, false, false));
+                }
+            }
         }
     }
 
@@ -1099,6 +1131,22 @@ public class AbilityManager {
                 type == PotionEffectType.CONDUIT_POWER ||
                 type == PotionEffectType.DOLPHINS_GRACE ||
                 type == PotionEffectType.HERO_OF_THE_VILLAGE;
+    }
+
+    private boolean isNegativeEffect(PotionEffectType type) {
+        return type == PotionEffectType.SLOWNESS ||
+                type == PotionEffectType.MINING_FATIGUE ||
+                type == PotionEffectType.INSTANT_DAMAGE ||
+                type == PotionEffectType.NAUSEA ||
+                type == PotionEffectType.BLINDNESS ||
+                type == PotionEffectType.HUNGER ||
+                type == PotionEffectType.WEAKNESS ||
+                type == PotionEffectType.POISON ||
+                type == PotionEffectType.WITHER ||
+                type == PotionEffectType.LEVITATION ||
+                type == PotionEffectType.UNLUCK ||
+                type == PotionEffectType.DARKNESS ||
+                type == PotionEffectType.GLOWING; // Glowing can reveal position
     }
 
     /**
