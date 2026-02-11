@@ -2,8 +2,6 @@ package com.oddssmp;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
@@ -148,12 +146,11 @@ public class WeaponAltar {
             String line = textLines.get(i);
             double yOffset = textY - (i * lineSpacing);
 
-            // Tiny Z offset for depth (text in front of block)
-            Location textLoc = new Location(world, anchorX, yOffset, anchorZ + 0.08);
+            Location textLoc = new Location(world, anchorX, yOffset, anchorZ);
 
             TextDisplay textDisplay = world.spawn(textLoc, TextDisplay.class, display -> {
                 display.setText(line);
-                display.setBillboard(Display.Billboard.FIXED);
+                display.setBillboard(Display.Billboard.CENTER); // Face towards player
                 display.setAlignment(TextDisplay.TextAlignment.CENTER);
                 display.setBackgroundColor(Color.fromARGB(0, 0, 0, 0)); // Transparent background
                 display.setShadowed(true);
@@ -180,24 +177,9 @@ public class WeaponAltar {
         });
         displayEntities.add(weaponDisplay);
 
-        // 4. SPAWN ANCIENT DEBRIS BLOCK DISPLAY - centered, 2 blocks below (1.25x size)
-        double blockY = baseY - 1.5; // 2 blocks down from base
-        Location bgLoc = new Location(world, anchorX, blockY, anchorZ);
-        BlockDisplay blockDisplay = world.spawn(bgLoc, BlockDisplay.class, display -> {
-            BlockData blockData = Material.ANCIENT_DEBRIS.createBlockData();
-            display.setBlock(blockData);
-            display.setBillboard(Display.Billboard.FIXED);
-            // Scale: 1.25x normal block size, centered
-            // Translation: recenter from corner (-0.625, -0.625, -0.625)
-            Transformation transform = new Transformation(
-                new Vector3f(-0.625f, -0.625f, -0.625f),  // translation to center
-                new AxisAngle4f(0, 0, 0, 1),              // left rotation
-                new Vector3f(1.25f, 1.25f, 1.25f),        // scale
-                new AxisAngle4f(0, 0, 0, 1)               // right rotation
-            );
-            display.setTransformation(transform);
-        });
-        displayEntities.add(blockDisplay);
+        // 4. PLACE SOLID ANCIENT DEBRIS BLOCK - below the display
+        Location blockLoc = new Location(world, location.getBlockX(), location.getBlockY() - 1, location.getBlockZ());
+        setBlock(blockLoc, Material.ANCIENT_DEBRIS);
 
         plugin.getLogger().info("Created display entities for " + weapon.getName() + " altar");
     }
@@ -421,6 +403,14 @@ public class WeaponAltar {
             }
         }
         displayEntities.clear();
+
+        // Remove protected blocks (including Ancient Debris)
+        for (Location loc : protectedBlocks) {
+            if (loc.getWorld() != null) {
+                loc.getBlock().setType(Material.AIR);
+            }
+        }
+        protectedBlocks.clear();
     }
 
     public Location getLocation() {
