@@ -166,11 +166,11 @@ public class WeaponAltar {
             ItemStack weaponItem = new ItemStack(weapon.getMaterial());
             display.setItemStack(weaponItem);
             display.setBillboard(Display.Billboard.FIXED);
-            // Scale up the item significantly (2.5x for big display)
+            // Scale up the item (1.75x)
             Transformation transform = new Transformation(
                 new Vector3f(0f, 0f, 0f),         // translation
                 new AxisAngle4f(0, 0, 1, 0),      // left rotation (Y axis)
-                new Vector3f(2.5f, 2.5f, 2.5f),   // scale - MUCH BIGGER
+                new Vector3f(1.75f, 1.75f, 1.75f), // scale
                 new AxisAngle4f(0, 0, 0, 1)       // right rotation
             );
             display.setTransformation(transform);
@@ -211,7 +211,7 @@ public class WeaponAltar {
                     Transformation transform = new Transformation(
                         new Vector3f(0f, 0f, 0f),                    // translation
                         new AxisAngle4f(rotation, 0, 1, 0),          // left rotation (around Y axis)
-                        new Vector3f(2.5f, 2.5f, 2.5f),              // scale
+                        new Vector3f(1.75f, 1.75f, 1.75f),           // scale
                         new AxisAngle4f(0, 0, 0, 1)                  // right rotation
                     );
                     weaponDisplay.setTransformation(transform);
