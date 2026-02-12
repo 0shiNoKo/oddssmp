@@ -978,7 +978,9 @@ public class AbilityManager {
         if (data == null || data.getAttribute() == null) return;
 
         // Passive abilities - this method is called every second by the ticker
-        ParticleManager.playPassiveParticles(player, data.getAttribute(), data.getTier());
+        if (plugin.isParticleEffectsEnabled()) {
+            ParticleManager.playPassiveParticles(player, data.getAttribute(), data.getTier());
+        }
 
         // Vision Passive: Awareness - see all enemies around you
         if (data.getAttribute() == AttributeType.VISION) {

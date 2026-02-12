@@ -93,7 +93,7 @@ public class GUIListener implements Listener {
         }
         // Settings
         else if (title.contains("Settings")) {
-            handleSettings(player, itemName);
+            handleSettings(player, itemName, event.getClick());
         }
         // Ability Details
         else if (title.contains("Details")) {
@@ -797,11 +797,226 @@ public class GUIListener implements Listener {
         }
     }
 
-    private void handleSettings(Player player, String itemName) {
+    private void handleSettings(Player player, String itemName, ClickType clickType) {
+        AttributeSettings settings = plugin.getAttributeSettings();
+
         if (itemName.contains("Back")) {
             adminGUI.openMainMenu(player);
-        } else {
-            player.sendMessage("§e§lSettings are currently view-only!");
+            return;
+        }
+
+        // Gameplay toggles
+        if (itemName.contains("Particle Effects")) {
+            plugin.setParticleEffectsEnabled(!plugin.isParticleEffectsEnabled());
+            player.sendMessage("§aParticle effects " + (plugin.isParticleEffectsEnabled() ? "§aenabled" : "§cdisabled"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Level Loss on Death")) {
+            plugin.setLevelLossOnDeath(!plugin.isLevelLossOnDeath());
+            player.sendMessage("§aLevel loss on death " + (plugin.isLevelLossOnDeath() ? "§aenabled" : "§cdisabled"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Level Gain on Kill")) {
+            plugin.setLevelGainOnKill(!plugin.isLevelGainOnKill());
+            player.sendMessage("§aLevel gain on kill " + (plugin.isLevelGainOnKill() ? "§aenabled" : "§cdisabled"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Auto-Assign on Join")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setAutoAssignEnabled(!plugin.isAutoAssignEnabled());
+                player.sendMessage("§aAuto-assign " + (plugin.isAutoAssignEnabled() ? "§aenabled" : "§cdisabled"));
+            } else if (clickType == ClickType.RIGHT) {
+                plugin.setAutoAssignDelaySeconds(plugin.getAutoAssignDelaySeconds() + 5);
+                player.sendMessage("§aAuto-assign delay: §e" + plugin.getAutoAssignDelaySeconds() + "s");
+            } else if (clickType == ClickType.SHIFT_RIGHT) {
+                plugin.setAutoAssignDelaySeconds(Math.max(0, plugin.getAutoAssignDelaySeconds() - 5));
+                player.sendMessage("§aAuto-assign delay: §e" + plugin.getAutoAssignDelaySeconds() + "s");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        // Global multipliers
+        if (itemName.contains("Global Cooldown Multiplier")) {
+            if (clickType.isShiftClick()) {
+                settings.setGlobalCooldownMultiplier(1.0);
+                player.sendMessage("§aReset global cooldown multiplier to §e1.0x");
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalCooldownMultiplier(Math.max(0.1, settings.getGlobalCooldownMultiplier() - 0.1));
+                player.sendMessage("§aGlobal cooldown multiplier: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()));
+            } else if (clickType == ClickType.RIGHT) {
+                settings.setGlobalCooldownMultiplier(Math.min(5.0, settings.getGlobalCooldownMultiplier() + 0.1));
+                player.sendMessage("§aGlobal cooldown multiplier: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()));
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Global Damage Multiplier")) {
+            if (clickType.isShiftClick()) {
+                settings.setGlobalDamageMultiplier(1.0);
+                player.sendMessage("§aReset global damage multiplier to §e1.0x");
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalDamageMultiplier(Math.max(0.1, settings.getGlobalDamageMultiplier() - 0.1));
+                player.sendMessage("§aGlobal damage multiplier: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()));
+            } else if (clickType == ClickType.RIGHT) {
+                settings.setGlobalDamageMultiplier(Math.min(5.0, settings.getGlobalDamageMultiplier() + 0.1));
+                player.sendMessage("§aGlobal damage multiplier: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()));
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Level Scaling")) {
+            if (clickType.isShiftClick()) {
+                settings.setLevelScalingPercent(10.0);
+                player.sendMessage("§aReset level scaling to §e+10%");
+            } else if (clickType == ClickType.LEFT) {
+                settings.setLevelScalingPercent(Math.max(0, settings.getLevelScalingPercent() - 1.0));
+                player.sendMessage("§aLevel scaling: §e+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level");
+            } else if (clickType == ClickType.RIGHT) {
+                settings.setLevelScalingPercent(Math.min(50, settings.getLevelScalingPercent() + 1.0));
+                player.sendMessage("§aLevel scaling: §e+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        // Tier settings
+        if (itemName.contains("Stable Tier")) {
+            if (clickType == ClickType.SHIFT_LEFT) {
+                double newMult = Math.max(0.5, settings.getStableMultiplier() - 0.1);
+                settings.setTierMultiplier(Tier.STABLE, newMult);
+                player.sendMessage("§aStable tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.SHIFT_RIGHT) {
+                double newMult = Math.min(3.0, settings.getStableMultiplier() + 0.1);
+                settings.setTierMultiplier(Tier.STABLE, newMult);
+                player.sendMessage("§aStable tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.LEFT) {
+                int newCd = Math.max(10, settings.getStableCooldown() - 10);
+                settings.setTierCooldown(Tier.STABLE, newCd);
+                player.sendMessage("§aStable tier cooldown: §e" + newCd + "s");
+            } else if (clickType == ClickType.RIGHT) {
+                int newCd = Math.min(300, settings.getStableCooldown() + 10);
+                settings.setTierCooldown(Tier.STABLE, newCd);
+                player.sendMessage("§aStable tier cooldown: §e" + newCd + "s");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Warped Tier")) {
+            if (clickType == ClickType.SHIFT_LEFT) {
+                double newMult = Math.max(0.5, settings.getWarpedMultiplier() - 0.1);
+                settings.setTierMultiplier(Tier.WARPED, newMult);
+                player.sendMessage("§dWarped tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.SHIFT_RIGHT) {
+                double newMult = Math.min(3.0, settings.getWarpedMultiplier() + 0.1);
+                settings.setTierMultiplier(Tier.WARPED, newMult);
+                player.sendMessage("§dWarped tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.LEFT) {
+                int newCd = Math.max(10, settings.getWarpedCooldown() - 10);
+                settings.setTierCooldown(Tier.WARPED, newCd);
+                player.sendMessage("§dWarped tier cooldown: §e" + newCd + "s");
+            } else if (clickType == ClickType.RIGHT) {
+                int newCd = Math.min(300, settings.getWarpedCooldown() + 10);
+                settings.setTierCooldown(Tier.WARPED, newCd);
+                player.sendMessage("§dWarped tier cooldown: §e" + newCd + "s");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Extreme Tier")) {
+            if (clickType == ClickType.SHIFT_LEFT) {
+                double newMult = Math.max(0.5, settings.getExtremeMultiplier() - 0.1);
+                settings.setTierMultiplier(Tier.EXTREME, newMult);
+                player.sendMessage("§cExtreme tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.SHIFT_RIGHT) {
+                double newMult = Math.min(3.0, settings.getExtremeMultiplier() + 0.1);
+                settings.setTierMultiplier(Tier.EXTREME, newMult);
+                player.sendMessage("§cExtreme tier effect: §e" + (int)(newMult * 100) + "%");
+            } else if (clickType == ClickType.LEFT) {
+                int newCd = Math.max(10, settings.getExtremeCooldown() - 10);
+                settings.setTierCooldown(Tier.EXTREME, newCd);
+                player.sendMessage("§cExtreme tier cooldown: §e" + newCd + "s");
+            } else if (clickType == ClickType.RIGHT) {
+                int newCd = Math.min(300, settings.getExtremeCooldown() + 10);
+                settings.setTierCooldown(Tier.EXTREME, newCd);
+                player.sendMessage("§cExtreme tier cooldown: §e" + newCd + "s");
+            }
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        // Presets
+        if (itemName.contains("Balanced Preset")) {
+            settings.applyPresetToAll("balanced");
+            player.sendMessage("§a§lApplied Balanced preset to all attributes!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("High Power Preset")) {
+            settings.applyPresetToAll("highpower");
+            player.sendMessage("§c§lApplied High Power preset to all attributes!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 0.8f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Low Power Preset")) {
+            settings.applyPresetToAll("lowpower");
+            player.sendMessage("§7§lApplied Low Power preset to all attributes!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        if (itemName.contains("Chaos Preset")) {
+            settings.applyPresetToAll("chaos");
+            player.sendMessage("§d§lApplied Chaos preset to all attributes! Good luck!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.3f, 1.5f);
+            adminGUI.openSettings(player);
+            return;
+        }
+
+        // Actions
+        if (itemName.contains("Save All Settings")) {
+            settings.saveConfig();
+            player.sendMessage("§a§lAll settings saved to config!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);
+            return;
+        }
+
+        if (itemName.contains("Reset to Defaults")) {
+            settings.resetToDefaults();
+            plugin.setLevelLossOnDeath(true);
+            plugin.setLevelGainOnKill(true);
+            plugin.setParticleEffectsEnabled(true);
+            plugin.setAutoAssignEnabled(false);
+            plugin.setAutoAssignDelaySeconds(10);
+            player.sendMessage("§c§lAll settings reset to defaults!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1.0f);
+            adminGUI.openSettings(player);
+            return;
         }
     }
 

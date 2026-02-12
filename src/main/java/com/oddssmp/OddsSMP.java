@@ -38,6 +38,11 @@ public class OddsSMP extends JavaPlugin {
     private boolean autoAssignEnabled = false;
     private int autoAssignDelaySeconds = 10; // Default 10 seconds
 
+    // Gameplay settings
+    private boolean levelLossOnDeath = true;
+    private boolean levelGainOnKill = true;
+    private boolean particleEffectsEnabled = true;
+
     // Data file
     private File dataFile;
     private FileConfiguration dataConfig;
@@ -514,6 +519,48 @@ public class OddsSMP extends JavaPlugin {
      */
     public void setAutoAssignDelaySeconds(int seconds) {
         this.autoAssignDelaySeconds = seconds;
+    }
+
+    /**
+     * Check if level loss on death is enabled
+     */
+    public boolean isLevelLossOnDeath() {
+        return levelLossOnDeath;
+    }
+
+    /**
+     * Set level loss on death
+     */
+    public void setLevelLossOnDeath(boolean enabled) {
+        this.levelLossOnDeath = enabled;
+    }
+
+    /**
+     * Check if level gain on kill is enabled
+     */
+    public boolean isLevelGainOnKill() {
+        return levelGainOnKill;
+    }
+
+    /**
+     * Set level gain on kill
+     */
+    public void setLevelGainOnKill(boolean enabled) {
+        this.levelGainOnKill = enabled;
+    }
+
+    /**
+     * Check if particle effects are enabled
+     */
+    public boolean isParticleEffectsEnabled() {
+        return particleEffectsEnabled;
+    }
+
+    /**
+     * Set particle effects enabled
+     */
+    public void setParticleEffectsEnabled(boolean enabled) {
+        this.particleEffectsEnabled = enabled;
     }
 
     /**

@@ -775,9 +775,11 @@ public class EventListener implements Listener {
 
         if (data == null) return;
 
-        // Increment deaths and decrease level
+        // Increment deaths and decrease level (if enabled)
         data.incrementDeaths();
-        data.decrementLevel();
+        if (plugin.isLevelLossOnDeath()) {
+            data.decrementLevel();
+        }
 
         // HEALTH PASSIVE: Vitality - lose hearts on death
         if (data.getAttribute() == AttributeType.HEALTH) {
@@ -807,7 +809,11 @@ public class EventListener implements Listener {
             flags.speedAdrenalineStacks = 0.0;
         }
 
-        player.sendMessage("§cYou died! Level decreased to " + data.getLevel());
+        if (plugin.isLevelLossOnDeath()) {
+            player.sendMessage("§cYou died! Level decreased to " + data.getLevel());
+        } else {
+            player.sendMessage("§cYou died!");
+        }
 
         // Handle killer
         Player killer = player.getKiller();
@@ -815,7 +821,9 @@ public class EventListener implements Listener {
             PlayerData killerData = plugin.getPlayerData(killer.getUniqueId());
             if (killerData != null) {
                 killerData.incrementKills();
-                killerData.incrementLevel();
+                if (plugin.isLevelGainOnKill()) {
+                    killerData.incrementLevel();
+                }
 
                 // MELEE PASSIVE: Bloodlust - gain stacks
                 if (killerData.getAttribute() == AttributeType.MELEE) {
