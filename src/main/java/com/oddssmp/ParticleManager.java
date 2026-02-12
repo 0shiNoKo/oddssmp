@@ -9,32 +9,49 @@ import org.bukkit.util.Vector;
 
 public class ParticleManager {
 
+    private static OddsSMP plugin;
+
+    /**
+     * Initialize the ParticleManager with plugin reference
+     */
+    public static void init(OddsSMP pluginInstance) {
+        plugin = pluginInstance;
+    }
+
+    /**
+     * Get scaled particle count based on intensity setting
+     */
+    private static int scaleCount(int baseCount) {
+        if (plugin == null) return baseCount;
+        return (int) Math.max(1, baseCount * plugin.getParticleIntensity());
+    }
+
     /**
      * Play support ability particles for the given attribute
      */
     public static void playSupportParticles(Player player, AttributeType attribute, Tier tier, int level) {
         Location loc = player.getLocation().add(0, 1, 0);
         boolean isExtreme = tier == Tier.EXTREME;
-        int particleCount = isExtreme ? 100 : 50;
+        int particleCount = scaleCount(isExtreme ? 100 : 50);
         double radius = 6.0 * (1.0 + level * 0.15);
 
         switch (attribute) {
             case MELEE:
                 spawnCircleParticles(loc, Particle.HAPPY_VILLAGER, radius, particleCount);
                 spawnCircleParticles(loc, Particle.CRIT, radius * 0.8, particleCount / 2);
-                spawnSpiralParticles(loc, Particle.SWEEP_ATTACK, radius, 40);
+                spawnSpiralParticles(loc, Particle.SWEEP_ATTACK, radius, scaleCount(40));
                 if (isExtreme) {
-                    spawnCircleParticles(loc, Particle.CRIT, radius * 1.2, 60);
-                    spawnBurstParticles(loc, Particle.ENCHANTED_HIT, 80);
+                    spawnCircleParticles(loc, Particle.CRIT, radius * 1.2, scaleCount(60));
+                    spawnBurstParticles(loc, Particle.ENCHANTED_HIT, scaleCount(80));
                 }
                 break;
 
             case SPEED:
                 spawnColoredParticles(loc, Color.YELLOW, radius, particleCount);
                 spawnColoredParticles(loc, Color.WHITE, radius * 0.8, particleCount / 2);
-                spawnSpiralParticles(loc, Particle.CLOUD, radius, 60);
+                spawnSpiralParticles(loc, Particle.CLOUD, radius, scaleCount(60));
                 if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.FIREWORK, 100);
+                    spawnBurstParticles(loc, Particle.FIREWORK, scaleCount(100));
                 }
                 break;
 
@@ -42,7 +59,7 @@ public class ParticleManager {
                 spawnCircleParticles(loc, Particle.ELECTRIC_SPARK, radius, particleCount);
                 spawnColoredParticles(loc, Color.fromRGB(150, 0, 0), radius * 0.8, particleCount / 2);
                 if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.ELECTRIC_SPARK, 120);
+                    spawnBurstParticles(loc, Particle.ELECTRIC_SPARK, scaleCount(120));
                 }
                 break;
 
@@ -50,26 +67,26 @@ public class ParticleManager {
                 spawnColoredParticles(loc, Color.RED, radius, particleCount);
                 spawnCircleParticles(loc, Particle.LAVA, radius * 0.7, particleCount / 2);
                 if (isExtreme) {
-                    spawnDomeParticles(loc, Color.RED, radius, 100);
+                    spawnDomeParticles(loc, Color.RED, radius, scaleCount(100));
                 }
                 break;
 
             case ANCHOR:
                 spawnColoredParticles(loc, Color.GRAY, radius, particleCount);
                 spawnColoredParticles(loc, Color.SILVER, radius * 0.7, particleCount / 2);
-                spawnCircleParticles(loc, Particle.CRIT, radius, 50);
+                spawnCircleParticles(loc, Particle.CRIT, radius, scaleCount(50));
                 if (isExtreme) {
-                    spawnDomeParticles(loc, Color.GRAY, radius, 90);
+                    spawnDomeParticles(loc, Color.GRAY, radius, scaleCount(90));
                 }
                 break;
 
             case RISK:
                 spawnCircleParticles(loc, Particle.FIREWORK, radius, particleCount);
-                player.getWorld().spawnParticle(Particle.GLOW, loc, 80, radius, 1, radius, 0);
+                player.getWorld().spawnParticle(Particle.GLOW, loc, scaleCount(80), radius, 1, radius, 0);
                 spawnColoredParticles(loc, Color.RED, radius * 0.8, particleCount / 2);
                 spawnColoredParticles(loc, Color.YELLOW, radius * 0.6, particleCount / 3);
                 if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.FIREWORK, 120);
+                    spawnBurstParticles(loc, Particle.FIREWORK, scaleCount(120));
                 }
                 break;
 
@@ -77,7 +94,7 @@ public class ParticleManager {
                 spawnCircleParticles(loc, Particle.HEART, radius, particleCount);
                 spawnCircleParticles(loc, Particle.GLOW, radius * 0.7, particleCount / 2);
                 if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.HEART, 100);
+                    spawnBurstParticles(loc, Particle.HEART, scaleCount(100));
                 }
                 break;
 
@@ -438,10 +455,11 @@ public class ParticleManager {
         }
     }
 
-    // Helper methods
+    // Helper methods - all apply intensity scaling automatically
     private static void spawnCircleParticles(Location center, Particle particle, double radius, int count) {
-        for (int i = 0; i < count; i++) {
-            double angle = 2 * Math.PI * i / count;
+        int scaledCount = scaleCount(count);
+        for (int i = 0; i < scaledCount; i++) {
+            double angle = 2 * Math.PI * i / scaledCount;
             double x = radius * Math.cos(angle);
             double z = radius * Math.sin(angle);
             Location loc = center.clone().add(x, 0, z);
@@ -450,23 +468,25 @@ public class ParticleManager {
     }
 
     private static void spawnSpiralParticles(Location center, Particle particle, double radius, int count) {
-        for (int i = 0; i < count; i++) {
-            double angle = 4 * Math.PI * i / count;
-            double currentRadius = radius * i / count;
+        int scaledCount = scaleCount(count);
+        for (int i = 0; i < scaledCount; i++) {
+            double angle = 4 * Math.PI * i / scaledCount;
+            double currentRadius = radius * i / scaledCount;
             double x = currentRadius * Math.cos(angle);
             double z = currentRadius * Math.sin(angle);
-            double y = 2.0 * i / count;
+            double y = 2.0 * i / scaledCount;
             Location loc = center.clone().add(x, y, z);
             center.getWorld().spawnParticle(particle, loc, 1, 0, 0, 0, 0);
         }
     }
 
     private static void spawnBurstParticles(Location center, Particle particle, int count) {
-        center.getWorld().spawnParticle(particle, center, count, 1.5, 1.5, 1.5, 0.1);
+        center.getWorld().spawnParticle(particle, center, scaleCount(count), 1.5, 1.5, 1.5, 0.1);
     }
 
     private static void spawnShieldParticles(Location center, Color color, double radius) {
-        for (int i = 0; i < 50; i++) {
+        int scaledCount = scaleCount(50);
+        for (int i = 0; i < scaledCount; i++) {
             double theta = Math.random() * Math.PI;
             double phi = Math.random() * 2 * Math.PI;
 
@@ -483,8 +503,9 @@ public class ParticleManager {
     }
 
     private static void spawnDomeParticles(Location center, Color color, double radius, int count) {
-        for (int i = 0; i < count; i++) {
-            double theta = Math.acos(1 - 2.0 * i / count);
+        int scaledCount = scaleCount(count);
+        for (int i = 0; i < scaledCount; i++) {
+            double theta = Math.acos(1 - 2.0 * i / scaledCount);
             double phi = Math.PI * (1 + Math.sqrt(5)) * i;
 
             double x = radius * Math.sin(theta) * Math.cos(phi);
@@ -500,8 +521,9 @@ public class ParticleManager {
     }
 
     private static void spawnExplosionRing(Location center, Color color, double radius, int count) {
-        for (int i = 0; i < count; i++) {
-            double angle = 2 * Math.PI * i / count;
+        int scaledCount = scaleCount(count);
+        for (int i = 0; i < scaledCount; i++) {
+            double angle = 2 * Math.PI * i / scaledCount;
             double x = radius * Math.cos(angle);
             double z = radius * Math.sin(angle);
             Location loc = center.clone().add(x, 0, z);
@@ -511,8 +533,9 @@ public class ParticleManager {
     }
 
     private static void spawnColoredParticles(Location center, Color color, double radius, int count) {
-        for (int i = 0; i < count; i++) {
-            double angle = 2 * Math.PI * i / count;
+        int scaledCount = scaleCount(count);
+        for (int i = 0; i < scaledCount; i++) {
+            double angle = 2 * Math.PI * i / scaledCount;
             double x = radius * Math.cos(angle);
             double z = radius * Math.sin(angle);
             Location loc = center.clone().add(x, 0, z);
@@ -522,23 +545,25 @@ public class ParticleManager {
     }
 
     private static void spawnColoredParticle(Location loc, Color color, int count) {
-        loc.getWorld().spawnParticle(Particle.DUST, loc, count, 0.3, 0.5, 0.3, 0,
+        loc.getWorld().spawnParticle(Particle.DUST, loc, scaleCount(count), 0.3, 0.5, 0.3, 0,
                 new Particle.DustOptions(color, 1.0f));
     }
 
     private static void spawnDragonParticles(Location center, double radius, int count) {
-        center.getWorld().spawnParticle(Particle.FLAME, center, count, radius, 1.5, radius, 0.08);
-        center.getWorld().spawnParticle(Particle.LAVA, center, count / 2, radius, 1, radius, 0);
-        center.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, center, count / 2, radius, 1.5, radius, 0.05);
+        int scaledCount = scaleCount(count);
+        center.getWorld().spawnParticle(Particle.FLAME, center, scaledCount, radius, 1.5, radius, 0.08);
+        center.getWorld().spawnParticle(Particle.LAVA, center, scaledCount / 2, radius, 1, radius, 0);
+        center.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, center, scaledCount / 2, radius, 1.5, radius, 0.05);
     }
 
     private static void drawLine(Location start, Location end, Particle particle, int points) {
+        int scaledPoints = scaleCount(points);
         Vector direction = end.toVector().subtract(start.toVector());
         double length = direction.length();
         direction.normalize();
 
-        for (int i = 0; i < points; i++) {
-            double ratio = (double) i / points;
+        for (int i = 0; i < scaledPoints; i++) {
+            double ratio = (double) i / scaledPoints;
             Vector offset = direction.clone().multiply(length * ratio);
             Location loc = start.clone().add(offset);
             start.getWorld().spawnParticle(particle, loc, 1, 0, 0, 0, 0);
@@ -546,12 +571,13 @@ public class ParticleManager {
     }
 
     private static void drawColoredLine(Location start, Location end, Color color, int points) {
+        int scaledPoints = scaleCount(points);
         Vector direction = end.toVector().subtract(start.toVector());
         double length = direction.length();
         direction.normalize();
 
-        for (int i = 0; i < points; i++) {
-            double ratio = (double) i / points;
+        for (int i = 0; i < scaledPoints; i++) {
+            double ratio = (double) i / scaledPoints;
             Vector offset = direction.clone().multiply(length * ratio);
             Location loc = start.clone().add(offset);
             start.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0,

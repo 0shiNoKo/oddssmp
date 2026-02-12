@@ -135,6 +135,7 @@ public class OddsSMP extends JavaPlugin {
         // Initialize managers
         attributeSettings = new AttributeSettings(this);
         combatLogger = new CombatLogger(this);
+        ParticleManager.init(this);
         abilityManager = new AbilityManager(this);
         commandHandler = new CommandHandler(this);
         eventListener = new EventListener(this);
