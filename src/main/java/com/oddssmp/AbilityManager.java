@@ -48,7 +48,9 @@ public class AbilityManager {
         List<Player> allies = getNearbyAllies(player, getSupportRadius(data.getAttribute()));
 
         // Play particles and sound
-        ParticleManager.playSupportParticles(player, data.getAttribute(), data.getTier(), data.getLevel());
+        if (plugin.isParticleSupportAbility()) {
+            ParticleManager.playSupportParticles(player, data.getAttribute(), data.getTier(), data.getLevel());
+        }
         playSupportSound(player, data.getAttribute());
 
         // Apply support effects
@@ -104,7 +106,9 @@ public class AbilityManager {
         if (data == null || data.getAttribute() == null) return;
 
         // Play particles and sound
-        ParticleManager.playMeleeParticles(attacker, target, data.getAttribute(), data.getTier());
+        if (plugin.isParticleMeleeAbility()) {
+            ParticleManager.playMeleeParticles(attacker, target, data.getAttribute(), data.getTier());
+        }
         playMeleeSound(attacker, data.getAttribute());
 
         // Apply melee effects
@@ -978,7 +982,7 @@ public class AbilityManager {
         if (data == null || data.getAttribute() == null) return;
 
         // Passive abilities - this method is called every second by the ticker
-        if (plugin.isParticleEffectsEnabled()) {
+        if (plugin.isParticlePassiveAbility()) {
             ParticleManager.playPassiveParticles(player, data.getAttribute(), data.getTier());
         }
 

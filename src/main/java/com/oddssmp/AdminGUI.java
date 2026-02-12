@@ -751,7 +751,16 @@ public class AdminGUI {
                 "",
                 "§eClick to configure")));
 
-        gui.setItem(38, createItem(Material.WRITABLE_BOOK, "§c§lCombat Log Settings", Arrays.asList(
+        gui.setItem(37, createItem(Material.FIREWORK_ROCKET, "§d§lParticle Settings", Arrays.asList(
+                "§7Configure all particle effects",
+                "§7Abilities, combat, bosses",
+                "§7World effects, intensity",
+                "",
+                "§7Status: " + (plugin.isParticleMasterEnabled() ? "§aEnabled" : "§cDisabled"),
+                "",
+                "§eClick to configure")));
+
+        gui.setItem(39, createItem(Material.WRITABLE_BOOK, "§c§lCombat Log Settings", Arrays.asList(
                 "§7Configure combat logging",
                 "§7Damage, kills, abilities",
                 "§7File logging, notifications",
@@ -780,14 +789,14 @@ public class AdminGUI {
 
         // Row 1: Core toggles
         gui.setItem(10, createItem(
-                plugin.isParticleEffectsEnabled() ? Material.FIREWORK_ROCKET : Material.GUNPOWDER,
-                "§e§lParticle Effects",
+                plugin.isParticleMasterEnabled() ? Material.FIREWORK_ROCKET : Material.GUNPOWDER,
+                "§d§lParticle Settings",
                 Arrays.asList(
-                        "§7Show ability particle effects",
+                        "§7Configure all particle effects",
                         "",
-                        "§7Current: " + (plugin.isParticleEffectsEnabled() ? "§aEnabled" : "§cDisabled"),
+                        "§7Master: " + (plugin.isParticleMasterEnabled() ? "§aEnabled" : "§cDisabled"),
                         "",
-                        "§eClick to toggle")));
+                        "§eClick for detailed settings")));
 
         gui.setItem(11, createItem(
                 plugin.isLevelLossOnDeath() ? Material.SKELETON_SKULL : Material.PLAYER_HEAD,
@@ -1511,6 +1520,376 @@ public class AdminGUI {
                 "§7Disable logging for all event types",
                 "",
                 "§eClick to disable all")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Comprehensive Particle Settings sub-menu
+     */
+    public void openParticleSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§d§lParticle Settings");
+
+        // Row 1: Master toggle and general settings
+        gui.setItem(4, createItem(
+                plugin.isParticleMasterEnabled() ? Material.NETHER_STAR : Material.COAL,
+                "§d§l✦ MASTER TOGGLE ✦",
+                Arrays.asList(
+                        "§7Enable/disable ALL particles",
+                        "",
+                        "§7Current: " + (plugin.isParticleMasterEnabled() ? "§a§lENABLED" : "§c§lDISABLED"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 2: Ability Particles
+        gui.setItem(9, createItem(Material.PAPER, "§6§l--- ABILITY PARTICLES ---", Arrays.asList("§7Particle effects for abilities")));
+
+        gui.setItem(10, createItem(
+                plugin.getParticleSupportAbilityRaw() ? Material.BEACON : Material.GLASS,
+                "§b§lSupport Ability",
+                Arrays.asList(
+                        "§7Particles when using support ability",
+                        "§7(healing circles, buff effects)",
+                        "",
+                        "§7Current: " + (plugin.getParticleSupportAbilityRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(11, createItem(
+                plugin.getParticleMeleeAbilityRaw() ? Material.IRON_SWORD : Material.WOODEN_SWORD,
+                "§c§lMelee Ability",
+                Arrays.asList(
+                        "§7Particles when using melee ability",
+                        "§7(slashes, impacts, strikes)",
+                        "",
+                        "§7Current: " + (plugin.getParticleMeleeAbilityRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(12, createItem(
+                plugin.getParticlePassiveAbilityRaw() ? Material.GLOWSTONE_DUST : Material.GUNPOWDER,
+                "§a§lPassive Ability",
+                Arrays.asList(
+                        "§7Ambient particles for passive effects",
+                        "§7(auras, glows, trails)",
+                        "",
+                        "§7Current: " + (plugin.getParticlePassiveAbilityRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 2: Combat Particles
+        gui.setItem(14, createItem(Material.PAPER, "§c§l--- COMBAT PARTICLES ---", Arrays.asList("§7Particle effects in combat")));
+
+        gui.setItem(15, createItem(
+                plugin.getParticleDamageHitRaw() ? Material.REDSTONE : Material.GRAY_DYE,
+                "§c§lDamage Hit",
+                Arrays.asList(
+                        "§7Particles when dealing/taking damage",
+                        "§7(blood, impact sparks)",
+                        "",
+                        "§7Current: " + (plugin.getParticleDamageHitRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(16, createItem(
+                plugin.getParticleCriticalHitRaw() ? Material.GOLDEN_SWORD : Material.STONE_SWORD,
+                "§6§lCritical Hit",
+                Arrays.asList(
+                        "§7Particles for critical strikes",
+                        "§7(golden sparks, enhanced impact)",
+                        "",
+                        "§7Current: " + (plugin.getParticleCriticalHitRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(17, createItem(
+                plugin.getParticleBlockingRaw() ? Material.SHIELD : Material.IRON_NUGGET,
+                "§b§lBlocking",
+                Arrays.asList(
+                        "§7Particles when blocking damage",
+                        "§7(shield sparks, deflection)",
+                        "",
+                        "§7Current: " + (plugin.getParticleBlockingRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 3: More Combat + Player Events
+        gui.setItem(18, createItem(
+                plugin.getParticleHealingRaw() ? Material.GOLDEN_APPLE : Material.APPLE,
+                "§a§lHealing",
+                Arrays.asList(
+                        "§7Particles when healing",
+                        "§7(hearts, green sparkles)",
+                        "",
+                        "§7Current: " + (plugin.getParticleHealingRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(19, createItem(
+                plugin.getParticleKillRaw() ? Material.WITHER_SKELETON_SKULL : Material.SKELETON_SKULL,
+                "§4§lKill",
+                Arrays.asList(
+                        "§7Particles when killing a player",
+                        "§7(death effects, soul release)",
+                        "",
+                        "§7Current: " + (plugin.getParticleKillRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(20, createItem(
+                plugin.getParticleDeathRaw() ? Material.BONE : Material.STICK,
+                "§8§lDeath",
+                Arrays.asList(
+                        "§7Particles when you die",
+                        "§7(death burst, fade out)",
+                        "",
+                        "§7Current: " + (plugin.getParticleDeathRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Player Events
+        gui.setItem(22, createItem(Material.PAPER, "§e§l--- PLAYER EVENTS ---", Arrays.asList("§7Particle effects for player events")));
+
+        gui.setItem(23, createItem(
+                plugin.getParticleLevelUpRaw() ? Material.EXPERIENCE_BOTTLE : Material.GLASS_BOTTLE,
+                "§a§lLevel Up",
+                Arrays.asList(
+                        "§7Particles when leveling up",
+                        "§7(fireworks, sparkles)",
+                        "",
+                        "§7Current: " + (plugin.getParticleLevelUpRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(24, createItem(
+                plugin.getParticleAttributeAssignRaw() ? Material.ENCHANTED_BOOK : Material.BOOK,
+                "§d§lAttribute Assign",
+                Arrays.asList(
+                        "§7Particles when assigned attribute",
+                        "§7(magical aura, color burst)",
+                        "",
+                        "§7Current: " + (plugin.getParticleAttributeAssignRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(25, createItem(
+                plugin.getParticleAttributeRemoveRaw() ? Material.BARRIER : Material.STRUCTURE_VOID,
+                "§7§lAttribute Remove",
+                Arrays.asList(
+                        "§7Particles when attribute removed",
+                        "§7(fade out, disperse)",
+                        "",
+                        "§7Current: " + (plugin.getParticleAttributeRemoveRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(26, createItem(
+                plugin.getParticleTierUpRaw() ? Material.NETHER_STAR : Material.FIREWORK_STAR,
+                "§6§lTier Up",
+                Arrays.asList(
+                        "§7Particles when upgrading tier",
+                        "§7(epic effects, ascension)",
+                        "",
+                        "§7Current: " + (plugin.getParticleTierUpRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 4: Boss Particles
+        gui.setItem(27, createItem(Material.PAPER, "§5§l--- BOSS PARTICLES ---", Arrays.asList("§7Particle effects for bosses")));
+
+        gui.setItem(28, createItem(
+                plugin.getParticleBossAmbientRaw() ? Material.END_CRYSTAL : Material.GLASS,
+                "§5§lBoss Ambient",
+                Arrays.asList(
+                        "§7Ambient particles around bosses",
+                        "§7(auras, menacing effects)",
+                        "",
+                        "§7Current: " + (plugin.getParticleBossAmbientRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(29, createItem(
+                plugin.getParticleBossAbilityRaw() ? Material.BLAZE_ROD : Material.STICK,
+                "§c§lBoss Ability",
+                Arrays.asList(
+                        "§7Particles for boss abilities",
+                        "§7(attacks, special moves)",
+                        "",
+                        "§7Current: " + (plugin.getParticleBossAbilityRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(30, createItem(
+                plugin.getParticleBossSpawnRaw() ? Material.DRAGON_EGG : Material.COAL_BLOCK,
+                "§4§lBoss Spawn",
+                Arrays.asList(
+                        "§7Particles when boss spawns",
+                        "§7(summoning circle, emergence)",
+                        "",
+                        "§7Current: " + (plugin.getParticleBossSpawnRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(31, createItem(
+                plugin.getParticleBossDeathRaw() ? Material.TOTEM_OF_UNDYING : Material.ROTTEN_FLESH,
+                "§e§lBoss Death",
+                Arrays.asList(
+                        "§7Particles when boss dies",
+                        "§7(explosion, soul release)",
+                        "",
+                        "§7Current: " + (plugin.getParticleBossDeathRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 4: World Particles
+        gui.setItem(32, createItem(Material.PAPER, "§2§l--- WORLD PARTICLES ---", Arrays.asList("§7Particle effects in the world")));
+
+        gui.setItem(33, createItem(
+                plugin.getParticleAltarAmbientRaw() ? Material.ENCHANTING_TABLE : Material.CRAFTING_TABLE,
+                "§9§lAltar Ambient",
+                Arrays.asList(
+                        "§7Ambient particles on weapon altars",
+                        "§7(mystical glow, enchantment)",
+                        "",
+                        "§7Current: " + (plugin.getParticleAltarAmbientRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(34, createItem(
+                plugin.getParticleAltarActivationRaw() ? Material.ENDER_EYE : Material.ENDER_PEARL,
+                "§b§lAltar Activation",
+                Arrays.asList(
+                        "§7Particles when using altar",
+                        "§7(activation burst, energy)",
+                        "",
+                        "§7Current: " + (plugin.getParticleAltarActivationRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(35, createItem(
+                plugin.getParticleItemPickupRaw() ? Material.HOPPER : Material.DROPPER,
+                "§a§lItem Pickup",
+                Arrays.asList(
+                        "§7Particles when picking up items",
+                        "",
+                        "§7Current: " + (plugin.getParticleItemPickupRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 5: Effect Particles + Special
+        gui.setItem(36, createItem(
+                plugin.getParticleStatusEffectRaw() ? Material.POTION : Material.GLASS_BOTTLE,
+                "§e§lStatus Effects",
+                Arrays.asList(
+                        "§7Particles for status effects",
+                        "§7(poison, wither, regen)",
+                        "",
+                        "§7Current: " + (plugin.getParticleStatusEffectRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(37, createItem(
+                plugin.getParticleBuffAppliedRaw() ? Material.GOLDEN_CARROT : Material.CARROT,
+                "§a§lBuff Applied",
+                Arrays.asList(
+                        "§7Particles when receiving buffs",
+                        "§7(strength, speed, protection)",
+                        "",
+                        "§7Current: " + (plugin.getParticleBuffAppliedRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(38, createItem(
+                plugin.getParticleDebuffAppliedRaw() ? Material.SPIDER_EYE : Material.FERMENTED_SPIDER_EYE,
+                "§c§lDebuff Applied",
+                Arrays.asList(
+                        "§7Particles when receiving debuffs",
+                        "§7(slowness, weakness, poison)",
+                        "",
+                        "§7Current: " + (plugin.getParticleDebuffAppliedRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(39, createItem(
+                plugin.getParticleTeleportRaw() ? Material.CHORUS_FRUIT : Material.APPLE,
+                "§5§lTeleport",
+                Arrays.asList(
+                        "§7Particles when teleporting",
+                        "§7(ender particles, warping)",
+                        "",
+                        "§7Current: " + (plugin.getParticleTeleportRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(40, createItem(
+                plugin.getParticleRespawnRaw() ? Material.WHITE_BED : Material.RED_BED,
+                "§f§lRespawn",
+                Arrays.asList(
+                        "§7Particles when respawning",
+                        "§7(revival effects)",
+                        "",
+                        "§7Current: " + (plugin.getParticleRespawnRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(41, createItem(
+                plugin.getParticleComboRaw() ? Material.FIREWORK_ROCKET : Material.PAPER,
+                "§6§lCombo",
+                Arrays.asList(
+                        "§7Particles for combo hits",
+                        "§7(streak effects)",
+                        "",
+                        "§7Current: " + (plugin.getParticleComboRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(42, createItem(
+                plugin.getParticleKillStreakRaw() ? Material.BLAZE_POWDER : Material.GUNPOWDER,
+                "§c§lKill Streak",
+                Arrays.asList(
+                        "§7Particles for kill streaks",
+                        "§7(rampage effects)",
+                        "",
+                        "§7Current: " + (plugin.getParticleKillStreakRaw() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 6: Numeric settings and actions
+        gui.setItem(45, createItem(Material.COMPARATOR, "§e§lParticle Intensity", Arrays.asList(
+                "§7Multiplier for particle count",
+                "",
+                "§7Current: §e" + String.format("%.2fx", plugin.getParticleIntensity()),
+                "",
+                "§eLeft Click: -0.25x",
+                "§eRight Click: +0.25x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(46, createItem(Material.SPYGLASS, "§e§lRender Distance", Arrays.asList(
+                "§7Max distance to see particles",
+                "",
+                "§7Current: §e" + plugin.getParticleRenderDistance() + " blocks",
+                "",
+                "§eLeft Click: -8 blocks",
+                "§eRight Click: +8 blocks")));
+
+        gui.setItem(50, createItem(Material.LIME_DYE, "§a§lEnable All", Arrays.asList(
+                "§7Enable all particle types",
+                "",
+                "§eClick to enable all")));
+
+        gui.setItem(51, createItem(Material.RED_DYE, "§c§lDisable All", Arrays.asList(
+                "§7Disable all particle types",
+                "",
+                "§eClick to disable all")));
+
+        gui.setItem(52, createItem(Material.TNT, "§c§lReset Defaults", Arrays.asList(
+                "§7Reset all particle settings",
+                "§7to default values",
+                "",
+                "§eClick to reset")));
 
         // Back button
         gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
