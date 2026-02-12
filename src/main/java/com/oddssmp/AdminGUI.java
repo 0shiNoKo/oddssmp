@@ -751,6 +751,13 @@ public class AdminGUI {
                 "",
                 "§eClick to configure")));
 
+        gui.setItem(38, createItem(Material.WRITABLE_BOOK, "§c§lCombat Log Settings", Arrays.asList(
+                "§7Configure combat logging",
+                "§7Damage, kills, abilities",
+                "§7File logging, notifications",
+                "",
+                "§eClick to configure")));
+
         // Bottom row actions
         gui.setItem(45, createItem(Material.WRITABLE_BOOK, "§a§lSave All Settings", Arrays.asList(
                 "§7Save current settings to config",
@@ -1277,6 +1284,233 @@ public class AdminGUI {
                 "",
                 "§eLeft Click: -1",
                 "§eRight Click: +1")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Combat Log Settings sub-menu
+     */
+    public void openCombatLogSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§c§lCombat Log Settings");
+
+        CombatLogger logger = plugin.getCombatLogger();
+
+        // Row 1: Main toggles
+        gui.setItem(10, createItem(
+                logger.isEnabled() ? Material.LIME_DYE : Material.GRAY_DYE,
+                "§e§lCombat Logging",
+                Arrays.asList(
+                        "§7Master toggle for combat logging",
+                        "",
+                        "§7Current: " + (logger.isEnabled() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(11, createItem(
+                logger.isLogToFile() ? Material.WRITABLE_BOOK : Material.BOOK,
+                "§e§lLog to File",
+                Arrays.asList(
+                        "§7Save combat logs to file",
+                        "§7Location: /plugins/OddsSMP/combat-logs/",
+                        "",
+                        "§7Current: " + (logger.isLogToFile() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(12, createItem(
+                logger.isLogToConsole() ? Material.COMMAND_BLOCK : Material.CHAIN_COMMAND_BLOCK,
+                "§e§lLog to Console",
+                Arrays.asList(
+                        "§7Print combat logs to server console",
+                        "",
+                        "§7Current: " + (logger.isLogToConsole() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(13, createItem(
+                logger.isShowToPlayers() ? Material.PLAYER_HEAD : Material.SKELETON_SKULL,
+                "§e§lShow to Players",
+                Arrays.asList(
+                        "§7Send combat logs to players in chat",
+                        "",
+                        "§7Current: " + (logger.isShowToPlayers() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(14, createItem(
+                logger.isCompactMode() ? Material.PAPER : Material.MAP,
+                "§e§lCompact Mode",
+                Arrays.asList(
+                        "§7Use shorter log messages",
+                        "",
+                        "§7Current: " + (logger.isCompactMode() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(15, createItem(
+                logger.isShowDamageNumbers() ? Material.NAME_TAG : Material.STRING,
+                "§e§lShow Damage Numbers",
+                Arrays.asList(
+                        "§7Display raw damage values",
+                        "",
+                        "§7Current: " + (logger.isShowDamageNumbers() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(16, createItem(
+                logger.isShowHealthBars() ? Material.RED_DYE : Material.GRAY_DYE,
+                "§e§lShow Health Bars",
+                Arrays.asList(
+                        "§7Display health after damage",
+                        "",
+                        "§7Current: " + (logger.isShowHealthBars() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 2: Event type toggles
+        gui.setItem(19, createItem(
+                logger.isLogDamageEvents() ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD,
+                "§c§lLog Damage Events",
+                Arrays.asList(
+                        "§7Log player damage dealt/taken",
+                        "",
+                        "§7Current: " + (logger.isLogDamageEvents() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(20, createItem(
+                logger.isLogAbilityEvents() ? Material.ENCHANTED_BOOK : Material.BOOK,
+                "§d§lLog Ability Events",
+                Arrays.asList(
+                        "§7Log ability usage",
+                        "",
+                        "§7Current: " + (logger.isLogAbilityEvents() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(21, createItem(
+                logger.isLogKillEvents() ? Material.WITHER_SKELETON_SKULL : Material.SKELETON_SKULL,
+                "§4§lLog Kill Events",
+                Arrays.asList(
+                        "§7Log player kills and deaths",
+                        "",
+                        "§7Current: " + (logger.isLogKillEvents() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(22, createItem(
+                logger.isLogHealingEvents() ? Material.GOLDEN_APPLE : Material.APPLE,
+                "§a§lLog Healing Events",
+                Arrays.asList(
+                        "§7Log healing received",
+                        "",
+                        "§7Current: " + (logger.isLogHealingEvents() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(23, createItem(
+                logger.isLogCombatTagEvents() ? Material.IRON_SWORD : Material.STONE_SWORD,
+                "§e§lLog Combat Tag Events",
+                Arrays.asList(
+                        "§7Log combat tag entering/leaving",
+                        "",
+                        "§7Current: " + (logger.isLogCombatTagEvents() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(24, createItem(
+                logger.isLogCriticalHits() ? Material.GOLDEN_SWORD : Material.IRON_SWORD,
+                "§6§lLog Critical Hits",
+                Arrays.asList(
+                        "§7Log critical hit events",
+                        "",
+                        "§7Current: " + (logger.isLogCriticalHits() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(25, createItem(
+                logger.isLogBlockedDamage() ? Material.SHIELD : Material.IRON_NUGGET,
+                "§b§lLog Blocked Damage",
+                Arrays.asList(
+                        "§7Log damage blocked by shields",
+                        "",
+                        "§7Current: " + (logger.isLogBlockedDamage() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 3: Additional event types
+        gui.setItem(28, createItem(
+                logger.isLogEnvironmentalDamage() ? Material.CAMPFIRE : Material.SOUL_CAMPFIRE,
+                "§7§lLog Environmental Damage",
+                Arrays.asList(
+                        "§7Log damage from environment",
+                        "§7(fire, fall, drowning, etc.)",
+                        "",
+                        "§7Current: " + (logger.isLogEnvironmentalDamage() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(29, createItem(
+                logger.isLogMobDamage() ? Material.ZOMBIE_HEAD : Material.PLAYER_HEAD,
+                "§8§lLog Mob Damage",
+                Arrays.asList(
+                        "§7Log damage from mobs",
+                        "",
+                        "§7Current: " + (logger.isLogMobDamage() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Row 3: Numeric settings
+        gui.setItem(32, createItem(Material.COMPARATOR, "§e§lDamage Threshold", Arrays.asList(
+                "§7Minimum damage to log",
+                "",
+                "§7Current: §e" + String.format("%.1f", logger.getMinimumDamageThreshold()),
+                "",
+                "§eLeft Click: -0.5",
+                "§eRight Click: +0.5",
+                "§eShift+Click: Reset to 0")));
+
+        gui.setItem(33, createItem(Material.CHEST, "§e§lMax Log History", Arrays.asList(
+                "§7Maximum entries in global log",
+                "",
+                "§7Current: §e" + logger.getMaxLogHistory(),
+                "",
+                "§eLeft Click: -10",
+                "§eRight Click: +10")));
+
+        gui.setItem(34, createItem(Material.ENDER_CHEST, "§e§lMax Player Log History", Arrays.asList(
+                "§7Maximum entries per player",
+                "",
+                "§7Current: §e" + logger.getMaxPlayerLogHistory(),
+                "",
+                "§eLeft Click: -10",
+                "§eRight Click: +10")));
+
+        // Row 4: Actions
+        gui.setItem(37, createItem(Material.BUCKET, "§c§lClear Global Log", Arrays.asList(
+                "§7Clear all global combat logs",
+                "",
+                "§eClick to clear")));
+
+        gui.setItem(39, createItem(Material.TNT, "§c§lReset to Defaults", Arrays.asList(
+                "§7Reset all combat log settings",
+                "§7to default values",
+                "",
+                "§eClick to reset")));
+
+        gui.setItem(41, createItem(Material.LIME_DYE, "§a§lEnable All Events", Arrays.asList(
+                "§7Enable logging for all event types",
+                "",
+                "§eClick to enable all")));
+
+        gui.setItem(43, createItem(Material.RED_DYE, "§c§lDisable All Events", Arrays.asList(
+                "§7Disable logging for all event types",
+                "",
+                "§eClick to disable all")));
 
         // Back button
         gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));

@@ -30,6 +30,7 @@ public class OddsSMP extends JavaPlugin {
     private WeaponGUI weaponGUI;
     private GUIListener guiListener;
     private AttributeSettings attributeSettings;
+    private CombatLogger combatLogger;
 
     // Weapon altars
     private final List<WeaponAltar> activeAltars = new ArrayList<>();
@@ -92,6 +93,7 @@ public class OddsSMP extends JavaPlugin {
 
         // Initialize managers
         attributeSettings = new AttributeSettings(this);
+        combatLogger = new CombatLogger(this);
         abilityManager = new AbilityManager(this);
         commandHandler = new CommandHandler(this);
         eventListener = new EventListener(this);
@@ -136,6 +138,11 @@ public class OddsSMP extends JavaPlugin {
         // Save attribute settings
         if (attributeSettings != null) {
             attributeSettings.saveConfig();
+        }
+
+        // Shutdown combat logger
+        if (combatLogger != null) {
+            combatLogger.shutdown();
         }
 
         // Remove all active altars
@@ -524,6 +531,13 @@ public class OddsSMP extends JavaPlugin {
      */
     public AttributeSettings getAttributeSettings() {
         return attributeSettings;
+    }
+
+    /**
+     * Get combat logger
+     */
+    public CombatLogger getCombatLogger() {
+        return combatLogger;
     }
 
     /**

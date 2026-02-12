@@ -33,7 +33,7 @@ public class GUIListener implements Listener {
                 !title.contains("Cooldown") && !title.contains("Details") &&
                 !title.contains("Encyclopedia") && !title.contains("Editor") &&
                 !title.contains("Edit:") && !title.contains("Weapons") &&
-                !title.contains("Custom Items") &&
+                !title.contains("Custom Items") && !title.contains("Combat Log") &&
                 !isAttributeDetailsGUI(title)) {
             return;
         }
@@ -815,7 +815,7 @@ public class GUIListener implements Listener {
         if (title.equals("§b§lPlugin Settings")) {
             if (itemName.contains("Gameplay Settings")) {
                 adminGUI.openGameplaySettings(player);
-            } else if (itemName.contains("Combat Settings")) {
+            } else if (itemName.contains("Combat Settings") && !itemName.contains("Combat Log")) {
                 adminGUI.openCombatSettings(player);
             } else if (itemName.contains("Boss Settings")) {
                 adminGUI.openBossSettings(player);
@@ -829,6 +829,8 @@ public class GUIListener implements Listener {
                 adminGUI.openPresetSettings(player);
             } else if (itemName.contains("Death Settings")) {
                 adminGUI.openDeathSettings(player);
+            } else if (itemName.contains("Combat Log Settings")) {
+                adminGUI.openCombatLogSettings(player);
             } else if (itemName.contains("Save All Settings")) {
                 settings.saveConfig();
                 player.sendMessage("§a§lAll settings saved to config!");
@@ -887,6 +889,12 @@ public class GUIListener implements Listener {
         // Death Settings sub-menu
         if (title.equals("§8§lDeath Settings")) {
             handleDeathSettings(player, itemName, clickType);
+            return;
+        }
+
+        // Combat Log Settings sub-menu
+        if (title.equals("§c§lCombat Log Settings")) {
+            handleCombatLogSettings(player, itemName, clickType);
             return;
         }
     }
@@ -1202,6 +1210,149 @@ public class GUIListener implements Listener {
         }
         player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
         adminGUI.openDeathSettings(player);
+    }
+
+    private void handleCombatLogSettings(Player player, String itemName, ClickType clickType) {
+        CombatLogger logger = plugin.getCombatLogger();
+
+        // Main toggles (row 1)
+        if (itemName.contains("Combat Logging") && !itemName.contains("Log")) {
+            logger.setEnabled(!logger.isEnabled());
+            player.sendMessage("§aCombat logging " + (logger.isEnabled() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log to File")) {
+            logger.setLogToFile(!logger.isLogToFile());
+            player.sendMessage("§aLog to file " + (logger.isLogToFile() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log to Console")) {
+            logger.setLogToConsole(!logger.isLogToConsole());
+            player.sendMessage("§aLog to console " + (logger.isLogToConsole() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Show to Players")) {
+            logger.setShowToPlayers(!logger.isShowToPlayers());
+            player.sendMessage("§aShow to players " + (logger.isShowToPlayers() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Compact Mode")) {
+            logger.setCompactMode(!logger.isCompactMode());
+            player.sendMessage("§aCompact mode " + (logger.isCompactMode() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Show Damage Numbers")) {
+            logger.setShowDamageNumbers(!logger.isShowDamageNumbers());
+            player.sendMessage("§aShow damage numbers " + (logger.isShowDamageNumbers() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Show Health Bars")) {
+            logger.setShowHealthBars(!logger.isShowHealthBars());
+            player.sendMessage("§aShow health bars " + (logger.isShowHealthBars() ? "§aenabled" : "§cdisabled"));
+        }
+        // Event type toggles (row 2)
+        else if (itemName.contains("Log Damage Events")) {
+            logger.setLogDamageEvents(!logger.isLogDamageEvents());
+            player.sendMessage("§aLog damage events " + (logger.isLogDamageEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Ability Events")) {
+            logger.setLogAbilityEvents(!logger.isLogAbilityEvents());
+            player.sendMessage("§aLog ability events " + (logger.isLogAbilityEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Kill Events")) {
+            logger.setLogKillEvents(!logger.isLogKillEvents());
+            player.sendMessage("§aLog kill events " + (logger.isLogKillEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Healing Events")) {
+            logger.setLogHealingEvents(!logger.isLogHealingEvents());
+            player.sendMessage("§aLog healing events " + (logger.isLogHealingEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Combat Tag Events")) {
+            logger.setLogCombatTagEvents(!logger.isLogCombatTagEvents());
+            player.sendMessage("§aLog combat tag events " + (logger.isLogCombatTagEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Critical Hits")) {
+            logger.setLogCriticalHits(!logger.isLogCriticalHits());
+            player.sendMessage("§aLog critical hits " + (logger.isLogCriticalHits() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Blocked Damage")) {
+            logger.setLogBlockedDamage(!logger.isLogBlockedDamage());
+            player.sendMessage("§aLog blocked damage " + (logger.isLogBlockedDamage() ? "§aenabled" : "§cdisabled"));
+        }
+        // Additional event types (row 3)
+        else if (itemName.contains("Log Environmental Damage")) {
+            logger.setLogEnvironmentalDamage(!logger.isLogEnvironmentalDamage());
+            player.sendMessage("§aLog environmental damage " + (logger.isLogEnvironmentalDamage() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Mob Damage")) {
+            logger.setLogMobDamage(!logger.isLogMobDamage());
+            player.sendMessage("§aLog mob damage " + (logger.isLogMobDamage() ? "§aenabled" : "§cdisabled"));
+        }
+        // Numeric settings
+        else if (itemName.contains("Damage Threshold")) {
+            if (clickType.isShiftClick()) {
+                logger.setMinimumDamageThreshold(0);
+                player.sendMessage("§aDamage threshold reset to §e0");
+            } else if (clickType == ClickType.LEFT) {
+                logger.setMinimumDamageThreshold(logger.getMinimumDamageThreshold() - 0.5);
+                player.sendMessage("§aDamage threshold: §e" + String.format("%.1f", logger.getMinimumDamageThreshold()));
+            } else {
+                logger.setMinimumDamageThreshold(logger.getMinimumDamageThreshold() + 0.5);
+                player.sendMessage("§aDamage threshold: §e" + String.format("%.1f", logger.getMinimumDamageThreshold()));
+            }
+        } else if (itemName.contains("Max Log History") && !itemName.contains("Player")) {
+            if (clickType == ClickType.LEFT) {
+                logger.setMaxLogHistory(logger.getMaxLogHistory() - 10);
+            } else {
+                logger.setMaxLogHistory(logger.getMaxLogHistory() + 10);
+            }
+            player.sendMessage("§aMax log history: §e" + logger.getMaxLogHistory());
+        } else if (itemName.contains("Max Player Log History")) {
+            if (clickType == ClickType.LEFT) {
+                logger.setMaxPlayerLogHistory(logger.getMaxPlayerLogHistory() - 10);
+            } else {
+                logger.setMaxPlayerLogHistory(logger.getMaxPlayerLogHistory() + 10);
+            }
+            player.sendMessage("§aMax player log history: §e" + logger.getMaxPlayerLogHistory());
+        }
+        // Actions
+        else if (itemName.contains("Clear Global Log")) {
+            logger.clearGlobalLog();
+            player.sendMessage("§aCleared global combat log!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.3f, 1.5f);
+        } else if (itemName.contains("Reset to Defaults")) {
+            resetCombatLogSettings(logger);
+            player.sendMessage("§aReset combat log settings to defaults!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.3f, 1.2f);
+        } else if (itemName.contains("Enable All Events")) {
+            logger.setLogDamageEvents(true);
+            logger.setLogAbilityEvents(true);
+            logger.setLogKillEvents(true);
+            logger.setLogHealingEvents(true);
+            logger.setLogCombatTagEvents(true);
+            logger.setLogCriticalHits(true);
+            logger.setLogBlockedDamage(true);
+            logger.setLogEnvironmentalDamage(true);
+            logger.setLogMobDamage(true);
+            player.sendMessage("§aEnabled all event logging!");
+        } else if (itemName.contains("Disable All Events")) {
+            logger.setLogDamageEvents(false);
+            logger.setLogAbilityEvents(false);
+            logger.setLogKillEvents(false);
+            logger.setLogHealingEvents(false);
+            logger.setLogCombatTagEvents(false);
+            logger.setLogCriticalHits(false);
+            logger.setLogBlockedDamage(false);
+            logger.setLogEnvironmentalDamage(false);
+            logger.setLogMobDamage(false);
+            player.sendMessage("§cDisabled all event logging!");
+        }
+
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openCombatLogSettings(player);
+    }
+
+    private void resetCombatLogSettings(CombatLogger logger) {
+        logger.setEnabled(true);
+        logger.setLogToFile(true);
+        logger.setLogToConsole(false);
+        logger.setShowToPlayers(true);
+        logger.setLogDamageEvents(true);
+        logger.setLogAbilityEvents(true);
+        logger.setLogKillEvents(true);
+        logger.setLogHealingEvents(true);
+        logger.setLogCombatTagEvents(true);
+        logger.setLogCriticalHits(true);
+        logger.setLogBlockedDamage(true);
+        logger.setLogEnvironmentalDamage(false);
+        logger.setLogMobDamage(false);
+        logger.setShowDamageNumbers(true);
+        logger.setShowHealthBars(true);
+        logger.setCompactMode(false);
+        logger.setMinimumDamageThreshold(0);
+        logger.setMaxLogHistory(100);
+        logger.setMaxPlayerLogHistory(50);
     }
 
     private void resetAllSettings(AttributeSettings settings) {
