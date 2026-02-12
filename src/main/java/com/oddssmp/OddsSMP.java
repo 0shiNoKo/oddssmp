@@ -42,8 +42,49 @@ public class OddsSMP extends JavaPlugin {
     // Gameplay settings
     private boolean levelLossOnDeath = true;
     private boolean levelGainOnKill = true;
-    private boolean particleEffectsEnabled = true;
     private boolean pvpOnlyAbilities = false; // Abilities only work against players
+
+    // Comprehensive Particle Settings
+    private boolean particleMasterEnabled = true; // Master toggle
+    // Ability particles
+    private boolean particleSupportAbility = true;
+    private boolean particleMeleeAbility = true;
+    private boolean particlePassiveAbility = true;
+    // Combat particles
+    private boolean particleDamageHit = true;
+    private boolean particleCriticalHit = true;
+    private boolean particleBlocking = true;
+    private boolean particleHealing = true;
+    private boolean particleKill = true;
+    private boolean particleDeath = true;
+    // Player event particles
+    private boolean particleLevelUp = true;
+    private boolean particleAttributeAssign = true;
+    private boolean particleAttributeRemove = true;
+    private boolean particleTierUp = true;
+    // Boss particles
+    private boolean particleBossAmbient = true;
+    private boolean particleBossAbility = true;
+    private boolean particleBossSpawn = true;
+    private boolean particleBossDeath = true;
+    // World particles
+    private boolean particleAltarAmbient = true;
+    private boolean particleAltarActivation = true;
+    private boolean particleItemPickup = true;
+    private boolean particleItemDrop = true;
+    // Effect particles
+    private boolean particleStatusEffect = true;
+    private boolean particleBuffApplied = true;
+    private boolean particleDebuffApplied = true;
+    private boolean particlePotionEffect = true;
+    // Special particles
+    private boolean particleTeleport = true;
+    private boolean particleRespawn = true;
+    private boolean particleCombo = true;
+    private boolean particleKillStreak = true;
+    // Particle intensity
+    private double particleIntensity = 1.0; // 0.25 to 2.0
+    private int particleRenderDistance = 32; // blocks
     private boolean friendlyFire = true; // Can abilities affect teammates
     private int maxLevel = 5;
     private int levelsLostOnDeath = 1;
@@ -597,18 +638,221 @@ public class OddsSMP extends JavaPlugin {
     }
 
     /**
-     * Check if particle effects are enabled
+     * Check if particle effects are enabled (master toggle + specific type)
      */
     public boolean isParticleEffectsEnabled() {
-        return particleEffectsEnabled;
+        return particleMasterEnabled;
     }
 
     /**
-     * Set particle effects enabled
+     * Set particle effects enabled (master toggle)
      */
     public void setParticleEffectsEnabled(boolean enabled) {
-        this.particleEffectsEnabled = enabled;
+        this.particleMasterEnabled = enabled;
     }
+
+    // ==================== COMPREHENSIVE PARTICLE SETTINGS ====================
+
+    // Master toggle
+    public boolean isParticleMasterEnabled() { return particleMasterEnabled; }
+    public void setParticleMasterEnabled(boolean enabled) { this.particleMasterEnabled = enabled; }
+
+    // Ability particles
+    public boolean isParticleSupportAbility() { return particleMasterEnabled && particleSupportAbility; }
+    public void setParticleSupportAbility(boolean enabled) { this.particleSupportAbility = enabled; }
+    public boolean getParticleSupportAbilityRaw() { return particleSupportAbility; }
+
+    public boolean isParticleMeleeAbility() { return particleMasterEnabled && particleMeleeAbility; }
+    public void setParticleMeleeAbility(boolean enabled) { this.particleMeleeAbility = enabled; }
+    public boolean getParticleMeleeAbilityRaw() { return particleMeleeAbility; }
+
+    public boolean isParticlePassiveAbility() { return particleMasterEnabled && particlePassiveAbility; }
+    public void setParticlePassiveAbility(boolean enabled) { this.particlePassiveAbility = enabled; }
+    public boolean getParticlePassiveAbilityRaw() { return particlePassiveAbility; }
+
+    // Combat particles
+    public boolean isParticleDamageHit() { return particleMasterEnabled && particleDamageHit; }
+    public void setParticleDamageHit(boolean enabled) { this.particleDamageHit = enabled; }
+    public boolean getParticleDamageHitRaw() { return particleDamageHit; }
+
+    public boolean isParticleCriticalHit() { return particleMasterEnabled && particleCriticalHit; }
+    public void setParticleCriticalHit(boolean enabled) { this.particleCriticalHit = enabled; }
+    public boolean getParticleCriticalHitRaw() { return particleCriticalHit; }
+
+    public boolean isParticleBlocking() { return particleMasterEnabled && particleBlocking; }
+    public void setParticleBlocking(boolean enabled) { this.particleBlocking = enabled; }
+    public boolean getParticleBlockingRaw() { return particleBlocking; }
+
+    public boolean isParticleHealing() { return particleMasterEnabled && particleHealing; }
+    public void setParticleHealing(boolean enabled) { this.particleHealing = enabled; }
+    public boolean getParticleHealingRaw() { return particleHealing; }
+
+    public boolean isParticleKill() { return particleMasterEnabled && particleKill; }
+    public void setParticleKill(boolean enabled) { this.particleKill = enabled; }
+    public boolean getParticleKillRaw() { return particleKill; }
+
+    public boolean isParticleDeath() { return particleMasterEnabled && particleDeath; }
+    public void setParticleDeath(boolean enabled) { this.particleDeath = enabled; }
+    public boolean getParticleDeathRaw() { return particleDeath; }
+
+    // Player event particles
+    public boolean isParticleLevelUp() { return particleMasterEnabled && particleLevelUp; }
+    public void setParticleLevelUp(boolean enabled) { this.particleLevelUp = enabled; }
+    public boolean getParticleLevelUpRaw() { return particleLevelUp; }
+
+    public boolean isParticleAttributeAssign() { return particleMasterEnabled && particleAttributeAssign; }
+    public void setParticleAttributeAssign(boolean enabled) { this.particleAttributeAssign = enabled; }
+    public boolean getParticleAttributeAssignRaw() { return particleAttributeAssign; }
+
+    public boolean isParticleAttributeRemove() { return particleMasterEnabled && particleAttributeRemove; }
+    public void setParticleAttributeRemove(boolean enabled) { this.particleAttributeRemove = enabled; }
+    public boolean getParticleAttributeRemoveRaw() { return particleAttributeRemove; }
+
+    public boolean isParticleTierUp() { return particleMasterEnabled && particleTierUp; }
+    public void setParticleTierUp(boolean enabled) { this.particleTierUp = enabled; }
+    public boolean getParticleTierUpRaw() { return particleTierUp; }
+
+    // Boss particles
+    public boolean isParticleBossAmbient() { return particleMasterEnabled && particleBossAmbient; }
+    public void setParticleBossAmbient(boolean enabled) { this.particleBossAmbient = enabled; }
+    public boolean getParticleBossAmbientRaw() { return particleBossAmbient; }
+
+    public boolean isParticleBossAbility() { return particleMasterEnabled && particleBossAbility; }
+    public void setParticleBossAbility(boolean enabled) { this.particleBossAbility = enabled; }
+    public boolean getParticleBossAbilityRaw() { return particleBossAbility; }
+
+    public boolean isParticleBossSpawn() { return particleMasterEnabled && particleBossSpawn; }
+    public void setParticleBossSpawn(boolean enabled) { this.particleBossSpawn = enabled; }
+    public boolean getParticleBossSpawnRaw() { return particleBossSpawn; }
+
+    public boolean isParticleBossDeath() { return particleMasterEnabled && particleBossDeath; }
+    public void setParticleBossDeath(boolean enabled) { this.particleBossDeath = enabled; }
+    public boolean getParticleBossDeathRaw() { return particleBossDeath; }
+
+    // World particles
+    public boolean isParticleAltarAmbient() { return particleMasterEnabled && particleAltarAmbient; }
+    public void setParticleAltarAmbient(boolean enabled) { this.particleAltarAmbient = enabled; }
+    public boolean getParticleAltarAmbientRaw() { return particleAltarAmbient; }
+
+    public boolean isParticleAltarActivation() { return particleMasterEnabled && particleAltarActivation; }
+    public void setParticleAltarActivation(boolean enabled) { this.particleAltarActivation = enabled; }
+    public boolean getParticleAltarActivationRaw() { return particleAltarActivation; }
+
+    public boolean isParticleItemPickup() { return particleMasterEnabled && particleItemPickup; }
+    public void setParticleItemPickup(boolean enabled) { this.particleItemPickup = enabled; }
+    public boolean getParticleItemPickupRaw() { return particleItemPickup; }
+
+    public boolean isParticleItemDrop() { return particleMasterEnabled && particleItemDrop; }
+    public void setParticleItemDrop(boolean enabled) { this.particleItemDrop = enabled; }
+    public boolean getParticleItemDropRaw() { return particleItemDrop; }
+
+    // Effect particles
+    public boolean isParticleStatusEffect() { return particleMasterEnabled && particleStatusEffect; }
+    public void setParticleStatusEffect(boolean enabled) { this.particleStatusEffect = enabled; }
+    public boolean getParticleStatusEffectRaw() { return particleStatusEffect; }
+
+    public boolean isParticleBuffApplied() { return particleMasterEnabled && particleBuffApplied; }
+    public void setParticleBuffApplied(boolean enabled) { this.particleBuffApplied = enabled; }
+    public boolean getParticleBuffAppliedRaw() { return particleBuffApplied; }
+
+    public boolean isParticleDebuffApplied() { return particleMasterEnabled && particleDebuffApplied; }
+    public void setParticleDebuffApplied(boolean enabled) { this.particleDebuffApplied = enabled; }
+    public boolean getParticleDebuffAppliedRaw() { return particleDebuffApplied; }
+
+    public boolean isParticlePotionEffect() { return particleMasterEnabled && particlePotionEffect; }
+    public void setParticlePotionEffect(boolean enabled) { this.particlePotionEffect = enabled; }
+    public boolean getParticlePotionEffectRaw() { return particlePotionEffect; }
+
+    // Special particles
+    public boolean isParticleTeleport() { return particleMasterEnabled && particleTeleport; }
+    public void setParticleTeleport(boolean enabled) { this.particleTeleport = enabled; }
+    public boolean getParticleTeleportRaw() { return particleTeleport; }
+
+    public boolean isParticleRespawn() { return particleMasterEnabled && particleRespawn; }
+    public void setParticleRespawn(boolean enabled) { this.particleRespawn = enabled; }
+    public boolean getParticleRespawnRaw() { return particleRespawn; }
+
+    public boolean isParticleCombo() { return particleMasterEnabled && particleCombo; }
+    public void setParticleCombo(boolean enabled) { this.particleCombo = enabled; }
+    public boolean getParticleComboRaw() { return particleCombo; }
+
+    public boolean isParticleKillStreak() { return particleMasterEnabled && particleKillStreak; }
+    public void setParticleKillStreak(boolean enabled) { this.particleKillStreak = enabled; }
+    public boolean getParticleKillStreakRaw() { return particleKillStreak; }
+
+    // Particle intensity and render distance
+    public double getParticleIntensity() { return particleIntensity; }
+    public void setParticleIntensity(double intensity) { this.particleIntensity = Math.max(0.25, Math.min(2.0, intensity)); }
+
+    public int getParticleRenderDistance() { return particleRenderDistance; }
+    public void setParticleRenderDistance(int distance) { this.particleRenderDistance = Math.max(8, Math.min(64, distance)); }
+
+    // Utility methods for enabling/disabling all
+    public void enableAllParticles() {
+        particleSupportAbility = true;
+        particleMeleeAbility = true;
+        particlePassiveAbility = true;
+        particleDamageHit = true;
+        particleCriticalHit = true;
+        particleBlocking = true;
+        particleHealing = true;
+        particleKill = true;
+        particleDeath = true;
+        particleLevelUp = true;
+        particleAttributeAssign = true;
+        particleAttributeRemove = true;
+        particleTierUp = true;
+        particleBossAmbient = true;
+        particleBossAbility = true;
+        particleBossSpawn = true;
+        particleBossDeath = true;
+        particleAltarAmbient = true;
+        particleAltarActivation = true;
+        particleItemPickup = true;
+        particleItemDrop = true;
+        particleStatusEffect = true;
+        particleBuffApplied = true;
+        particleDebuffApplied = true;
+        particlePotionEffect = true;
+        particleTeleport = true;
+        particleRespawn = true;
+        particleCombo = true;
+        particleKillStreak = true;
+    }
+
+    public void disableAllParticles() {
+        particleSupportAbility = false;
+        particleMeleeAbility = false;
+        particlePassiveAbility = false;
+        particleDamageHit = false;
+        particleCriticalHit = false;
+        particleBlocking = false;
+        particleHealing = false;
+        particleKill = false;
+        particleDeath = false;
+        particleLevelUp = false;
+        particleAttributeAssign = false;
+        particleAttributeRemove = false;
+        particleTierUp = false;
+        particleBossAmbient = false;
+        particleBossAbility = false;
+        particleBossSpawn = false;
+        particleBossDeath = false;
+        particleAltarAmbient = false;
+        particleAltarActivation = false;
+        particleItemPickup = false;
+        particleItemDrop = false;
+        particleStatusEffect = false;
+        particleBuffApplied = false;
+        particleDebuffApplied = false;
+        particlePotionEffect = false;
+        particleTeleport = false;
+        particleRespawn = false;
+        particleCombo = false;
+        particleKillStreak = false;
+    }
+
+    // ==================== END PARTICLE SETTINGS ====================
 
     // PvP Only Abilities
     public boolean isPvpOnlyAbilities() { return pvpOnlyAbilities; }

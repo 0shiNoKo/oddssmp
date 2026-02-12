@@ -34,6 +34,7 @@ public class GUIListener implements Listener {
                 !title.contains("Encyclopedia") && !title.contains("Editor") &&
                 !title.contains("Edit:") && !title.contains("Weapons") &&
                 !title.contains("Custom Items") && !title.contains("Combat Log") &&
+                !title.contains("Particle") &&
                 !isAttributeDetailsGUI(title)) {
             return;
         }
@@ -829,6 +830,8 @@ public class GUIListener implements Listener {
                 adminGUI.openPresetSettings(player);
             } else if (itemName.contains("Death Settings")) {
                 adminGUI.openDeathSettings(player);
+            } else if (itemName.contains("Particle Settings")) {
+                adminGUI.openParticleSettings(player);
             } else if (itemName.contains("Combat Log Settings")) {
                 adminGUI.openCombatLogSettings(player);
             } else if (itemName.contains("Save All Settings")) {
@@ -897,12 +900,18 @@ public class GUIListener implements Listener {
             handleCombatLogSettings(player, itemName, clickType);
             return;
         }
+
+        // Particle Settings sub-menu
+        if (title.equals("§d§lParticle Settings")) {
+            handleParticleSettings(player, itemName, clickType);
+            return;
+        }
     }
 
     private void handleGameplaySettings(Player player, String itemName, ClickType clickType) {
-        if (itemName.contains("Particle Effects")) {
-            plugin.setParticleEffectsEnabled(!plugin.isParticleEffectsEnabled());
-            player.sendMessage("§aParticle effects " + (plugin.isParticleEffectsEnabled() ? "§aenabled" : "§cdisabled"));
+        if (itemName.contains("Particle Settings")) {
+            adminGUI.openParticleSettings(player);
+            return;
         } else if (itemName.contains("Level Loss on Death")) {
             plugin.setLevelLossOnDeath(!plugin.isLevelLossOnDeath());
             player.sendMessage("§aLevel loss on death " + (plugin.isLevelLossOnDeath() ? "§aenabled" : "§cdisabled"));
@@ -1331,6 +1340,154 @@ public class GUIListener implements Listener {
 
         player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
         adminGUI.openCombatLogSettings(player);
+    }
+
+    private void handleParticleSettings(Player player, String itemName, ClickType clickType) {
+        // Master toggle
+        if (itemName.contains("MASTER TOGGLE")) {
+            plugin.setParticleMasterEnabled(!plugin.isParticleMasterEnabled());
+            player.sendMessage("§dParticle Master: " + (plugin.isParticleMasterEnabled() ? "§aENABLED" : "§cDISABLED"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_BEACON_POWER_SELECT, 0.5f, 1.0f);
+        }
+        // Ability particles
+        else if (itemName.contains("Support Ability")) {
+            plugin.setParticleSupportAbility(!plugin.getParticleSupportAbilityRaw());
+            player.sendMessage("§bSupport ability particles " + (plugin.getParticleSupportAbilityRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Melee Ability")) {
+            plugin.setParticleMeleeAbility(!plugin.getParticleMeleeAbilityRaw());
+            player.sendMessage("§cMelee ability particles " + (plugin.getParticleMeleeAbilityRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Passive Ability")) {
+            plugin.setParticlePassiveAbility(!plugin.getParticlePassiveAbilityRaw());
+            player.sendMessage("§aPassive ability particles " + (plugin.getParticlePassiveAbilityRaw() ? "§aenabled" : "§cdisabled"));
+        }
+        // Combat particles
+        else if (itemName.contains("Damage Hit")) {
+            plugin.setParticleDamageHit(!plugin.getParticleDamageHitRaw());
+            player.sendMessage("§cDamage hit particles " + (plugin.getParticleDamageHitRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Critical Hit")) {
+            plugin.setParticleCriticalHit(!plugin.getParticleCriticalHitRaw());
+            player.sendMessage("§6Critical hit particles " + (plugin.getParticleCriticalHitRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Blocking")) {
+            plugin.setParticleBlocking(!plugin.getParticleBlockingRaw());
+            player.sendMessage("§bBlocking particles " + (plugin.getParticleBlockingRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Healing")) {
+            plugin.setParticleHealing(!plugin.getParticleHealingRaw());
+            player.sendMessage("§aHealing particles " + (plugin.getParticleHealingRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Kill") && !itemName.contains("Streak")) {
+            plugin.setParticleKill(!plugin.getParticleKillRaw());
+            player.sendMessage("§4Kill particles " + (plugin.getParticleKillRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Death") && !itemName.contains("Boss")) {
+            plugin.setParticleDeath(!plugin.getParticleDeathRaw());
+            player.sendMessage("§8Death particles " + (plugin.getParticleDeathRaw() ? "§aenabled" : "§cdisabled"));
+        }
+        // Player event particles
+        else if (itemName.contains("Level Up")) {
+            plugin.setParticleLevelUp(!plugin.getParticleLevelUpRaw());
+            player.sendMessage("§aLevel up particles " + (plugin.getParticleLevelUpRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Attribute Assign")) {
+            plugin.setParticleAttributeAssign(!plugin.getParticleAttributeAssignRaw());
+            player.sendMessage("§dAttribute assign particles " + (plugin.getParticleAttributeAssignRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Attribute Remove")) {
+            plugin.setParticleAttributeRemove(!plugin.getParticleAttributeRemoveRaw());
+            player.sendMessage("§7Attribute remove particles " + (plugin.getParticleAttributeRemoveRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Tier Up")) {
+            plugin.setParticleTierUp(!plugin.getParticleTierUpRaw());
+            player.sendMessage("§6Tier up particles " + (plugin.getParticleTierUpRaw() ? "§aenabled" : "§cdisabled"));
+        }
+        // Boss particles
+        else if (itemName.contains("Boss Ambient")) {
+            plugin.setParticleBossAmbient(!plugin.getParticleBossAmbientRaw());
+            player.sendMessage("§5Boss ambient particles " + (plugin.getParticleBossAmbientRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Boss Ability")) {
+            plugin.setParticleBossAbility(!plugin.getParticleBossAbilityRaw());
+            player.sendMessage("§cBoss ability particles " + (plugin.getParticleBossAbilityRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Boss Spawn")) {
+            plugin.setParticleBossSpawn(!plugin.getParticleBossSpawnRaw());
+            player.sendMessage("§4Boss spawn particles " + (plugin.getParticleBossSpawnRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Boss Death")) {
+            plugin.setParticleBossDeath(!plugin.getParticleBossDeathRaw());
+            player.sendMessage("§eBoss death particles " + (plugin.getParticleBossDeathRaw() ? "§aenabled" : "§cdisabled"));
+        }
+        // World particles
+        else if (itemName.contains("Altar Ambient")) {
+            plugin.setParticleAltarAmbient(!plugin.getParticleAltarAmbientRaw());
+            player.sendMessage("§9Altar ambient particles " + (plugin.getParticleAltarAmbientRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Altar Activation")) {
+            plugin.setParticleAltarActivation(!plugin.getParticleAltarActivationRaw());
+            player.sendMessage("§bAltar activation particles " + (plugin.getParticleAltarActivationRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Item Pickup")) {
+            plugin.setParticleItemPickup(!plugin.getParticleItemPickupRaw());
+            player.sendMessage("§aItem pickup particles " + (plugin.getParticleItemPickupRaw() ? "§aenabled" : "§cdisabled"));
+        }
+        // Effect particles
+        else if (itemName.contains("Status Effects")) {
+            plugin.setParticleStatusEffect(!plugin.getParticleStatusEffectRaw());
+            player.sendMessage("§eStatus effect particles " + (plugin.getParticleStatusEffectRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Buff Applied")) {
+            plugin.setParticleBuffApplied(!plugin.getParticleBuffAppliedRaw());
+            player.sendMessage("§aBuff applied particles " + (plugin.getParticleBuffAppliedRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Debuff Applied")) {
+            plugin.setParticleDebuffApplied(!plugin.getParticleDebuffAppliedRaw());
+            player.sendMessage("§cDebuff applied particles " + (plugin.getParticleDebuffAppliedRaw() ? "§aenabled" : "§cdisabled"));
+        }
+        // Special particles
+        else if (itemName.contains("Teleport")) {
+            plugin.setParticleTeleport(!plugin.getParticleTeleportRaw());
+            player.sendMessage("§5Teleport particles " + (plugin.getParticleTeleportRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Respawn")) {
+            plugin.setParticleRespawn(!plugin.getParticleRespawnRaw());
+            player.sendMessage("§fRespawn particles " + (plugin.getParticleRespawnRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Combo")) {
+            plugin.setParticleCombo(!plugin.getParticleComboRaw());
+            player.sendMessage("§6Combo particles " + (plugin.getParticleComboRaw() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Kill Streak")) {
+            plugin.setParticleKillStreak(!plugin.getParticleKillStreakRaw());
+            player.sendMessage("§cKill streak particles " + (plugin.getParticleKillStreakRaw() ? "§aenabled" : "§cdisabled"));
+        }
+        // Numeric settings
+        else if (itemName.contains("Particle Intensity")) {
+            if (clickType.isShiftClick()) {
+                plugin.setParticleIntensity(1.0);
+                player.sendMessage("§eParticle intensity reset to §e1.0x");
+            } else if (clickType == ClickType.LEFT) {
+                plugin.setParticleIntensity(plugin.getParticleIntensity() - 0.25);
+                player.sendMessage("§eParticle intensity: §e" + String.format("%.2fx", plugin.getParticleIntensity()));
+            } else {
+                plugin.setParticleIntensity(plugin.getParticleIntensity() + 0.25);
+                player.sendMessage("§eParticle intensity: §e" + String.format("%.2fx", plugin.getParticleIntensity()));
+            }
+        } else if (itemName.contains("Render Distance")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setParticleRenderDistance(plugin.getParticleRenderDistance() - 8);
+            } else {
+                plugin.setParticleRenderDistance(plugin.getParticleRenderDistance() + 8);
+            }
+            player.sendMessage("§eParticle render distance: §e" + plugin.getParticleRenderDistance() + " blocks");
+        }
+        // Actions
+        else if (itemName.contains("Enable All")) {
+            plugin.enableAllParticles();
+            player.sendMessage("§a§lEnabled all particle types!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);
+        } else if (itemName.contains("Disable All")) {
+            plugin.disableAllParticles();
+            player.sendMessage("§c§lDisabled all particle types!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.3f, 1.5f);
+        } else if (itemName.contains("Reset Defaults")) {
+            resetParticleSettings();
+            player.sendMessage("§a§lReset all particle settings to defaults!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.3f, 1.2f);
+        }
+
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openParticleSettings(player);
+    }
+
+    private void resetParticleSettings() {
+        plugin.setParticleMasterEnabled(true);
+        plugin.enableAllParticles();
+        plugin.setParticleIntensity(1.0);
+        plugin.setParticleRenderDistance(32);
     }
 
     private void resetCombatLogSettings(CombatLogger logger) {
