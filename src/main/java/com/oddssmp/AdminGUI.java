@@ -697,154 +697,61 @@ public class AdminGUI {
     }
 
     /**
-     * Plugin settings menu
+     * Plugin settings menu - Main page
      */
     public void openSettings(Player admin) {
         Inventory gui = Bukkit.createInventory(null, 54, "§b§lPlugin Settings");
 
-        AttributeSettings settings = plugin.getAttributeSettings();
-
-        // Row 1: Gameplay toggles
-        gui.setItem(0, createItem(Material.COMPARATOR, "§6§lGameplay Settings", Arrays.asList(
-                "§7Toggle various gameplay features")));
-
-        gui.setItem(2, createItem(
-                plugin.isParticleEffectsEnabled() ? Material.FIREWORK_ROCKET : Material.GUNPOWDER,
-                "§e§lParticle Effects",
-                Arrays.asList(
-                        "§7Toggle particle visibility",
-                        "",
-                        "§7Current: " + (plugin.isParticleEffectsEnabled() ? "§aEnabled" : "§cDisabled"),
-                        "",
-                        "§eClick to toggle")));
-
-        gui.setItem(3, createItem(
-                plugin.isLevelLossOnDeath() ? Material.SKELETON_SKULL : Material.PLAYER_HEAD,
-                "§e§lLevel Loss on Death",
-                Arrays.asList(
-                        "§7Lose a level when you die",
-                        "",
-                        "§7Current: " + (plugin.isLevelLossOnDeath() ? "§aEnabled" : "§cDisabled"),
-                        "",
-                        "§eClick to toggle")));
-
-        gui.setItem(4, createItem(
-                plugin.isLevelGainOnKill() ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD,
-                "§e§lLevel Gain on Kill",
-                Arrays.asList(
-                        "§7Gain a level when you kill a player",
-                        "",
-                        "§7Current: " + (plugin.isLevelGainOnKill() ? "§aEnabled" : "§cDisabled"),
-                        "",
-                        "§eClick to toggle")));
-
-        gui.setItem(5, createItem(
-                plugin.isAutoAssignEnabled() ? Material.ENDER_PEARL : Material.ENDER_EYE,
-                "§e§lAuto-Assign on Join",
-                Arrays.asList(
-                        "§7Automatically assign attributes to new players",
-                        "",
-                        "§7Current: " + (plugin.isAutoAssignEnabled() ? "§aEnabled" : "§cDisabled"),
-                        "§7Delay: §e" + plugin.getAutoAssignDelaySeconds() + "s",
-                        "",
-                        "§eLeft Click: Toggle",
-                        "§eRight Click: +5s delay",
-                        "§eShift+Right: -5s delay")));
-
-        // Row 2: Global multipliers
-        gui.setItem(9, createItem(Material.GOLDEN_APPLE, "§6§lGlobal Multipliers", Arrays.asList(
-                "§7Adjust global game balance")));
-
-        gui.setItem(11, createItem(Material.CLOCK, "§e§lGlobal Cooldown Multiplier", Arrays.asList(
-                "§7Multiplier for ALL ability cooldowns",
+        // Navigation buttons for sub-menus
+        gui.setItem(10, createItem(Material.COMPARATOR, "§6§lGameplay Settings", Arrays.asList(
+                "§7Core gameplay toggles",
+                "§7Level system, particles, etc.",
                 "",
-                "§7Current: §a" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()),
-                "",
-                "§eLeft Click: §7-0.1x",
-                "§eRight Click: §7+0.1x",
-                "§eShift+Click: §7Reset to 1.0x")));
+                "§eClick to configure")));
 
-        gui.setItem(13, createItem(Material.DIAMOND_SWORD, "§c§lGlobal Damage Multiplier", Arrays.asList(
-                "§7Multiplier for ALL ability damage",
+        gui.setItem(12, createItem(Material.DIAMOND_SWORD, "§c§lCombat Settings", Arrays.asList(
+                "§7PvP and damage settings",
+                "§7Combat tags, multipliers",
                 "",
-                "§7Current: §a" + String.format("%.1fx", settings.getGlobalDamageMultiplier()),
+                "§eClick to configure")));
+
+        gui.setItem(14, createItem(Material.DRAGON_HEAD, "§5§lBoss Settings", Arrays.asList(
+                "§7Boss fight configuration",
+                "§7Health, damage, drops",
                 "",
-                "§eLeft Click: §7-0.1x",
-                "§eRight Click: §7+0.1x",
-                "§eShift+Click: §7Reset to 1.0x")));
+                "§eClick to configure")));
 
-        gui.setItem(15, createItem(Material.EXPERIENCE_BOTTLE, "§b§lLevel Scaling", Arrays.asList(
-                "§7Bonus effect % per level",
+        gui.setItem(16, createItem(Material.BELL, "§e§lBroadcast Settings", Arrays.asList(
+                "§7Server announcements",
+                "§7Level ups, kills, bosses",
                 "",
-                "§7Current: §a+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level",
+                "§eClick to configure")));
+
+        gui.setItem(28, createItem(Material.NETHER_STAR, "§d§lTier Settings", Arrays.asList(
+                "§7Tier configuration",
+                "§7Cooldowns, effects, drawbacks",
                 "",
-                "§eLeft Click: §7-1%",
-                "§eRight Click: §7+1%",
-                "§eShift+Click: §7Reset to 10%")));
+                "§eClick to configure")));
 
-        // Row 3: Tier settings
-        gui.setItem(18, createItem(Material.NETHER_STAR, "§6§lTier Settings", Arrays.asList(
-                "§7Adjust tier cooldowns and effects")));
-
-        gui.setItem(20, createItem(Material.LIME_DYE, "§a§lStable Tier", Arrays.asList(
-                "§7Effect: §e" + (int)(settings.getStableMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getStableCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getStableDrawback() * 100) + "%",
+        gui.setItem(30, createItem(Material.GOLDEN_APPLE, "§a§lMultiplier Settings", Arrays.asList(
+                "§7Global multipliers",
+                "§7Cooldowns, damage, scaling",
                 "",
-                "§eLeft Click: §7-10s cooldown",
-                "§eRight Click: §7+10s cooldown",
-                "§eShift+Left: §7-10% effect",
-                "§eShift+Right: §7+10% effect")));
+                "§eClick to configure")));
 
-        gui.setItem(22, createItem(Material.PURPLE_DYE, "§d§lWarped Tier", Arrays.asList(
-                "§7Effect: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getWarpedCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getWarpedDrawback() * 100) + "%",
+        gui.setItem(32, createItem(Material.COMMAND_BLOCK, "§b§lQuick Presets", Arrays.asList(
+                "§7Apply preset configurations",
+                "§7Balanced, High Power, Chaos",
                 "",
-                "§eLeft Click: §7-10s cooldown",
-                "§eRight Click: §7+10s cooldown",
-                "§eShift+Left: §7-10% effect",
-                "§eShift+Right: §7+10% effect")));
+                "§eClick to configure")));
 
-        gui.setItem(24, createItem(Material.RED_DYE, "§c§lExtreme Tier", Arrays.asList(
-                "§7Effect: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getExtremeCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getExtremeDrawback() * 100) + "%",
+        gui.setItem(34, createItem(Material.SKULL_BANNER_PATTERN, "§8§lDeath Settings", Arrays.asList(
+                "§7Death and respawn options",
+                "§7Keep inventory, item drops",
                 "",
-                "§eLeft Click: §7-10s cooldown",
-                "§eRight Click: §7+10s cooldown",
-                "§eShift+Left: §7-10% effect",
-                "§eShift+Right: §7+10% effect")));
+                "§eClick to configure")));
 
-        // Row 4: Presets
-        gui.setItem(27, createItem(Material.COMMAND_BLOCK, "§6§lQuick Presets", Arrays.asList(
-                "§7Apply preset configurations")));
-
-        gui.setItem(29, createItem(Material.PAPER, "§e§lBalanced Preset", Arrays.asList(
-                "§7Standard competitive values",
-                "§7All multipliers set to 1.0x",
-                "",
-                "§eClick to apply to all attributes")));
-
-        gui.setItem(31, createItem(Material.REDSTONE, "§c§lHigh Power Preset", Arrays.asList(
-                "§7Increased damage/effects (1.5x)",
-                "§7Lower cooldowns (0.7x)",
-                "",
-                "§eClick to apply to all attributes")));
-
-        gui.setItem(33, createItem(Material.IRON_INGOT, "§7§lLow Power Preset", Arrays.asList(
-                "§7Reduced effects (0.7x)",
-                "§7Higher cooldowns (1.5x)",
-                "",
-                "§eClick to apply to all attributes")));
-
-        gui.setItem(35, createItem(Material.NETHER_STAR, "§d§lChaos Preset", Arrays.asList(
-                "§7Random extreme values!",
-                "§7For fun/event game modes",
-                "",
-                "§eClick to apply to all attributes")));
-
-        // Row 5: Actions
+        // Bottom row actions
         gui.setItem(45, createItem(Material.WRITABLE_BOOK, "§a§lSave All Settings", Arrays.asList(
                 "§7Save current settings to config",
                 "§7Persists across server restarts")));
@@ -853,8 +760,526 @@ public class AdminGUI {
                 "§7Reset ALL settings to defaults",
                 "§c§lCannot be undone!")));
 
-        // Back button
         gui.setItem(49, createItem(Material.BARRIER, "§c§lBack", Arrays.asList("§7Return to main menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Gameplay Settings sub-menu
+     */
+    public void openGameplaySettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§6§lGameplay Settings");
+
+        // Row 1: Core toggles
+        gui.setItem(10, createItem(
+                plugin.isParticleEffectsEnabled() ? Material.FIREWORK_ROCKET : Material.GUNPOWDER,
+                "§e§lParticle Effects",
+                Arrays.asList(
+                        "§7Show ability particle effects",
+                        "",
+                        "§7Current: " + (plugin.isParticleEffectsEnabled() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(11, createItem(
+                plugin.isLevelLossOnDeath() ? Material.SKELETON_SKULL : Material.PLAYER_HEAD,
+                "§e§lLevel Loss on Death",
+                Arrays.asList(
+                        "§7Lose levels when you die",
+                        "",
+                        "§7Current: " + (plugin.isLevelLossOnDeath() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(12, createItem(
+                plugin.isLevelGainOnKill() ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD,
+                "§e§lLevel Gain on Kill",
+                Arrays.asList(
+                        "§7Gain levels when you kill",
+                        "",
+                        "§7Current: " + (plugin.isLevelGainOnKill() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(13, createItem(
+                plugin.isAutoAssignEnabled() ? Material.ENDER_PEARL : Material.ENDER_EYE,
+                "§e§lAuto-Assign on Join",
+                Arrays.asList(
+                        "§7Auto-assign attributes to new players",
+                        "",
+                        "§7Current: " + (plugin.isAutoAssignEnabled() ? "§aEnabled" : "§cDisabled"),
+                        "§7Delay: §e" + plugin.getAutoAssignDelaySeconds() + "s",
+                        "",
+                        "§eLeft Click: Toggle",
+                        "§eRight Click: +5s delay",
+                        "§eShift+Right: -5s delay")));
+
+        gui.setItem(14, createItem(
+                plugin.isPvpOnlyAbilities() ? Material.IRON_SWORD : Material.STONE_SWORD,
+                "§e§lPvP Only Abilities",
+                Arrays.asList(
+                        "§7Abilities only work against players",
+                        "",
+                        "§7Current: " + (plugin.isPvpOnlyAbilities() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(15, createItem(
+                plugin.isFriendlyFire() ? Material.GOLDEN_SWORD : Material.SHIELD,
+                "§e§lFriendly Fire",
+                Arrays.asList(
+                        "§7Abilities can affect teammates",
+                        "",
+                        "§7Current: " + (plugin.isFriendlyFire() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(16, createItem(
+                plugin.isKillStreakBonuses() ? Material.BLAZE_POWDER : Material.GUNPOWDER,
+                "§e§lKill Streak Bonuses",
+                Arrays.asList(
+                        "§7Bonus effects for kill streaks",
+                        "",
+                        "§7Current: " + (plugin.isKillStreakBonuses() ? "§aEnabled" : "§cDisabled"),
+                        "§7Threshold: §e" + plugin.getKillStreakThreshold() + " kills",
+                        "",
+                        "§eLeft Click: Toggle",
+                        "§eRight Click: +1 threshold",
+                        "§eShift+Right: -1 threshold")));
+
+        // Row 2: Level settings
+        gui.setItem(19, createItem(Material.EXPERIENCE_BOTTLE, "§b§lMax Level", Arrays.asList(
+                "§7Maximum player level",
+                "",
+                "§7Current: §e" + plugin.getMaxLevel(),
+                "",
+                "§eLeft Click: -1",
+                "§eRight Click: +1")));
+
+        gui.setItem(20, createItem(Material.REDSTONE, "§c§lLevels Lost on Death", Arrays.asList(
+                "§7Levels lost when dying",
+                "",
+                "§7Current: §e" + plugin.getLevelsLostOnDeath(),
+                "",
+                "§eLeft Click: -1",
+                "§eRight Click: +1")));
+
+        gui.setItem(21, createItem(Material.EMERALD, "§a§lLevels Gained on Kill", Arrays.asList(
+                "§7Levels gained per kill",
+                "",
+                "§7Current: §e" + plugin.getLevelsGainedOnKill(),
+                "",
+                "§eLeft Click: -1",
+                "§eRight Click: +1")));
+
+        // Row 3: Passive settings
+        gui.setItem(28, createItem(Material.CLOCK, "§d§lPassive Tick Rate", Arrays.asList(
+                "§7Seconds between passive effects",
+                "",
+                "§7Current: §e" + String.format("%.1f", plugin.getPassiveTickRate()) + "s",
+                "",
+                "§eLeft Click: -0.5s",
+                "§eRight Click: +0.5s")));
+
+        gui.setItem(29, createItem(Material.POTION, "§d§lPassive Effect Strength", Arrays.asList(
+                "§7Multiplier for passive effects",
+                "",
+                "§7Current: §e" + String.format("%.1fx", plugin.getPassiveEffectStrength()),
+                "",
+                "§eLeft Click: -0.1x",
+                "§eRight Click: +0.1x")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Combat Settings sub-menu
+     */
+    public void openCombatSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§c§lCombat Settings");
+
+        AttributeSettings settings = plugin.getAttributeSettings();
+
+        // Row 1: Damage multipliers
+        gui.setItem(10, createItem(Material.DIAMOND_SWORD, "§c§lPvP Damage Multiplier", Arrays.asList(
+                "§7Multiplier for all PvP damage",
+                "",
+                "§7Current: §e" + String.format("%.1fx", plugin.getPvpDamageMultiplier()),
+                "",
+                "§eLeft Click: -0.1x",
+                "§eRight Click: +0.1x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(12, createItem(Material.BLAZE_ROD, "§c§lAbility Damage Multiplier", Arrays.asList(
+                "§7Multiplier for ability damage",
+                "",
+                "§7Current: §e" + String.format("%.1fx", plugin.getAbilityDamageMultiplier()),
+                "",
+                "§eLeft Click: -0.1x",
+                "§eRight Click: +0.1x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(14, createItem(Material.NETHERITE_SWORD, "§c§lGlobal Damage Multiplier", Arrays.asList(
+                "§7Multiplier for ALL damage",
+                "",
+                "§7Current: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()),
+                "",
+                "§eLeft Click: -0.1x",
+                "§eRight Click: +0.1x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(16, createItem(Material.CLOCK, "§e§lGlobal Cooldown Multiplier", Arrays.asList(
+                "§7Multiplier for ALL cooldowns",
+                "",
+                "§7Current: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()),
+                "",
+                "§eLeft Click: -0.1x",
+                "§eRight Click: +0.1x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        // Row 2: Combat tag settings
+        gui.setItem(28, createItem(
+                plugin.isCombatTagEnabled() ? Material.IRON_SWORD : Material.WOODEN_SWORD,
+                "§e§lCombat Tag",
+                Arrays.asList(
+                        "§7Tag players when in combat",
+                        "",
+                        "§7Current: " + (plugin.isCombatTagEnabled() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(30, createItem(Material.CLOCK, "§e§lCombat Tag Duration", Arrays.asList(
+                "§7Seconds in combat after hit",
+                "",
+                "§7Current: §e" + plugin.getCombatTagDuration() + "s",
+                "",
+                "§eLeft Click: -5s",
+                "§eRight Click: +5s")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Boss Settings sub-menu
+     */
+    public void openBossSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§5§lBoss Settings");
+
+        // Row 1: Boss multipliers
+        gui.setItem(11, createItem(Material.DRAGON_HEAD, "§c§lBoss Health Multiplier", Arrays.asList(
+                "§7Multiplier for boss HP",
+                "",
+                "§7Current: §e" + String.format("%.1fx", plugin.getBossHealthMultiplier()),
+                "",
+                "§eLeft Click: -0.25x",
+                "§eRight Click: +0.25x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(13, createItem(Material.NETHERITE_SWORD, "§c§lBoss Damage Multiplier", Arrays.asList(
+                "§7Multiplier for boss damage",
+                "",
+                "§7Current: §e" + String.format("%.1fx", plugin.getBossDamageMultiplier()),
+                "",
+                "§eLeft Click: -0.25x",
+                "§eRight Click: +0.25x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(15, createItem(Material.CHEST, "§a§lBoss Drop Rate Multiplier", Arrays.asList(
+                "§7Multiplier for boss drops",
+                "",
+                "§7Current: §e" + String.format("%.1fx", plugin.getBossDropRateMultiplier()),
+                "",
+                "§eLeft Click: -0.25x",
+                "§eRight Click: +0.25x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Broadcast Settings sub-menu
+     */
+    public void openBroadcastSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§e§lBroadcast Settings");
+
+        // Row 1: Broadcast toggles
+        gui.setItem(10, createItem(
+                plugin.isBroadcastAttributeAssign() ? Material.LIME_DYE : Material.GRAY_DYE,
+                "§e§lAttribute Assignment",
+                Arrays.asList(
+                        "§7Announce new attribute assignments",
+                        "",
+                        "§7Current: " + (plugin.isBroadcastAttributeAssign() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(11, createItem(
+                plugin.isBroadcastLevelUp() ? Material.LIME_DYE : Material.GRAY_DYE,
+                "§e§lLevel Up",
+                Arrays.asList(
+                        "§7Announce player level ups",
+                        "",
+                        "§7Current: " + (plugin.isBroadcastLevelUp() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(12, createItem(
+                plugin.isBroadcastDragonEgg() ? Material.DRAGON_EGG : Material.GRAY_DYE,
+                "§6§lDragon Egg Obtained",
+                Arrays.asList(
+                        "§7Announce Dragon Egg assignments",
+                        "",
+                        "§7Current: " + (plugin.isBroadcastDragonEgg() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(14, createItem(
+                plugin.isBroadcastBossSpawn() ? Material.WITHER_SKELETON_SKULL : Material.GRAY_DYE,
+                "§5§lBoss Spawn",
+                Arrays.asList(
+                        "§7Announce boss spawns",
+                        "",
+                        "§7Current: " + (plugin.isBroadcastBossSpawn() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(15, createItem(
+                plugin.isBroadcastBossDefeat() ? Material.NETHER_STAR : Material.GRAY_DYE,
+                "§a§lBoss Defeat",
+                Arrays.asList(
+                        "§7Announce boss defeats",
+                        "",
+                        "§7Current: " + (plugin.isBroadcastBossDefeat() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Tier Settings sub-menu
+     */
+    public void openTierSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§d§lTier Settings");
+
+        AttributeSettings settings = plugin.getAttributeSettings();
+
+        // Row 1: Stable Tier
+        gui.setItem(10, createItem(Material.LIME_WOOL, "§a§lStable Tier", Arrays.asList(
+                "§7Base tier - no drawbacks",
+                "",
+                "§7Effect: §e" + (int)(settings.getStableMultiplier() * 100) + "%",
+                "§7Cooldown: §e" + settings.getStableCooldown() + "s",
+                "§7Drawback: §e" + (int)(settings.getStableDrawback() * 100) + "%")));
+
+        gui.setItem(11, createItem(Material.LIME_DYE, "§a§lStable Effect", Arrays.asList(
+                "§7Effect multiplier",
+                "",
+                "§7Current: §e" + (int)(settings.getStableMultiplier() * 100) + "%",
+                "",
+                "§eLeft Click: -10%",
+                "§eRight Click: +10%")));
+
+        gui.setItem(12, createItem(Material.CLOCK, "§a§lStable Cooldown", Arrays.asList(
+                "§7Base cooldown in seconds",
+                "",
+                "§7Current: §e" + settings.getStableCooldown() + "s",
+                "",
+                "§eLeft Click: -10s",
+                "§eRight Click: +10s")));
+
+        // Row 2: Warped Tier
+        gui.setItem(19, createItem(Material.PURPLE_WOOL, "§d§lWarped Tier", Arrays.asList(
+                "§7Enhanced tier - minor drawbacks",
+                "",
+                "§7Effect: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%",
+                "§7Cooldown: §e" + settings.getWarpedCooldown() + "s",
+                "§7Drawback: §e" + (int)(settings.getWarpedDrawback() * 100) + "%")));
+
+        gui.setItem(20, createItem(Material.PURPLE_DYE, "§d§lWarped Effect", Arrays.asList(
+                "§7Effect multiplier",
+                "",
+                "§7Current: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%",
+                "",
+                "§eLeft Click: -10%",
+                "§eRight Click: +10%")));
+
+        gui.setItem(21, createItem(Material.CLOCK, "§d§lWarped Cooldown", Arrays.asList(
+                "§7Base cooldown in seconds",
+                "",
+                "§7Current: §e" + settings.getWarpedCooldown() + "s",
+                "",
+                "§eLeft Click: -10s",
+                "§eRight Click: +10s")));
+
+        // Row 3: Extreme Tier
+        gui.setItem(28, createItem(Material.RED_WOOL, "§c§lExtreme Tier", Arrays.asList(
+                "§7Maximum tier - major drawbacks",
+                "",
+                "§7Effect: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%",
+                "§7Cooldown: §e" + settings.getExtremeCooldown() + "s",
+                "§7Drawback: §e" + (int)(settings.getExtremeDrawback() * 100) + "%")));
+
+        gui.setItem(29, createItem(Material.RED_DYE, "§c§lExtreme Effect", Arrays.asList(
+                "§7Effect multiplier",
+                "",
+                "§7Current: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%",
+                "",
+                "§eLeft Click: -10%",
+                "§eRight Click: +10%")));
+
+        gui.setItem(30, createItem(Material.CLOCK, "§c§lExtreme Cooldown", Arrays.asList(
+                "§7Base cooldown in seconds",
+                "",
+                "§7Current: §e" + settings.getExtremeCooldown() + "s",
+                "",
+                "§eLeft Click: -10s",
+                "§eRight Click: +10s")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Multiplier Settings sub-menu
+     */
+    public void openMultiplierSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§a§lMultiplier Settings");
+
+        AttributeSettings settings = plugin.getAttributeSettings();
+
+        gui.setItem(11, createItem(Material.CLOCK, "§e§lGlobal Cooldown", Arrays.asList(
+                "§7Multiplier for ALL cooldowns",
+                "",
+                "§7Current: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()),
+                "",
+                "§eLeft Click: -0.1x",
+                "§eRight Click: +0.1x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(13, createItem(Material.DIAMOND_SWORD, "§c§lGlobal Damage", Arrays.asList(
+                "§7Multiplier for ALL damage",
+                "",
+                "§7Current: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()),
+                "",
+                "§eLeft Click: -0.1x",
+                "§eRight Click: +0.1x",
+                "§eShift+Click: Reset to 1.0x")));
+
+        gui.setItem(15, createItem(Material.EXPERIENCE_BOTTLE, "§b§lLevel Scaling", Arrays.asList(
+                "§7Bonus effect % per level",
+                "",
+                "§7Current: §e+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level",
+                "",
+                "§eLeft Click: -1%",
+                "§eRight Click: +1%",
+                "§eShift+Click: Reset to 10%")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Preset Settings sub-menu
+     */
+    public void openPresetSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§b§lQuick Presets");
+
+        gui.setItem(11, createItem(Material.PAPER, "§e§lBalanced Preset", Arrays.asList(
+                "§7Standard competitive values",
+                "§7All multipliers set to 1.0x",
+                "§7Default cooldowns",
+                "",
+                "§eClick to apply to all")));
+
+        gui.setItem(13, createItem(Material.REDSTONE, "§c§lHigh Power Preset", Arrays.asList(
+                "§7Increased effects (1.5x)",
+                "§7Lower cooldowns (0.7x)",
+                "§7More intense combat",
+                "",
+                "§eClick to apply to all")));
+
+        gui.setItem(15, createItem(Material.IRON_INGOT, "§7§lLow Power Preset", Arrays.asList(
+                "§7Reduced effects (0.7x)",
+                "§7Higher cooldowns (1.5x)",
+                "§7More strategic gameplay",
+                "",
+                "§eClick to apply to all")));
+
+        gui.setItem(29, createItem(Material.NETHER_STAR, "§d§lChaos Preset", Arrays.asList(
+                "§7Random extreme values!",
+                "§7Unpredictable gameplay",
+                "§7For fun/event modes",
+                "",
+                "§eClick to apply to all")));
+
+        gui.setItem(31, createItem(Material.GOLDEN_APPLE, "§6§lOP Preset", Arrays.asList(
+                "§7Maximum effects (2.0x)",
+                "§7Minimal cooldowns (0.5x)",
+                "§7Overpowered abilities",
+                "",
+                "§eClick to apply to all")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Death Settings sub-menu
+     */
+    public void openDeathSettings(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§8§lDeath Settings");
+
+        gui.setItem(11, createItem(
+                plugin.isKeepInventoryOnDeath() ? Material.CHEST : Material.ENDER_CHEST,
+                "§e§lKeep Inventory on Death",
+                Arrays.asList(
+                        "§7Players keep items on death",
+                        "",
+                        "§7Current: " + (plugin.isKeepInventoryOnDeath() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(13, createItem(
+                plugin.isDropAttributeItemsOnDeath() ? Material.HOPPER : Material.BARRIER,
+                "§e§lDrop Attribute Items",
+                Arrays.asList(
+                        "§7Drop special items on death",
+                        "§7(Hearts, Bones, etc.)",
+                        "",
+                        "§7Current: " + (plugin.isDropAttributeItemsOnDeath() ? "§aEnabled" : "§cDisabled"),
+                        "",
+                        "§eClick to toggle")));
+
+        gui.setItem(15, createItem(Material.EXPERIENCE_BOTTLE, "§c§lLevels Lost on Death", Arrays.asList(
+                "§7How many levels lost on death",
+                "",
+                "§7Current: §e" + plugin.getLevelsLostOnDeath(),
+                "",
+                "§eLeft Click: -1",
+                "§eRight Click: +1")));
+
+        // Back button
+        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
 
         admin.openInventory(gui);
     }

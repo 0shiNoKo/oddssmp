@@ -42,6 +42,39 @@ public class OddsSMP extends JavaPlugin {
     private boolean levelLossOnDeath = true;
     private boolean levelGainOnKill = true;
     private boolean particleEffectsEnabled = true;
+    private boolean pvpOnlyAbilities = false; // Abilities only work against players
+    private boolean friendlyFire = true; // Can abilities affect teammates
+    private int maxLevel = 5;
+    private int levelsLostOnDeath = 1;
+    private int levelsGainedOnKill = 1;
+    private boolean killStreakBonuses = false;
+    private int killStreakThreshold = 3; // Kills needed for bonus
+
+    // Broadcast settings
+    private boolean broadcastAttributeAssign = true;
+    private boolean broadcastLevelUp = false;
+    private boolean broadcastDragonEgg = true;
+    private boolean broadcastBossSpawn = true;
+    private boolean broadcastBossDefeat = true;
+
+    // Boss settings
+    private double bossHealthMultiplier = 1.0;
+    private double bossDamageMultiplier = 1.0;
+    private double bossDropRateMultiplier = 1.0;
+
+    // Passive settings
+    private double passiveTickRate = 1.0; // Seconds between passive ticks
+    private double passiveEffectStrength = 1.0;
+
+    // Combat settings
+    private double pvpDamageMultiplier = 1.0;
+    private double abilityDamageMultiplier = 1.0;
+    private boolean combatTagEnabled = true;
+    private int combatTagDuration = 15; // Seconds
+
+    // Death settings
+    private boolean keepInventoryOnDeath = false;
+    private boolean dropAttributeItemsOnDeath = true;
 
     // Data file
     private File dataFile;
@@ -562,6 +595,87 @@ public class OddsSMP extends JavaPlugin {
     public void setParticleEffectsEnabled(boolean enabled) {
         this.particleEffectsEnabled = enabled;
     }
+
+    // PvP Only Abilities
+    public boolean isPvpOnlyAbilities() { return pvpOnlyAbilities; }
+    public void setPvpOnlyAbilities(boolean enabled) { this.pvpOnlyAbilities = enabled; }
+
+    // Friendly Fire
+    public boolean isFriendlyFire() { return friendlyFire; }
+    public void setFriendlyFire(boolean enabled) { this.friendlyFire = enabled; }
+
+    // Max Level
+    public int getMaxLevel() { return maxLevel; }
+    public void setMaxLevel(int level) { this.maxLevel = Math.max(1, Math.min(10, level)); }
+
+    // Levels Lost on Death
+    public int getLevelsLostOnDeath() { return levelsLostOnDeath; }
+    public void setLevelsLostOnDeath(int levels) { this.levelsLostOnDeath = Math.max(0, Math.min(5, levels)); }
+
+    // Levels Gained on Kill
+    public int getLevelsGainedOnKill() { return levelsGainedOnKill; }
+    public void setLevelsGainedOnKill(int levels) { this.levelsGainedOnKill = Math.max(0, Math.min(5, levels)); }
+
+    // Kill Streak Bonuses
+    public boolean isKillStreakBonuses() { return killStreakBonuses; }
+    public void setKillStreakBonuses(boolean enabled) { this.killStreakBonuses = enabled; }
+
+    // Kill Streak Threshold
+    public int getKillStreakThreshold() { return killStreakThreshold; }
+    public void setKillStreakThreshold(int threshold) { this.killStreakThreshold = Math.max(2, Math.min(10, threshold)); }
+
+    // Broadcast Settings
+    public boolean isBroadcastAttributeAssign() { return broadcastAttributeAssign; }
+    public void setBroadcastAttributeAssign(boolean enabled) { this.broadcastAttributeAssign = enabled; }
+
+    public boolean isBroadcastLevelUp() { return broadcastLevelUp; }
+    public void setBroadcastLevelUp(boolean enabled) { this.broadcastLevelUp = enabled; }
+
+    public boolean isBroadcastDragonEgg() { return broadcastDragonEgg; }
+    public void setBroadcastDragonEgg(boolean enabled) { this.broadcastDragonEgg = enabled; }
+
+    public boolean isBroadcastBossSpawn() { return broadcastBossSpawn; }
+    public void setBroadcastBossSpawn(boolean enabled) { this.broadcastBossSpawn = enabled; }
+
+    public boolean isBroadcastBossDefeat() { return broadcastBossDefeat; }
+    public void setBroadcastBossDefeat(boolean enabled) { this.broadcastBossDefeat = enabled; }
+
+    // Boss Settings
+    public double getBossHealthMultiplier() { return bossHealthMultiplier; }
+    public void setBossHealthMultiplier(double mult) { this.bossHealthMultiplier = Math.max(0.1, Math.min(10.0, mult)); }
+
+    public double getBossDamageMultiplier() { return bossDamageMultiplier; }
+    public void setBossDamageMultiplier(double mult) { this.bossDamageMultiplier = Math.max(0.1, Math.min(10.0, mult)); }
+
+    public double getBossDropRateMultiplier() { return bossDropRateMultiplier; }
+    public void setBossDropRateMultiplier(double mult) { this.bossDropRateMultiplier = Math.max(0.1, Math.min(10.0, mult)); }
+
+    // Passive Settings
+    public double getPassiveTickRate() { return passiveTickRate; }
+    public void setPassiveTickRate(double rate) { this.passiveTickRate = Math.max(0.5, Math.min(5.0, rate)); }
+
+    public double getPassiveEffectStrength() { return passiveEffectStrength; }
+    public void setPassiveEffectStrength(double strength) { this.passiveEffectStrength = Math.max(0.1, Math.min(5.0, strength)); }
+
+    // Combat Settings
+    public double getPvpDamageMultiplier() { return pvpDamageMultiplier; }
+    public void setPvpDamageMultiplier(double mult) { this.pvpDamageMultiplier = Math.max(0.1, Math.min(5.0, mult)); }
+
+    public double getAbilityDamageMultiplier() { return abilityDamageMultiplier; }
+    public void setAbilityDamageMultiplier(double mult) { this.abilityDamageMultiplier = Math.max(0.1, Math.min(5.0, mult)); }
+
+    public boolean isCombatTagEnabled() { return combatTagEnabled; }
+    public void setCombatTagEnabled(boolean enabled) { this.combatTagEnabled = enabled; }
+
+    public int getCombatTagDuration() { return combatTagDuration; }
+    public void setCombatTagDuration(int duration) { this.combatTagDuration = Math.max(5, Math.min(60, duration)); }
+
+    // Death Settings
+    public boolean isKeepInventoryOnDeath() { return keepInventoryOnDeath; }
+    public void setKeepInventoryOnDeath(boolean enabled) { this.keepInventoryOnDeath = enabled; }
+
+    public boolean isDropAttributeItemsOnDeath() { return dropAttributeItemsOnDeath; }
+    public void setDropAttributeItemsOnDeath(boolean enabled) { this.dropAttributeItemsOnDeath = enabled; }
 
     /**
      * Register a weapon altar
