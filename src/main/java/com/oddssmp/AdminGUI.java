@@ -894,6 +894,70 @@ public class AdminGUI {
         player.openInventory(gui);
     }
 
+    /**
+     * Custom Items GUI - shows all custom items
+     */
+    public void openCustomItemsGUI(Player admin) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§6§lCustom Items");
+
+        // Row 1: Special Items (crafting materials)
+        gui.setItem(1, createClickableItem(WeaponAltar.createWeaponHandle(), "§eClick to receive"));
+        gui.setItem(2, createClickableItem(WeaponAltar.createWardensHeart(), "§eClick to receive"));
+        gui.setItem(3, createClickableItem(WeaponAltar.createWitherBone(), "§eClick to receive"));
+        gui.setItem(4, createClickableItem(WeaponAltar.createBreezeHeart(), "§eClick to receive"));
+        gui.setItem(5, createClickableItem(WeaponAltar.createDragonHeart(), "§eClick to receive"));
+        gui.setItem(6, createClickableItem(OddsSMP.createUpgrader(), "§eClick to receive"));
+        gui.setItem(7, createClickableItem(OddsSMP.createReroller(), "§eClick to receive"));
+
+        // Label
+        gui.setItem(0, createItem(Material.CHEST, "§e§lSpecial Items", Arrays.asList(
+                "§7Crafting materials and",
+                "§7utility items")));
+
+        // Row 2-5: All 19 Attribute Weapons
+        gui.setItem(9, createItem(Material.DIAMOND_SWORD, "§6§lAttribute Weapons", Arrays.asList(
+                "§7All 19 unique weapons",
+                "§7for each attribute")));
+
+        AttributeWeapon[] weapons = AttributeWeapon.values();
+        int slot = 10;
+        for (int i = 0; i < weapons.length && slot < 45; i++) {
+            AttributeWeapon weapon = weapons[i];
+            ItemStack weaponItem = weapon.createItem();
+            ItemMeta meta = weaponItem.getItemMeta();
+            List<String> lore = meta.getLore() != null ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+            lore.add("");
+            lore.add("§eClick to receive");
+            meta.setLore(lore);
+            weaponItem.setItemMeta(meta);
+            gui.setItem(slot, weaponItem);
+            slot++;
+            // Skip to next row after 8 items per row
+            if ((slot - 10) % 8 == 0) {
+                slot += 1; // Skip first slot of each row
+            }
+        }
+
+        // Back button
+        gui.setItem(49, createItem(Material.BARRIER, "§c§lClose", Arrays.asList("§7Close this menu")));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Create an item with click instruction added to lore
+     */
+    private ItemStack createClickableItem(ItemStack original, String instruction) {
+        ItemStack item = original.clone();
+        ItemMeta meta = item.getItemMeta();
+        List<String> lore = meta.getLore() != null ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+        lore.add("");
+        lore.add(instruction);
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
     // Helper methods
 
     private ItemStack createItem(Material material, String name, List<String> lore) {

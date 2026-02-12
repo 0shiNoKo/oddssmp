@@ -444,7 +444,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            sender.sendMessage("§cUsage: /admin <gui|test|boss|autoassign|assignall|debugdragon> [args]");
+            sender.sendMessage("§cUsage: /admin <gui|test|boss|customitems|autoassign|assignall|debugdragon> [args]");
             return true;
         }
 
@@ -492,6 +492,16 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 return true;
             }
             plugin.getWeaponGUI().openMainMenu((Player) sender);
+            return true;
+        }
+
+        // Custom items GUI command
+        if (args[0].equalsIgnoreCase("customitems")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cOnly players can use the custom items GUI!");
+                return true;
+            }
+            plugin.getAdminGUI().openCustomItemsGUI((Player) sender);
             return true;
         }
 
@@ -854,6 +864,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/admin gui §7- Open admin control panel");
             sender.sendMessage("§e/admin boss <type> §7- Spawn boss (wither/warden/breeze/enderdragon)");
             sender.sendMessage("§e/admin weapon §7- Open attribute weapons GUI");
+            sender.sendMessage("§e/admin customitems §7- Open custom items GUI (all items)");
             sender.sendMessage("§e/admin spwe <weapon> §7- Spawn weapon crafting altar");
             sender.sendMessage("§e/admin givehandle §7- Give yourself a Weapon Handle");
             sender.sendMessage("§e/admin giveupgrader [amount] §7- Give yourself Upgrader(s)");
@@ -904,6 +915,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.add("test");
                 completions.add("boss");
                 completions.add("weapon");
+                completions.add("customitems");
                 completions.add("spwe");
                 completions.add("spawnweapon");
                 completions.add("givehandle");

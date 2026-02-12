@@ -33,6 +33,7 @@ public class GUIListener implements Listener {
                 !title.contains("Cooldown") && !title.contains("Details") &&
                 !title.contains("Encyclopedia") && !title.contains("Editor") &&
                 !title.contains("Edit:") && !title.contains("Weapons") &&
+                !title.contains("Custom Items") &&
                 !isAttributeDetailsGUI(title)) {
             return;
         }
@@ -113,6 +114,10 @@ public class GUIListener implements Listener {
         // Boss Weapon Menu
         else if (title.equals(WeaponGUI.BOSS_WEAPON_MENU_TITLE)) {
             handleBossWeaponMenu(player, clicked, itemName);
+        }
+        // Custom Items GUI
+        else if (title.equals("§6§lCustom Items")) {
+            handleCustomItemsMenu(player, clicked, itemName);
         }
     }
 
@@ -1085,6 +1090,53 @@ public class GUIListener implements Listener {
                 weaponGUI.giveWeapon(player, weapon);
                 return;
             }
+        }
+    }
+
+    private void handleCustomItemsMenu(Player player, ItemStack clicked, String itemName) {
+        // Close button
+        if (itemName.contains("Close")) {
+            player.closeInventory();
+            return;
+        }
+
+        // Labels don't give items
+        if (itemName.contains("Special Items") || itemName.contains("Attribute Weapons")) {
+            return;
+        }
+
+        // Give the clicked item (create a clean copy without the click instruction)
+        ItemStack itemToGive = null;
+
+        // Special items
+        if (itemName.contains("Weapon Handle")) {
+            itemToGive = WeaponAltar.createWeaponHandle();
+        } else if (itemName.contains("Warden's Heart")) {
+            itemToGive = WeaponAltar.createWardensHeart();
+        } else if (itemName.contains("Wither Bone")) {
+            itemToGive = WeaponAltar.createWitherBone();
+        } else if (itemName.contains("Breeze Heart")) {
+            itemToGive = WeaponAltar.createBreezeHeart();
+        } else if (itemName.contains("Dragon Heart")) {
+            itemToGive = WeaponAltar.createDragonHeart();
+        } else if (itemName.contains("Attribute Upgrader")) {
+            itemToGive = OddsSMP.createUpgrader();
+        } else if (itemName.contains("Attribute Reroller")) {
+            itemToGive = OddsSMP.createReroller();
+        } else {
+            // Check for attribute weapons
+            for (AttributeWeapon weapon : AttributeWeapon.values()) {
+                if (itemName.contains(weapon.getName())) {
+                    itemToGive = weapon.createItem();
+                    break;
+                }
+            }
+        }
+
+        if (itemToGive != null) {
+            player.getInventory().addItem(itemToGive);
+            player.sendMessage("§aYou received " + itemToGive.getItemMeta().getDisplayName() + "§a!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
         }
     }
 }
