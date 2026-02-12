@@ -473,6 +473,57 @@ public class WeaponAltar {
     }
 
     /**
+     * Create a Wither Bone item
+     */
+    public static ItemStack createWitherBone() {
+        ItemStack item = new ItemStack(Material.BONE);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§5§lWither Bone");
+        List<String> lore = new ArrayList<>();
+        lore.add("§7A bone infused with wither essence");
+        lore.add("§7Grants the §5Wither §7attribute");
+        lore.add("");
+        lore.add("§c§lCANNOT BE DROPPED OR STORED");
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Create a Breeze Heart item
+     */
+    public static ItemStack createBreezeHeart() {
+        ItemStack item = new ItemStack(Material.WIND_CHARGE);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§b§lBreeze Heart");
+        List<String> lore = new ArrayList<>();
+        lore.add("§7A heart swirling with wind energy");
+        lore.add("§7Grants the §bBreeze §7attribute");
+        lore.add("");
+        lore.add("§c§lCANNOT BE DROPPED OR STORED");
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Create a Dragon Heart item
+     */
+    public static ItemStack createDragonHeart() {
+        ItemStack item = new ItemStack(Material.DRAGON_EGG);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§5§lDragon Heart");
+        List<String> lore = new ArrayList<>();
+        lore.add("§7The crystallized essence of an");
+        lore.add("§7Ascended Ender Dragon.");
+        lore.add("");
+        lore.add("§8Dropped by Ascended Ender Dragon");
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
      * Get crafting requirements as formatted strings
      */
     public static List<String> getCraftingRequirements(AttributeWeapon weapon) {
