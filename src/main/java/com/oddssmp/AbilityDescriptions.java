@@ -19,7 +19,8 @@ public class AbilityDescriptions {
                         "§a§lSupport: §7Battle Fervor",
                         "§7Allies within 3 blocks gain:",
                         "§7+15% melee damage",
-                        "§7Duration: 6s +1s per level (max 11s)"
+                        "§7Duration: 6s +1s per level (max 11s)",
+                        "§7Cooldown: 150s"
                 };
             case "MELEE_PASSIVE":
                 return new String[]{
@@ -42,7 +43,9 @@ public class AbilityDescriptions {
                 return new String[]{
                         "§a§lSupport: §7Fortify",
                         "§7Allies within 6 blocks gain:",
-                        "§7+2 max hearts (+1 per level, max +7)"
+                        "§7+2 max hearts (+1 per level, max +7)",
+                        "§7Duration: 15s",
+                        "§7Cooldown: 120s"
                 };
             case "HEALTH_PASSIVE":
                 return new String[]{
@@ -277,7 +280,8 @@ public class AbilityDescriptions {
                         "§a§lSupport: §7System Jam",
                         "§7Enemies within 6 blocks:",
                         "§7Cannot activate abilities",
-                        "§73s +1s per level (max 8s)"
+                        "§73s +1s per level (max 8s)",
+                        "§7Cooldown: 150s"
                 };
             case "DISRUPTION_PASSIVE":
                 return new String[]{
@@ -292,8 +296,9 @@ public class AbilityDescriptions {
                 return new String[]{
                         "§c§lMelee: §7Pin",
                         "§7Next melee hit:",
-                        "§7Roots target to the floor",
-                        "§74s +1s per level (max 9s)"
+                        "§7Prevents sprinting, jumping, and knockback",
+                        "§74s +1s per level (max 9s)",
+                        "§7Cooldown: 120s"
                 };
             case "ANCHOR_SUPPORT":
                 return new String[]{
@@ -327,7 +332,8 @@ public class AbilityDescriptions {
                         "§7Allies within 6 blocks:",
                         "§7+30% damage (+5% per level, max +55%)",
                         "§7+20% damage taken",
-                        "§7Duration: 6s"
+                        "§7Duration: 6s",
+                        "§7Cooldown: 150s"
                 };
             case "RISK_PASSIVE":
                 return new String[]{
