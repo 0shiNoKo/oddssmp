@@ -119,12 +119,14 @@ public class AbilityManager {
     private int getSupportCooldown(AttributeType attr) {
         switch (attr) {
             case MELEE:
+            case DISRUPTION:
+            case RISK:
                 return 150;
             case WITHER:
+            case BREEZE:
                 return 240;
             case WARDEN:
                 return 180;
-            case BREEZE:
             case DRAGON_EGG:
                 return 300;
             default:
