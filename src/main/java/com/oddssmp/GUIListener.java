@@ -33,7 +33,7 @@ public class GUIListener implements Listener {
                 !title.contains("Cooldown") && !title.contains("Details") &&
                 !title.contains("Encyclopedia") && !title.contains("Editor") &&
                 !title.contains("Edit:") && !title.contains("Weapons") &&
-                !title.contains("Custom Items") &&
+                !title.contains("Custom Items") && !title.contains("Combat Log") &&
                 !isAttributeDetailsGUI(title)) {
             return;
         }
@@ -93,7 +93,7 @@ public class GUIListener implements Listener {
         }
         // Settings
         else if (title.contains("Settings")) {
-            handleSettings(player, itemName);
+            handleSettings(player, itemName, event.getClick());
         }
         // Ability Details
         else if (title.contains("Details")) {
@@ -797,12 +797,594 @@ public class GUIListener implements Listener {
         }
     }
 
-    private void handleSettings(Player player, String itemName) {
+    private void handleSettings(Player player, String itemName, ClickType clickType) {
+        AttributeSettings settings = plugin.getAttributeSettings();
+        String title = player.getOpenInventory().getTitle();
+
+        // Back button - return to appropriate menu
         if (itemName.contains("Back")) {
-            adminGUI.openMainMenu(player);
-        } else {
-            player.sendMessage("§e§lSettings are currently view-only!");
+            if (title.equals("§b§lPlugin Settings")) {
+                adminGUI.openMainMenu(player);
+            } else {
+                adminGUI.openSettings(player);
+            }
+            return;
         }
+
+        // Main settings menu - open sub-menus
+        if (title.equals("§b§lPlugin Settings")) {
+            if (itemName.contains("Gameplay Settings")) {
+                adminGUI.openGameplaySettings(player);
+            } else if (itemName.contains("Combat Settings") && !itemName.contains("Combat Log")) {
+                adminGUI.openCombatSettings(player);
+            } else if (itemName.contains("Boss Settings")) {
+                adminGUI.openBossSettings(player);
+            } else if (itemName.contains("Broadcast Settings")) {
+                adminGUI.openBroadcastSettings(player);
+            } else if (itemName.contains("Tier Settings")) {
+                adminGUI.openTierSettings(player);
+            } else if (itemName.contains("Multiplier Settings")) {
+                adminGUI.openMultiplierSettings(player);
+            } else if (itemName.contains("Quick Presets")) {
+                adminGUI.openPresetSettings(player);
+            } else if (itemName.contains("Death Settings")) {
+                adminGUI.openDeathSettings(player);
+            } else if (itemName.contains("Combat Log Settings")) {
+                adminGUI.openCombatLogSettings(player);
+            } else if (itemName.contains("Save All Settings")) {
+                settings.saveConfig();
+                player.sendMessage("§a§lAll settings saved to config!");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);
+            } else if (itemName.contains("Reset to Defaults")) {
+                resetAllSettings(settings);
+                player.sendMessage("§c§lAll settings reset to defaults!");
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1.0f);
+                adminGUI.openSettings(player);
+            }
+            return;
+        }
+
+        // Gameplay Settings sub-menu
+        if (title.equals("§6§lGameplay Settings")) {
+            handleGameplaySettings(player, itemName, clickType);
+            return;
+        }
+
+        // Combat Settings sub-menu
+        if (title.equals("§c§lCombat Settings")) {
+            handleCombatSettings(player, itemName, clickType, settings);
+            return;
+        }
+
+        // Boss Settings sub-menu
+        if (title.equals("§5§lBoss Settings")) {
+            handleBossSettings(player, itemName, clickType);
+            return;
+        }
+
+        // Broadcast Settings sub-menu
+        if (title.equals("§e§lBroadcast Settings")) {
+            handleBroadcastSettings(player, itemName);
+            return;
+        }
+
+        // Tier Settings sub-menu
+        if (title.equals("§d§lTier Settings")) {
+            handleTierSettings(player, itemName, clickType, settings);
+            return;
+        }
+
+        // Multiplier Settings sub-menu
+        if (title.equals("§a§lMultiplier Settings")) {
+            handleMultiplierSettings(player, itemName, clickType, settings);
+            return;
+        }
+
+        // Preset Settings sub-menu
+        if (title.equals("§b§lQuick Presets")) {
+            handlePresetSettings(player, itemName, settings);
+            return;
+        }
+
+        // Death Settings sub-menu
+        if (title.equals("§8§lDeath Settings")) {
+            handleDeathSettings(player, itemName, clickType);
+            return;
+        }
+
+        // Combat Log Settings sub-menu
+        if (title.equals("§c§lCombat Log Settings")) {
+            handleCombatLogSettings(player, itemName, clickType);
+            return;
+        }
+    }
+
+    private void handleGameplaySettings(Player player, String itemName, ClickType clickType) {
+        if (itemName.contains("Particle Effects")) {
+            plugin.setParticleEffectsEnabled(!plugin.isParticleEffectsEnabled());
+            player.sendMessage("§aParticle effects " + (plugin.isParticleEffectsEnabled() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Level Loss on Death")) {
+            plugin.setLevelLossOnDeath(!plugin.isLevelLossOnDeath());
+            player.sendMessage("§aLevel loss on death " + (plugin.isLevelLossOnDeath() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Level Gain on Kill")) {
+            plugin.setLevelGainOnKill(!plugin.isLevelGainOnKill());
+            player.sendMessage("§aLevel gain on kill " + (plugin.isLevelGainOnKill() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Auto-Assign on Join")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setAutoAssignEnabled(!plugin.isAutoAssignEnabled());
+                player.sendMessage("§aAuto-assign " + (plugin.isAutoAssignEnabled() ? "§aenabled" : "§cdisabled"));
+            } else if (clickType == ClickType.RIGHT) {
+                plugin.setAutoAssignDelaySeconds(plugin.getAutoAssignDelaySeconds() + 5);
+                player.sendMessage("§aAuto-assign delay: §e" + plugin.getAutoAssignDelaySeconds() + "s");
+            } else if (clickType == ClickType.SHIFT_RIGHT) {
+                plugin.setAutoAssignDelaySeconds(Math.max(0, plugin.getAutoAssignDelaySeconds() - 5));
+                player.sendMessage("§aAuto-assign delay: §e" + plugin.getAutoAssignDelaySeconds() + "s");
+            }
+        } else if (itemName.contains("PvP Only Abilities")) {
+            plugin.setPvpOnlyAbilities(!plugin.isPvpOnlyAbilities());
+            player.sendMessage("§aPvP only abilities " + (plugin.isPvpOnlyAbilities() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Friendly Fire")) {
+            plugin.setFriendlyFire(!plugin.isFriendlyFire());
+            player.sendMessage("§aFriendly fire " + (plugin.isFriendlyFire() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Kill Streak Bonuses")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setKillStreakBonuses(!plugin.isKillStreakBonuses());
+                player.sendMessage("§aKill streak bonuses " + (plugin.isKillStreakBonuses() ? "§aenabled" : "§cdisabled"));
+            } else if (clickType == ClickType.RIGHT) {
+                plugin.setKillStreakThreshold(plugin.getKillStreakThreshold() + 1);
+                player.sendMessage("§aKill streak threshold: §e" + plugin.getKillStreakThreshold());
+            } else if (clickType == ClickType.SHIFT_RIGHT) {
+                plugin.setKillStreakThreshold(plugin.getKillStreakThreshold() - 1);
+                player.sendMessage("§aKill streak threshold: §e" + plugin.getKillStreakThreshold());
+            }
+        } else if (itemName.contains("Max Level")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setMaxLevel(plugin.getMaxLevel() - 1);
+            } else {
+                plugin.setMaxLevel(plugin.getMaxLevel() + 1);
+            }
+            player.sendMessage("§aMax level: §e" + plugin.getMaxLevel());
+        } else if (itemName.contains("Levels Lost on Death")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setLevelsLostOnDeath(plugin.getLevelsLostOnDeath() - 1);
+            } else {
+                plugin.setLevelsLostOnDeath(plugin.getLevelsLostOnDeath() + 1);
+            }
+            player.sendMessage("§aLevels lost on death: §e" + plugin.getLevelsLostOnDeath());
+        } else if (itemName.contains("Levels Gained on Kill")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setLevelsGainedOnKill(plugin.getLevelsGainedOnKill() - 1);
+            } else {
+                plugin.setLevelsGainedOnKill(plugin.getLevelsGainedOnKill() + 1);
+            }
+            player.sendMessage("§aLevels gained on kill: §e" + plugin.getLevelsGainedOnKill());
+        } else if (itemName.contains("Passive Tick Rate")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setPassiveTickRate(plugin.getPassiveTickRate() - 0.5);
+            } else {
+                plugin.setPassiveTickRate(plugin.getPassiveTickRate() + 0.5);
+            }
+            player.sendMessage("§aPassive tick rate: §e" + String.format("%.1f", plugin.getPassiveTickRate()) + "s");
+        } else if (itemName.contains("Passive Effect Strength")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setPassiveEffectStrength(plugin.getPassiveEffectStrength() - 0.1);
+            } else {
+                plugin.setPassiveEffectStrength(plugin.getPassiveEffectStrength() + 0.1);
+            }
+            player.sendMessage("§aPassive effect strength: §e" + String.format("%.1fx", plugin.getPassiveEffectStrength()));
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openGameplaySettings(player);
+    }
+
+    private void handleCombatSettings(Player player, String itemName, ClickType clickType, AttributeSettings settings) {
+        if (itemName.contains("PvP Damage Multiplier")) {
+            if (clickType.isShiftClick()) {
+                plugin.setPvpDamageMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                plugin.setPvpDamageMultiplier(plugin.getPvpDamageMultiplier() - 0.1);
+            } else {
+                plugin.setPvpDamageMultiplier(plugin.getPvpDamageMultiplier() + 0.1);
+            }
+            player.sendMessage("§aPvP damage multiplier: §e" + String.format("%.1fx", plugin.getPvpDamageMultiplier()));
+        } else if (itemName.contains("Ability Damage Multiplier")) {
+            if (clickType.isShiftClick()) {
+                plugin.setAbilityDamageMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                plugin.setAbilityDamageMultiplier(plugin.getAbilityDamageMultiplier() - 0.1);
+            } else {
+                plugin.setAbilityDamageMultiplier(plugin.getAbilityDamageMultiplier() + 0.1);
+            }
+            player.sendMessage("§aAbility damage multiplier: §e" + String.format("%.1fx", plugin.getAbilityDamageMultiplier()));
+        } else if (itemName.contains("Global Damage Multiplier")) {
+            if (clickType.isShiftClick()) {
+                settings.setGlobalDamageMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalDamageMultiplier(settings.getGlobalDamageMultiplier() - 0.1);
+            } else {
+                settings.setGlobalDamageMultiplier(settings.getGlobalDamageMultiplier() + 0.1);
+            }
+            player.sendMessage("§aGlobal damage multiplier: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()));
+        } else if (itemName.contains("Global Cooldown Multiplier")) {
+            if (clickType.isShiftClick()) {
+                settings.setGlobalCooldownMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalCooldownMultiplier(settings.getGlobalCooldownMultiplier() - 0.1);
+            } else {
+                settings.setGlobalCooldownMultiplier(settings.getGlobalCooldownMultiplier() + 0.1);
+            }
+            player.sendMessage("§aGlobal cooldown multiplier: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()));
+        } else if (itemName.contains("Combat Tag") && !itemName.contains("Duration")) {
+            plugin.setCombatTagEnabled(!plugin.isCombatTagEnabled());
+            player.sendMessage("§aCombat tag " + (plugin.isCombatTagEnabled() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Combat Tag Duration")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setCombatTagDuration(plugin.getCombatTagDuration() - 5);
+            } else {
+                plugin.setCombatTagDuration(plugin.getCombatTagDuration() + 5);
+            }
+            player.sendMessage("§aCombat tag duration: §e" + plugin.getCombatTagDuration() + "s");
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openCombatSettings(player);
+    }
+
+    private void handleBossSettings(Player player, String itemName, ClickType clickType) {
+        if (itemName.contains("Boss Health Multiplier")) {
+            if (clickType.isShiftClick()) {
+                plugin.setBossHealthMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                plugin.setBossHealthMultiplier(plugin.getBossHealthMultiplier() - 0.25);
+            } else {
+                plugin.setBossHealthMultiplier(plugin.getBossHealthMultiplier() + 0.25);
+            }
+            player.sendMessage("§aBoss health multiplier: §e" + String.format("%.2fx", plugin.getBossHealthMultiplier()));
+        } else if (itemName.contains("Boss Damage Multiplier")) {
+            if (clickType.isShiftClick()) {
+                plugin.setBossDamageMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                plugin.setBossDamageMultiplier(plugin.getBossDamageMultiplier() - 0.25);
+            } else {
+                plugin.setBossDamageMultiplier(plugin.getBossDamageMultiplier() + 0.25);
+            }
+            player.sendMessage("§aBoss damage multiplier: §e" + String.format("%.2fx", plugin.getBossDamageMultiplier()));
+        } else if (itemName.contains("Boss Drop Rate Multiplier")) {
+            if (clickType.isShiftClick()) {
+                plugin.setBossDropRateMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                plugin.setBossDropRateMultiplier(plugin.getBossDropRateMultiplier() - 0.25);
+            } else {
+                plugin.setBossDropRateMultiplier(plugin.getBossDropRateMultiplier() + 0.25);
+            }
+            player.sendMessage("§aBoss drop rate multiplier: §e" + String.format("%.2fx", plugin.getBossDropRateMultiplier()));
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openBossSettings(player);
+    }
+
+    private void handleBroadcastSettings(Player player, String itemName) {
+        if (itemName.contains("Attribute Assignment")) {
+            plugin.setBroadcastAttributeAssign(!plugin.isBroadcastAttributeAssign());
+            player.sendMessage("§aBroadcast attribute assignment " + (plugin.isBroadcastAttributeAssign() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Level Up")) {
+            plugin.setBroadcastLevelUp(!plugin.isBroadcastLevelUp());
+            player.sendMessage("§aBroadcast level up " + (plugin.isBroadcastLevelUp() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Dragon Egg")) {
+            plugin.setBroadcastDragonEgg(!plugin.isBroadcastDragonEgg());
+            player.sendMessage("§aBroadcast Dragon Egg " + (plugin.isBroadcastDragonEgg() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Boss Spawn")) {
+            plugin.setBroadcastBossSpawn(!plugin.isBroadcastBossSpawn());
+            player.sendMessage("§aBroadcast boss spawn " + (plugin.isBroadcastBossSpawn() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Boss Defeat")) {
+            plugin.setBroadcastBossDefeat(!plugin.isBroadcastBossDefeat());
+            player.sendMessage("§aBroadcast boss defeat " + (plugin.isBroadcastBossDefeat() ? "§aenabled" : "§cdisabled"));
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openBroadcastSettings(player);
+    }
+
+    private void handleTierSettings(Player player, String itemName, ClickType clickType, AttributeSettings settings) {
+        if (itemName.contains("Stable Effect")) {
+            if (clickType == ClickType.LEFT) {
+                settings.setTierMultiplier(Tier.STABLE, settings.getStableMultiplier() - 0.1);
+            } else {
+                settings.setTierMultiplier(Tier.STABLE, settings.getStableMultiplier() + 0.1);
+            }
+            player.sendMessage("§aStable tier effect: §e" + (int)(settings.getStableMultiplier() * 100) + "%");
+        } else if (itemName.contains("Stable Cooldown")) {
+            if (clickType == ClickType.LEFT) {
+                settings.setTierCooldown(Tier.STABLE, settings.getStableCooldown() - 10);
+            } else {
+                settings.setTierCooldown(Tier.STABLE, settings.getStableCooldown() + 10);
+            }
+            player.sendMessage("§aStable tier cooldown: §e" + settings.getStableCooldown() + "s");
+        } else if (itemName.contains("Warped Effect")) {
+            if (clickType == ClickType.LEFT) {
+                settings.setTierMultiplier(Tier.WARPED, settings.getWarpedMultiplier() - 0.1);
+            } else {
+                settings.setTierMultiplier(Tier.WARPED, settings.getWarpedMultiplier() + 0.1);
+            }
+            player.sendMessage("§dWarped tier effect: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%");
+        } else if (itemName.contains("Warped Cooldown")) {
+            if (clickType == ClickType.LEFT) {
+                settings.setTierCooldown(Tier.WARPED, settings.getWarpedCooldown() - 10);
+            } else {
+                settings.setTierCooldown(Tier.WARPED, settings.getWarpedCooldown() + 10);
+            }
+            player.sendMessage("§dWarped tier cooldown: §e" + settings.getWarpedCooldown() + "s");
+        } else if (itemName.contains("Extreme Effect")) {
+            if (clickType == ClickType.LEFT) {
+                settings.setTierMultiplier(Tier.EXTREME, settings.getExtremeMultiplier() - 0.1);
+            } else {
+                settings.setTierMultiplier(Tier.EXTREME, settings.getExtremeMultiplier() + 0.1);
+            }
+            player.sendMessage("§cExtreme tier effect: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%");
+        } else if (itemName.contains("Extreme Cooldown")) {
+            if (clickType == ClickType.LEFT) {
+                settings.setTierCooldown(Tier.EXTREME, settings.getExtremeCooldown() - 10);
+            } else {
+                settings.setTierCooldown(Tier.EXTREME, settings.getExtremeCooldown() + 10);
+            }
+            player.sendMessage("§cExtreme tier cooldown: §e" + settings.getExtremeCooldown() + "s");
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openTierSettings(player);
+    }
+
+    private void handleMultiplierSettings(Player player, String itemName, ClickType clickType, AttributeSettings settings) {
+        if (itemName.contains("Global Cooldown")) {
+            if (clickType.isShiftClick()) {
+                settings.setGlobalCooldownMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalCooldownMultiplier(settings.getGlobalCooldownMultiplier() - 0.1);
+            } else {
+                settings.setGlobalCooldownMultiplier(settings.getGlobalCooldownMultiplier() + 0.1);
+            }
+            player.sendMessage("§aGlobal cooldown: §e" + String.format("%.1fx", settings.getGlobalCooldownMultiplier()));
+        } else if (itemName.contains("Global Damage")) {
+            if (clickType.isShiftClick()) {
+                settings.setGlobalDamageMultiplier(1.0);
+            } else if (clickType == ClickType.LEFT) {
+                settings.setGlobalDamageMultiplier(settings.getGlobalDamageMultiplier() - 0.1);
+            } else {
+                settings.setGlobalDamageMultiplier(settings.getGlobalDamageMultiplier() + 0.1);
+            }
+            player.sendMessage("§aGlobal damage: §e" + String.format("%.1fx", settings.getGlobalDamageMultiplier()));
+        } else if (itemName.contains("Level Scaling")) {
+            if (clickType.isShiftClick()) {
+                settings.setLevelScalingPercent(10.0);
+            } else if (clickType == ClickType.LEFT) {
+                settings.setLevelScalingPercent(settings.getLevelScalingPercent() - 1.0);
+            } else {
+                settings.setLevelScalingPercent(settings.getLevelScalingPercent() + 1.0);
+            }
+            player.sendMessage("§aLevel scaling: §e+" + String.format("%.0f", settings.getLevelScalingPercent()) + "% per level");
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openMultiplierSettings(player);
+    }
+
+    private void handlePresetSettings(Player player, String itemName, AttributeSettings settings) {
+        if (itemName.contains("Balanced Preset")) {
+            settings.applyPresetToAll("balanced");
+            player.sendMessage("§a§lApplied Balanced preset!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.0f);
+        } else if (itemName.contains("High Power Preset")) {
+            settings.applyPresetToAll("highpower");
+            player.sendMessage("§c§lApplied High Power preset!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 0.8f);
+        } else if (itemName.contains("Low Power Preset")) {
+            settings.applyPresetToAll("lowpower");
+            player.sendMessage("§7§lApplied Low Power preset!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
+        } else if (itemName.contains("Chaos Preset")) {
+            settings.applyPresetToAll("chaos");
+            player.sendMessage("§d§lApplied Chaos preset!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.3f, 1.5f);
+        } else if (itemName.contains("OP Preset")) {
+            settings.setGlobalDamageMultiplier(2.0);
+            settings.setGlobalCooldownMultiplier(0.5);
+            for (AttributeType type : AttributeType.values()) {
+                settings.applyHighPowerPreset(type);
+            }
+            player.sendMessage("§6§lApplied OP preset!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.0f);
+        }
+        adminGUI.openPresetSettings(player);
+    }
+
+    private void handleDeathSettings(Player player, String itemName, ClickType clickType) {
+        if (itemName.contains("Keep Inventory on Death")) {
+            plugin.setKeepInventoryOnDeath(!plugin.isKeepInventoryOnDeath());
+            player.sendMessage("§aKeep inventory on death " + (plugin.isKeepInventoryOnDeath() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Drop Attribute Items")) {
+            plugin.setDropAttributeItemsOnDeath(!plugin.isDropAttributeItemsOnDeath());
+            player.sendMessage("§aDrop attribute items " + (plugin.isDropAttributeItemsOnDeath() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Levels Lost on Death")) {
+            if (clickType == ClickType.LEFT) {
+                plugin.setLevelsLostOnDeath(plugin.getLevelsLostOnDeath() - 1);
+            } else {
+                plugin.setLevelsLostOnDeath(plugin.getLevelsLostOnDeath() + 1);
+            }
+            player.sendMessage("§aLevels lost on death: §e" + plugin.getLevelsLostOnDeath());
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openDeathSettings(player);
+    }
+
+    private void handleCombatLogSettings(Player player, String itemName, ClickType clickType) {
+        CombatLogger logger = plugin.getCombatLogger();
+
+        // Main toggles (row 1)
+        if (itemName.contains("Combat Logging") && !itemName.contains("Log")) {
+            logger.setEnabled(!logger.isEnabled());
+            player.sendMessage("§aCombat logging " + (logger.isEnabled() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log to File")) {
+            logger.setLogToFile(!logger.isLogToFile());
+            player.sendMessage("§aLog to file " + (logger.isLogToFile() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log to Console")) {
+            logger.setLogToConsole(!logger.isLogToConsole());
+            player.sendMessage("§aLog to console " + (logger.isLogToConsole() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Show to Players")) {
+            logger.setShowToPlayers(!logger.isShowToPlayers());
+            player.sendMessage("§aShow to players " + (logger.isShowToPlayers() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Compact Mode")) {
+            logger.setCompactMode(!logger.isCompactMode());
+            player.sendMessage("§aCompact mode " + (logger.isCompactMode() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Show Damage Numbers")) {
+            logger.setShowDamageNumbers(!logger.isShowDamageNumbers());
+            player.sendMessage("§aShow damage numbers " + (logger.isShowDamageNumbers() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Show Health Bars")) {
+            logger.setShowHealthBars(!logger.isShowHealthBars());
+            player.sendMessage("§aShow health bars " + (logger.isShowHealthBars() ? "§aenabled" : "§cdisabled"));
+        }
+        // Event type toggles (row 2)
+        else if (itemName.contains("Log Damage Events")) {
+            logger.setLogDamageEvents(!logger.isLogDamageEvents());
+            player.sendMessage("§aLog damage events " + (logger.isLogDamageEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Ability Events")) {
+            logger.setLogAbilityEvents(!logger.isLogAbilityEvents());
+            player.sendMessage("§aLog ability events " + (logger.isLogAbilityEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Kill Events")) {
+            logger.setLogKillEvents(!logger.isLogKillEvents());
+            player.sendMessage("§aLog kill events " + (logger.isLogKillEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Healing Events")) {
+            logger.setLogHealingEvents(!logger.isLogHealingEvents());
+            player.sendMessage("§aLog healing events " + (logger.isLogHealingEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Combat Tag Events")) {
+            logger.setLogCombatTagEvents(!logger.isLogCombatTagEvents());
+            player.sendMessage("§aLog combat tag events " + (logger.isLogCombatTagEvents() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Critical Hits")) {
+            logger.setLogCriticalHits(!logger.isLogCriticalHits());
+            player.sendMessage("§aLog critical hits " + (logger.isLogCriticalHits() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Blocked Damage")) {
+            logger.setLogBlockedDamage(!logger.isLogBlockedDamage());
+            player.sendMessage("§aLog blocked damage " + (logger.isLogBlockedDamage() ? "§aenabled" : "§cdisabled"));
+        }
+        // Additional event types (row 3)
+        else if (itemName.contains("Log Environmental Damage")) {
+            logger.setLogEnvironmentalDamage(!logger.isLogEnvironmentalDamage());
+            player.sendMessage("§aLog environmental damage " + (logger.isLogEnvironmentalDamage() ? "§aenabled" : "§cdisabled"));
+        } else if (itemName.contains("Log Mob Damage")) {
+            logger.setLogMobDamage(!logger.isLogMobDamage());
+            player.sendMessage("§aLog mob damage " + (logger.isLogMobDamage() ? "§aenabled" : "§cdisabled"));
+        }
+        // Numeric settings
+        else if (itemName.contains("Damage Threshold")) {
+            if (clickType.isShiftClick()) {
+                logger.setMinimumDamageThreshold(0);
+                player.sendMessage("§aDamage threshold reset to §e0");
+            } else if (clickType == ClickType.LEFT) {
+                logger.setMinimumDamageThreshold(logger.getMinimumDamageThreshold() - 0.5);
+                player.sendMessage("§aDamage threshold: §e" + String.format("%.1f", logger.getMinimumDamageThreshold()));
+            } else {
+                logger.setMinimumDamageThreshold(logger.getMinimumDamageThreshold() + 0.5);
+                player.sendMessage("§aDamage threshold: §e" + String.format("%.1f", logger.getMinimumDamageThreshold()));
+            }
+        } else if (itemName.contains("Max Log History") && !itemName.contains("Player")) {
+            if (clickType == ClickType.LEFT) {
+                logger.setMaxLogHistory(logger.getMaxLogHistory() - 10);
+            } else {
+                logger.setMaxLogHistory(logger.getMaxLogHistory() + 10);
+            }
+            player.sendMessage("§aMax log history: §e" + logger.getMaxLogHistory());
+        } else if (itemName.contains("Max Player Log History")) {
+            if (clickType == ClickType.LEFT) {
+                logger.setMaxPlayerLogHistory(logger.getMaxPlayerLogHistory() - 10);
+            } else {
+                logger.setMaxPlayerLogHistory(logger.getMaxPlayerLogHistory() + 10);
+            }
+            player.sendMessage("§aMax player log history: §e" + logger.getMaxPlayerLogHistory());
+        }
+        // Actions
+        else if (itemName.contains("Clear Global Log")) {
+            logger.clearGlobalLog();
+            player.sendMessage("§aCleared global combat log!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.3f, 1.5f);
+        } else if (itemName.contains("Reset to Defaults")) {
+            resetCombatLogSettings(logger);
+            player.sendMessage("§aReset combat log settings to defaults!");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.3f, 1.2f);
+        } else if (itemName.contains("Enable All Events")) {
+            logger.setLogDamageEvents(true);
+            logger.setLogAbilityEvents(true);
+            logger.setLogKillEvents(true);
+            logger.setLogHealingEvents(true);
+            logger.setLogCombatTagEvents(true);
+            logger.setLogCriticalHits(true);
+            logger.setLogBlockedDamage(true);
+            logger.setLogEnvironmentalDamage(true);
+            logger.setLogMobDamage(true);
+            player.sendMessage("§aEnabled all event logging!");
+        } else if (itemName.contains("Disable All Events")) {
+            logger.setLogDamageEvents(false);
+            logger.setLogAbilityEvents(false);
+            logger.setLogKillEvents(false);
+            logger.setLogHealingEvents(false);
+            logger.setLogCombatTagEvents(false);
+            logger.setLogCriticalHits(false);
+            logger.setLogBlockedDamage(false);
+            logger.setLogEnvironmentalDamage(false);
+            logger.setLogMobDamage(false);
+            player.sendMessage("§cDisabled all event logging!");
+        }
+
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+        adminGUI.openCombatLogSettings(player);
+    }
+
+    private void resetCombatLogSettings(CombatLogger logger) {
+        logger.setEnabled(true);
+        logger.setLogToFile(true);
+        logger.setLogToConsole(false);
+        logger.setShowToPlayers(true);
+        logger.setLogDamageEvents(true);
+        logger.setLogAbilityEvents(true);
+        logger.setLogKillEvents(true);
+        logger.setLogHealingEvents(true);
+        logger.setLogCombatTagEvents(true);
+        logger.setLogCriticalHits(true);
+        logger.setLogBlockedDamage(true);
+        logger.setLogEnvironmentalDamage(false);
+        logger.setLogMobDamage(false);
+        logger.setShowDamageNumbers(true);
+        logger.setShowHealthBars(true);
+        logger.setCompactMode(false);
+        logger.setMinimumDamageThreshold(0);
+        logger.setMaxLogHistory(100);
+        logger.setMaxPlayerLogHistory(50);
+    }
+
+    private void resetAllSettings(AttributeSettings settings) {
+        settings.resetToDefaults();
+        plugin.setLevelLossOnDeath(true);
+        plugin.setLevelGainOnKill(true);
+        plugin.setParticleEffectsEnabled(true);
+        plugin.setAutoAssignEnabled(false);
+        plugin.setAutoAssignDelaySeconds(10);
+        plugin.setPvpOnlyAbilities(false);
+        plugin.setFriendlyFire(true);
+        plugin.setMaxLevel(5);
+        plugin.setLevelsLostOnDeath(1);
+        plugin.setLevelsGainedOnKill(1);
+        plugin.setKillStreakBonuses(false);
+        plugin.setKillStreakThreshold(3);
+        plugin.setBroadcastAttributeAssign(true);
+        plugin.setBroadcastLevelUp(false);
+        plugin.setBroadcastDragonEgg(true);
+        plugin.setBroadcastBossSpawn(true);
+        plugin.setBroadcastBossDefeat(true);
+        plugin.setBossHealthMultiplier(1.0);
+        plugin.setBossDamageMultiplier(1.0);
+        plugin.setBossDropRateMultiplier(1.0);
+        plugin.setPassiveTickRate(1.0);
+        plugin.setPassiveEffectStrength(1.0);
+        plugin.setPvpDamageMultiplier(1.0);
+        plugin.setAbilityDamageMultiplier(1.0);
+        plugin.setCombatTagEnabled(true);
+        plugin.setCombatTagDuration(15);
+        plugin.setKeepInventoryOnDeath(false);
+        plugin.setDropAttributeItemsOnDeath(true);
     }
 
     private void handleAbilityDetails(Player player, String itemName) {
