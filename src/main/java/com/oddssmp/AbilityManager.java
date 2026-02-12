@@ -977,91 +977,88 @@ public class AbilityManager {
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
         if (data == null || data.getAttribute() == null) return;
 
-        // Passive abilities are handled in event listeners
-        // This method can be called on a timer for passive aura effects
-        if (player.getTicksLived() % 20 == 0) { // Every second
-            ParticleManager.playPassiveParticles(player, data.getAttribute(), data.getTier());
+        // Passive abilities - this method is called every second by the ticker
+        ParticleManager.playPassiveParticles(player, data.getAttribute(), data.getTier());
 
-            // Vision Passive: Awareness - see all enemies around you
-            if (data.getAttribute() == AttributeType.VISION) {
-                for (Entity entity : player.getNearbyEntities(20, 20, 20)) {
-                    if (entity instanceof Player) {
-                        Player nearby = (Player) entity;
-                        nearby.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 25, 0, true, false));
-                    }
+        // Vision Passive: Awareness - see all enemies around you
+        if (data.getAttribute() == AttributeType.VISION) {
+            for (Entity entity : player.getNearbyEntities(20, 20, 20)) {
+                if (entity instanceof Player) {
+                    Player nearby = (Player) entity;
+                    nearby.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 25, 0, true, false));
+                }
+            }
+        }
+
+        // Dragon Egg Passive: Draconic Curse - nearby enemies take more damage
+        if (data.getAttribute() == AttributeType.DRAGON_EGG) {
+            double damageIncrease = 0.15 - (data.getLevel() - 1) * 0.01; // 15% to 11% (min 10% at max would be 11%)
+            for (Entity entity : player.getNearbyEntities(8, 8, 8)) {
+                if (entity instanceof Player && entity != player) {
+                    Player nearby = (Player) entity;
+                    AbilityFlags flags = getAbilityFlags(nearby.getUniqueId());
+                    flags.dragonCurseDamage = 1.0 + damageIncrease;
+                }
+            }
+        }
+
+        // Wither Passive: Curse of Despair particles
+        if (data.getAttribute() == AttributeType.WITHER) {
+            player.getWorld().spawnParticle(org.bukkit.Particle.SMOKE,
+                    player.getLocation().add(0, 2, 0), 3, 0.3, 0.3, 0.3, 0.01);
+        }
+
+        // Warden Passive: Curse of Silence particles
+        if (data.getAttribute() == AttributeType.WARDEN) {
+            player.getWorld().spawnParticle(org.bukkit.Particle.SCULK_SOUL,
+                    player.getLocation(), 2, 0.3, 0, 0.3, 0.01);
+        }
+
+        // Breeze Passive: Curse of Judgment - tick cooldowns if no enemy nearby
+        if (data.getAttribute() == AttributeType.BREEZE) {
+            boolean enemyNearby = false;
+            for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
+                if (entity instanceof Player) {
+                    enemyNearby = true;
+                    break;
                 }
             }
 
-            // Dragon Egg Passive: Draconic Curse - nearby enemies take more damage
-            if (data.getAttribute() == AttributeType.DRAGON_EGG) {
-                double damageIncrease = 0.15 - (data.getLevel() - 1) * 0.01; // 15% to 11% (min 10% at max would be 11%)
-                for (Entity entity : player.getNearbyEntities(8, 8, 8)) {
-                    if (entity instanceof Player && entity != player) {
-                        Player nearby = (Player) entity;
-                        AbilityFlags flags = getAbilityFlags(nearby.getUniqueId());
-                        flags.dragonCurseDamage = 1.0 + damageIncrease;
-                    }
+            if (!enemyNearby && player.getTicksLived() % 200 == 0) { // Every 10 seconds
+                data.setCooldown("melee", data.getRemainingCooldown("melee") + 1000);
+                data.setCooldown("support", data.getRemainingCooldown("support") + 1000);
+            }
+        }
+
+        // Wealth Passive: Industrialist - Hero of the Village XII permanent
+        if (data.getAttribute() == AttributeType.WEALTH) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, 40, 11, true, false, false));
+        }
+
+        // Transfer Passive: Immunity - cannot receive debuffs (remove negative effects)
+        if (data.getAttribute() == AttributeType.TRANSFER) {
+            for (PotionEffect effect : player.getActivePotionEffects()) {
+                if (isNegativeEffect(effect.getType())) {
+                    player.removePotionEffect(effect.getType());
                 }
             }
+        }
 
-            // Wither Passive: Curse of Despair particles
-            if (data.getAttribute() == AttributeType.WITHER) {
-                player.getWorld().spawnParticle(org.bukkit.Particle.SMOKE,
-                        player.getLocation().add(0, 2, 0), 3, 0.3, 0.3, 0.3, 0.01);
+        // Persistence Passive: Endure - damage resistance below 50% HP
+        if (data.getAttribute() == AttributeType.PERSISTENCE) {
+            double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
+            if (healthPercent < 0.5) {
+                int resistLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Resistance I-V
+                player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, resistLevel, true, false, false));
             }
+        }
 
-            // Warden Passive: Curse of Silence particles
-            if (data.getAttribute() == AttributeType.WARDEN) {
-                player.getWorld().spawnParticle(org.bukkit.Particle.SCULK_SOUL,
-                        player.getLocation(), 2, 0.3, 0, 0.3, 0.01);
-            }
-
-            // Breeze Passive: Curse of Judgment - tick cooldowns if no enemy nearby
-            if (data.getAttribute() == AttributeType.BREEZE) {
-                boolean enemyNearby = false;
-                for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
-                    if (entity instanceof Player) {
-                        enemyNearby = true;
-                        break;
-                    }
-                }
-
-                if (!enemyNearby && player.getTicksLived() % 200 == 0) { // Every 10 seconds
-                    data.setCooldown("melee", data.getRemainingCooldown("melee") + 1000);
-                    data.setCooldown("support", data.getRemainingCooldown("support") + 1000);
-                }
-            }
-
-            // Wealth Passive: Industrialist - Hero of the Village XII permanent
-            if (data.getAttribute() == AttributeType.WEALTH) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, 40, 11, true, false, false));
-            }
-
-            // Transfer Passive: Immunity - cannot receive debuffs (remove negative effects)
-            if (data.getAttribute() == AttributeType.TRANSFER) {
-                for (PotionEffect effect : player.getActivePotionEffects()) {
-                    if (isNegativeEffect(effect.getType())) {
-                        player.removePotionEffect(effect.getType());
-                    }
-                }
-            }
-
-            // Persistence Passive: Endure - damage resistance below 50% HP
-            if (data.getAttribute() == AttributeType.PERSISTENCE) {
-                double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
-                if (healthPercent < 0.5) {
-                    int resistLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Resistance I-V
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, resistLevel, true, false, false));
-                }
-            }
-
-            // Risk Passive: Gambler's Edge - damage boost below 40% HP
-            if (data.getAttribute() == AttributeType.RISK) {
-                double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
-                if (healthPercent < 0.4) {
-                    int strengthLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Strength I-V
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 40, strengthLevel, true, false, false));
-                }
+        // Risk Passive: Gambler's Edge - damage boost below 40% HP
+        if (data.getAttribute() == AttributeType.RISK) {
+            double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
+            if (healthPercent < 0.4) {
+                int strengthLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Strength I-V
+                player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 40, strengthLevel, true, false, false));
             }
         }
     }
