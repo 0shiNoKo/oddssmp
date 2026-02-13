@@ -44,8 +44,9 @@ public class AbilityManager {
         int baseCooldown = getSupportCooldown(data.getAttribute());
         data.setCooldown(cooldownKey, baseCooldown * 1000L);
 
-        // Get nearby allies
+        // Get nearby allies (includes self)
         List<Player> allies = getNearbyAllies(player, getSupportRadius(data.getAttribute()));
+        allies.add(0, player);
 
         // Play particles and sound
         if (plugin.isParticleSupportAbility()) {
