@@ -309,7 +309,17 @@ public class OddsSMP extends JavaPlugin {
         rerollerRecipe.setIngredient('S', Material.NETHER_STAR);
         Bukkit.addRecipe(rerollerRecipe);
 
-        getLogger().info("Registered custom recipes: Upgrader, Reroller");
+        // Tier Upgrader Recipe: 4 Dragon Breath, 4 Ender Eyes, Nether Star in middle
+        ItemStack tierUpgrader = createTierUpgrader();
+        NamespacedKey tierUpgraderKey = new NamespacedKey(this, "tier_upgrader");
+        ShapedRecipe tierUpgraderRecipe = new ShapedRecipe(tierUpgraderKey, tierUpgrader);
+        tierUpgraderRecipe.shape("DED", "ENE", "DED");
+        tierUpgraderRecipe.setIngredient('D', Material.DRAGON_BREATH);
+        tierUpgraderRecipe.setIngredient('E', Material.ENDER_EYE);
+        tierUpgraderRecipe.setIngredient('N', Material.NETHER_STAR);
+        Bukkit.addRecipe(tierUpgraderRecipe);
+
+        getLogger().info("Registered custom recipes: Upgrader, Reroller, Tier Upgrader");
     }
 
     /**
@@ -364,6 +374,35 @@ public class OddsSMP extends JavaPlugin {
         if (!item.hasItemMeta()) return false;
         String name = item.getItemMeta().getDisplayName();
         return name != null && name.contains("Attribute Reroller");
+    }
+
+    /**
+     * Create Tier Upgrader item
+     */
+    public static ItemStack createTierUpgrader() {
+        ItemStack item = new ItemStack(Material.DRAGON_BREATH);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§5§lTier Upgrader");
+        List<String> lore = new ArrayList<>();
+        lore.add("§7Right-click to upgrade your");
+        lore.add("§7attribute's tier!");
+        lore.add("");
+        lore.add("§aStable §7→ §dWarped §7→ §cExtreme");
+        lore.add("");
+        lore.add("§e§oMax tier: Extreme");
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Check if item is a Tier Upgrader
+     */
+    public static boolean isTierUpgrader(ItemStack item) {
+        if (item == null || item.getType() != Material.DRAGON_BREATH) return false;
+        if (!item.hasItemMeta()) return false;
+        String name = item.getItemMeta().getDisplayName();
+        return name != null && name.contains("Tier Upgrader");
     }
 
     /**

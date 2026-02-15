@@ -1862,6 +1862,8 @@ public class GUIListener implements Listener {
             itemToGive = OddsSMP.createUpgrader();
         } else if (itemName.contains("Attribute Reroller")) {
             itemToGive = OddsSMP.createReroller();
+        } else if (itemName.contains("Tier Upgrader")) {
+            itemToGive = OddsSMP.createTierUpgrader();
         } else {
             // Check for attribute weapons
             for (AttributeWeapon weapon : AttributeWeapon.values()) {

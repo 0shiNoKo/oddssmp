@@ -2078,6 +2078,7 @@ public class AdminGUI {
         gui.setItem(5, createClickableItem(WeaponAltar.createDragonHeart(), "§eClick to receive"));
         gui.setItem(6, createClickableItem(OddsSMP.createUpgrader(), "§eClick to receive"));
         gui.setItem(7, createClickableItem(OddsSMP.createReroller(), "§eClick to receive"));
+        gui.setItem(8, createClickableItem(OddsSMP.createTierUpgrader(), "§eClick to receive"));
 
         // Label
         gui.setItem(0, createItem(Material.CHEST, "§e§lSpecial Items", Arrays.asList(

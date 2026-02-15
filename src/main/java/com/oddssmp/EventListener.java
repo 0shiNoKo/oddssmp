@@ -322,6 +322,55 @@ public class EventListener implements Listener {
             return;
         }
 
+        // Handle Tier Upgrader
+        if (OddsSMP.isTierUpgrader(item)) {
+            event.setCancelled(true);
+
+            if (data == null || data.getAttribute() == null) {
+                player.sendMessage("§cYou don't have an attribute to upgrade!");
+                return;
+            }
+
+            Tier currentTier = data.getTier();
+            Tier newTier = null;
+
+            // Determine next tier
+            if (currentTier == Tier.STABLE) {
+                newTier = Tier.WARPED;
+            } else if (currentTier == Tier.WARPED) {
+                newTier = Tier.EXTREME;
+            } else {
+                player.sendMessage("§cYour attribute is already at the highest tier (Extreme)!");
+                return;
+            }
+
+            // Consume item
+            item.setAmount(item.getAmount() - 1);
+
+            // Upgrade tier
+            data.setTier(newTier);
+
+            // Effects
+            ParticleManager.playSupportParticles(player, data.getAttribute(), newTier, data.getLevel());
+            player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
+            player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 0.3f, 1.5f);
+
+            // Save and update
+            plugin.savePlayerData(player.getUniqueId());
+            plugin.updatePlayerTab(player);
+
+            player.sendMessage("");
+            player.sendMessage("§5§l§m                                                    ");
+            player.sendMessage("§5§l⚡ TIER UPGRADED! ⚡");
+            player.sendMessage("");
+            player.sendMessage("  §7" + data.getAttribute().getIcon() + " " + data.getAttribute().getDisplayName());
+            player.sendMessage("  " + currentTier.getColor() + currentTier.name() + " §7→ " + newTier.getColor() + "§l" + newTier.name());
+            player.sendMessage("");
+            player.sendMessage("§5§l§m                                                    ");
+            player.sendMessage("");
+            return;
+        }
+
         // Handle Reroller
         if (OddsSMP.isReroller(item)) {
             event.setCancelled(true);

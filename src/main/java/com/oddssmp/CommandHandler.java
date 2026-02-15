@@ -566,6 +566,28 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Give tier upgrader command
+        if (args[0].equalsIgnoreCase("givetierupgrader")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cOnly players can receive items!");
+                return true;
+            }
+            Player player = (Player) sender;
+            int amount = 1;
+            if (args.length >= 2) {
+                try {
+                    amount = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    amount = 1;
+                }
+            }
+            for (int i = 0; i < amount; i++) {
+                player.getInventory().addItem(OddsSMP.createTierUpgrader());
+            }
+            player.sendMessage("§aYou received " + amount + "x §5§lTier Upgrader§a!");
+            return true;
+        }
+
         // Test command
         if (args.length < 3) {
             sender.sendMessage("§cUsage: /admin <gui|test|boss|weapon|autoassign|assignall> [args]");
@@ -869,6 +891,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/admin givehandle §7- Give yourself a Weapon Handle");
             sender.sendMessage("§e/admin giveupgrader [amount] §7- Give yourself Upgrader(s)");
             sender.sendMessage("§e/admin givereroller [amount] §7- Give yourself Reroller(s)");
+            sender.sendMessage("§e/admin givetierupgrader [amount] §7- Give yourself Tier Upgrader(s)");
             sender.sendMessage("§e/admin autoassign <on|off> [delay] §7- Toggle auto-assign on join");
             sender.sendMessage("§e/admin assignall §7- Give attributes to all players");
         }
@@ -921,6 +944,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.add("givehandle");
                 completions.add("giveupgrader");
                 completions.add("givereroller");
+                completions.add("givetierupgrader");
                 completions.add("autoassign");
                 completions.add("assignall");
                 completions.add("debugdragon");
