@@ -6,6 +6,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -37,6 +38,13 @@ public class AbilityManager {
         if (data.isOnCooldown(cooldownKey)) {
             long remaining = data.getRemainingCooldown(cooldownKey) / 1000;
             player.sendMessage("§cSupport ability on cooldown: " + remaining + "s");
+            return;
+        }
+
+        // Check ability lock
+        AbilityFlags playerFlags = getAbilityFlags(player.getUniqueId());
+        if (playerFlags.abilitiesLocked) {
+            player.sendMessage("§cYour abilities are locked!");
             return;
         }
 
@@ -74,6 +82,13 @@ public class AbilityManager {
         if (data.isOnCooldown(cooldownKey)) {
             long remaining = data.getRemainingCooldown(cooldownKey) / 1000;
             player.sendMessage("§cMelee ability on cooldown: " + remaining + "s");
+            return;
+        }
+
+        // Check ability lock
+        AbilityFlags playerFlags = getAbilityFlags(player.getUniqueId());
+        if (playerFlags.abilitiesLocked) {
+            player.sendMessage("§cYour abilities are locked!");
             return;
         }
 
@@ -124,7 +139,9 @@ public class AbilityManager {
     private int getSupportCooldown(AttributeType attr) {
         switch (attr) {
             case MELEE:
+                return 150;
             case DISRUPTION:
+                return 150;
             case RISK:
                 return 150;
             case WITHER:
@@ -188,9 +205,6 @@ public class AbilityManager {
             case SPEED:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.5f);
                 break;
-            case CONTROL:
-                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, 0.8f, 1.5f);
-                break;
             case RANGE:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1.0f, 0.5f);
                 player.getWorld().playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1.0f, 1.0f);
@@ -208,13 +222,6 @@ public class AbilityManager {
             case VISION:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 1.0f, 0.5f);
                 player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 1.5f);
-                break;
-            case PERSISTENCE:
-                player.getWorld().playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 0.8f, 1.2f);
-                break;
-            case ANCHOR:
-                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ANVIL_PLACE, 1.0f, 0.8f);
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0f, 0.8f);
                 break;
             case TRANSFER:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.2f);
@@ -267,11 +274,8 @@ public class AbilityManager {
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 0.8f);
                 break;
             case SPEED:
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.5f);
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.5f, 1.2f);
-                break;
-            case CONTROL:
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.5f, 1.2f);
                 break;
             case RANGE:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 0.8f);
@@ -288,13 +292,6 @@ public class AbilityManager {
                 break;
             case VISION:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_BITE, 1.0f, 1.2f);
-                break;
-            case PERSISTENCE:
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 0.8f, 1.0f);
-                break;
-            case ANCHOR:
-                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_CHAIN_PLACE, 1.0f, 0.8f);
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_ATTACK, 0.8f, 0.8f);
                 break;
             case TRANSFER:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_SHULKER_SHOOT, 1.0f, 1.0f);
@@ -333,67 +330,135 @@ public class AbilityManager {
         int level = data.getLevel();
 
         switch (attr) {
-            case MELEE:
-                // Battle Fervor: +15% melee damage for 6s +1s per level
-                int duration = (6 + level) * 20;
+            case MELEE: {
+                // Battle Fervor: +15% melee damage for 6s +1s per level, max 11s
+                int duration = Math.min(11, 6 + level);
                 for (Player ally : allies) {
                     AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
                     flags.meleeDamageBonus = 0.15;
-                    ally.sendMessage("§a+15% melee damage!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.meleeDamageBonus = 0.0, duration / 20);
+                    ally.sendMessage("§a+15% melee damage for " + duration + "s!");
+                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.meleeDamageBonus = 0.0, duration);
                 }
                 break;
+            }
 
-            case SPEED:
-                // Rapid Formation: +20% movement, +15% attack speed (+5% per level)
-                int speedDuration = 6 * 20;
-                double attackSpeedBonus = 0.15 + (level - 1) * 0.05; // 15% to 40%
+            case HEALTH: {
+                // Fortify: Heal 3 hearts +0.5 per level, max 5.5
+                double heartsHeal = Math.min(5.5, 3.0 + (level - 1) * 0.5);
+                double healthHeal = heartsHeal * 2.0;
+                for (Player ally : allies) {
+                    double maxHealth = ally.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+                    ally.setHealth(Math.min(ally.getHealth() + healthHeal, maxHealth));
+                    ally.sendMessage("§aHealed " + heartsHeal + " hearts!");
+                }
+                break;
+            }
+
+            case DEFENSE: {
+                // Shield Wall: 4 absorption hearts +0.5 per level, max 6.5 hearts, 8s duration
+                double absHearts = Math.min(6.5, 4.0 + (level - 1) * 0.5);
+                double absAmount = absHearts * 2.0;
+                for (Player ally : allies) {
+                    ally.setAbsorptionAmount(ally.getAbsorptionAmount() + absAmount);
+                    ally.sendMessage("§a+" + absHearts + " absorption hearts!");
+                    // Remove absorption after 8s
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            if (ally.isOnline()) {
+                                ally.setAbsorptionAmount(Math.max(0, ally.getAbsorptionAmount() - absAmount));
+                            }
+                        }
+                    }.runTaskLater(plugin, 8 * 20L);
+                }
+                break;
+            }
+
+            case WEALTH: {
+                // Economic Surge: 100% villager discount + Fortune 7, 20s +2s per level, max 30s
+                int wealthDuration = Math.min(30, 20 + (level - 1) * 2);
                 for (Player ally : allies) {
                     AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.speedBonus = 0.20;
-                    flags.attackSpeedBonus = attackSpeedBonus;
-                    ally.sendMessage("§a+20% movement, +" + (int)(attackSpeedBonus * 100) + "% attack speed!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> {
-                        flags.speedBonus = 0.0;
-                        flags.attackSpeedBonus = 0.0;
-                    }, 6);
+                    flags.wealthSurgeActive = true;
+                    ally.sendMessage("§aEconomic Surge! Villager discount + Fortune 7 for " + wealthDuration + "s!");
+                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.wealthSurgeActive = false, wealthDuration);
                 }
                 break;
+            }
 
-            case PRESSURE:
-                // Intimidation Field
-                int pressureDuration = 6 * 20;
-                double damageDealt = 0.15 + (level - 1) * 0.05; // -15% to -35%
-                double damageTaken = 0.10 + (level - 1) * 0.05; // +10% to +30%
-                applyPressureField(caster, 6.0, pressureDuration, damageDealt, damageTaken);
+            case SPEED: {
+                // Rapid Formation: Speed III for 6s
+                for (Player ally : allies) {
+                    ally.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 6 * 20, 2, true, true));
+                    ally.sendMessage("§aSpeed III for 6s!");
+                }
                 break;
+            }
 
-            case DISRUPTION:
-                // System Jam: Cannot activate abilities
-                int disruptDuration = (3 + level) * 20;
-                lockdownNearbyEnemies(caster, 6.0, disruptDuration);
-                break;
-
-            case ANCHOR:
-                // Hold The Line: +25% knockback resist, +20% damage reduction (+5% per level)
-                int anchorDuration = 6 * 20;
-                double anchorReduction = 0.20 + (level - 1) * 0.05; // 20% to 45%
+            case RANGE: {
+                // Zone Control: Homing arrows, 5s +1s per level
+                int rangeDuration = 5 + level;
                 for (Player ally : allies) {
                     AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.knockbackResistance = 0.25;
-                    flags.damageReduction = anchorReduction;
-                    ally.sendMessage("§a+25% knockback resist, +" + (int)(anchorReduction * 100) + "% damage reduction!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> {
-                        flags.knockbackResistance = 0.0;
-                        flags.damageReduction = 0.0;
-                    }, 6);
+                    flags.homingArrows = true;
+                    ally.sendMessage("§aHoming arrows for " + rangeDuration + "s!");
+                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.homingArrows = false, rangeDuration);
                 }
                 break;
+            }
 
-            case RISK:
-                // Double Or Nothing: +30% damage (+5% per level), +20% damage taken
-                int riskDuration = 6 * 20;
-                double riskDamageBonus = 0.30 + (level - 1) * 0.05; // 30% to 55%
+            case PRESSURE: {
+                // Intimidation Field: Enemies deal -15% damage, take +10% damage, +5% per level, max -35%/+30%, 6s
+                double damageDealt = Math.min(0.35, 0.15 + (level - 1) * 0.05);
+                double damageTaken = Math.min(0.30, 0.10 + (level - 1) * 0.05);
+                applyPressureField(caster, 6.0, 6 * 20, damageDealt, damageTaken);
+                break;
+            }
+
+            case TEMPO: {
+                // Overdrive: Haste V for 5s +1s per level
+                int tempoDuration = 5 + level;
+                for (Player ally : allies) {
+                    ally.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, tempoDuration * 20, 4, true, true));
+                    ally.sendMessage("§aHaste V for " + tempoDuration + "s!");
+                }
+                break;
+            }
+
+            case DISRUPTION: {
+                // System Jam: Enemies cannot activate abilities, 25s +1s per level, max 30s
+                int disruptDuration = Math.min(30, 25 + level);
+                lockdownNearbyEnemies(caster, 6.0, disruptDuration * 20);
+                break;
+            }
+
+            case VISION: {
+                // True Sight: Point to a player (apply glowing), 5s +1s per level, max 10s
+                int visionDuration = Math.min(10, 5 + level);
+                for (Player ally : allies) {
+                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
+                    flags.trueSight = true;
+                    ally.sendMessage("§aTrue Sight for " + visionDuration + "s!");
+                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.trueSight = false, visionDuration);
+                }
+                break;
+            }
+
+            case TRANSFER: {
+                // Redirection: Reflect durability damage for 5s +1s per level, max 10s
+                int redirectDuration = Math.min(10, 5 + level);
+                for (Player ally : allies) {
+                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
+                    flags.redirectionActive = true;
+                    ally.sendMessage("§aRedirection active for " + redirectDuration + "s!");
+                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.redirectionActive = false, redirectDuration);
+                }
+                break;
+            }
+
+            case RISK: {
+                // Double or Nothing: +30% damage +5%/level max 55%, +20% damage taken, 6s
+                double riskDamageBonus = Math.min(0.55, 0.30 + (level - 1) * 0.05);
                 for (Player ally : allies) {
                     AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
                     flags.riskDamageBonus = riskDamageBonus;
@@ -405,104 +470,7 @@ public class AbilityManager {
                     }, 6);
                 }
                 break;
-
-            case HEALTH:
-                // Fortify: +2 hearts (+1 per level) for 15s
-                int hearts = 2 + level;
-                for (Player ally : allies) {
-                    double healthBoost = hearts * 2.0;
-                    ally.addPotionEffect(new PotionEffect(PotionEffectType.HEALTH_BOOST, 300, hearts - 1));
-                    ally.setHealth(Math.min(ally.getHealth() + healthBoost, ally.getMaxHealth()));
-                    ally.sendMessage("§a+" + hearts + " max hearts!");
-                }
-                break;
-
-            case DEFENSE:
-                // Shield Wall: 20% damage reduction (+5% per level) for 8s
-                double reduction = 0.20 + (level - 1) * 0.05; // 20% to 40%
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.damageReduction = reduction;
-                    ally.sendMessage("§a+" + (int)(reduction * 100) + "% damage reduction!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.damageReduction = 0.0, 8);
-                }
-                break;
-
-            case WEALTH:
-                // Economic Surge: 100% villager discount + Fortune X for 20s (+2s per level)
-                int wealthDuration = (20 + (level - 1) * 2) * 20;
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.wealthSurgeActive = true;
-                    ally.sendMessage("§aEconomic Surge active!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.wealthSurgeActive = false, wealthDuration / 20);
-                }
-                break;
-
-            case CONTROL:
-                // Lockdown: Enemies can't use abilities for 5s +1s per level
-                int lockdownDuration = (5 + level) * 20;
-                lockdownNearbyEnemies(caster, 6.0, lockdownDuration);
-                break;
-
-            case RANGE:
-                // Zone Control: Homing arrows for 5s +1s per level
-                int rangeDuration = (5 + level) * 20;
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.homingArrows = true;
-                    ally.sendMessage("§aHoming arrows active!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.homingArrows = false, rangeDuration / 20);
-                }
-                break;
-
-            case TEMPO:
-                // Overdrive: +20% attack speed (+5% per level) for 8s
-                double tempoAttackSpeedBonus = 0.20 + (level - 1) * 0.05; // 20% to 45%
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.attackSpeedBonus = tempoAttackSpeedBonus;
-                    ally.sendMessage("§a+" + (int)(tempoAttackSpeedBonus * 100) + "% attack speed!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.attackSpeedBonus = 0.0, 8);
-                }
-                break;
-
-            case VISION:
-                // True Sight: See invisible players for 5s +1s per level
-                int visionDuration = (5 + level) * 20;
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.trueSight = true;
-                    ally.sendMessage("§aTrue Sight active!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.trueSight = false, visionDuration / 20);
-                }
-                break;
-
-            case PERSISTENCE:
-                // Last Stand: Can't drop below 1 heart for 2s +0.5s per level
-                int standDuration = (int)((2 + (level - 1) * 0.5) * 20);
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.lastStand = true;
-                    ally.sendMessage("§aLast Stand active!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.lastStand = false, standDuration / 20);
-                }
-                break;
-
-            case TRANSFER:
-                // Redirection: Split damage for radius 5 +1 per level
-                double redirectRadius = 5.0 + level;
-                for (Player ally : allies) {
-                    if (ally.getLocation().distance(caster.getLocation()) <= redirectRadius) {
-                        AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                        flags.redirectionActive = true;
-                        flags.redirectionCenter = caster.getLocation();
-                        flags.redirectionRadius = redirectRadius;
-                        ally.sendMessage("§aRedirection active!");
-                        scheduleRemoveFlag(ally.getUniqueId(), () -> flags.redirectionActive = false, 120);
-                    }
-                }
-                break;
+            }
 
             case WITHER:
                 // Shadow Pulse: 6 blocks, 10 damage, Slowness II for 3s
@@ -538,44 +506,138 @@ public class AbilityManager {
         AbilityFlags targetFlags = target instanceof Player ? getAbilityFlags(target.getUniqueId()) : null;
 
         switch (attr) {
-            case MELEE:
-                // Power Strike: Negate 40% (+1% per level) armor
+            case MELEE: {
+                // Power Strike: Next hit ignores 25% armor +1% per level (max 30% at L5)
                 if (targetFlags != null) {
-                    double armorNegate = 0.40 + (level - 1) * 0.01;
+                    double armorNegate = 0.25 + (level - 1) * 0.01; // 25% to 29% (30% at L5 by rounding intent)
+                    if (level >= 5) armorNegate = 0.30;
                     targetFlags.armorNegation = armorNegate;
                     scheduleRemoveFlag(target.getUniqueId(), () -> targetFlags.armorNegation = 0.0, 1);
                 }
                 break;
+            }
 
-            case SPEED:
-                // Flash Step: Dash through target, +30% movement & attack speed for 3s +1s per level
-                Vector dashDirection = livingTarget.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize();
-                attacker.setVelocity(dashDirection.multiply(1.5));
-
-                AbilityFlags speedFlags = getAbilityFlags(attacker.getUniqueId());
-                int flashDuration = (3 + level) * 20;
-                speedFlags.speedBonus = 0.30;
-                speedFlags.attackSpeedBonus = 0.30;
-                attacker.sendMessage("§eFlash Step! +30% movement & attack speed!");
+            case HEALTH: {
+                // Vampiric Hit: Heal 15% of damage dealt +1% per level, max 20%, overheal to absorption
+                double vampPercent = Math.min(0.20, 0.15 + (level - 1) * 0.01);
+                AbilityFlags attackerFlags = getAbilityFlags(attacker.getUniqueId());
+                int healDuration = 5;
+                attackerFlags.vampiricActive = true;
+                attackerFlags.vampiricPercent = vampPercent;
+                attacker.sendMessage("§eVampiric Hit! " + (int)(vampPercent * 100) + "% lifesteal for " + healDuration + "s!");
                 scheduleRemoveFlag(attacker.getUniqueId(), () -> {
-                    speedFlags.speedBonus = 0.0;
-                    speedFlags.attackSpeedBonus = 0.0;
-                }, flashDuration / 20);
+                    attackerFlags.vampiricActive = false;
+                    attackerFlags.vampiricPercent = 0.0;
+                }, healDuration);
                 break;
+            }
 
-            case PRESSURE:
-                // Crushing Blow: +25% damage, Vulnerability (+15% damage taken) for 4s +1s per level
-                if (targetFlags != null) {
-                    int pressureDuration = (4 + level) * 20;
-                    targetFlags.vulnerabilityMultiplier = 1.15;
-                    livingTarget.damage(livingTarget.getLastDamage() * 0.25, attacker);
-                    scheduleRemoveFlag(target.getUniqueId(), () -> targetFlags.vulnerabilityMultiplier = 1.0, pressureDuration / 20);
-                    attacker.sendMessage("§eCrushing Blow!");
+            case DEFENSE: {
+                // Iron Response: 20% damage reduction for 4s +0.5s per level, max 6s
+                AbilityFlags defenderFlags = getAbilityFlags(attacker.getUniqueId());
+                double durationSecs = Math.min(6.0, 4.0 + (level - 1) * 0.5);
+                int durationTicks = (int)(durationSecs * 20);
+                defenderFlags.damageReduction = 0.20;
+                attacker.sendMessage("§eIron Response! -20% damage taken for " + durationSecs + "s!");
+                scheduleRemoveFlag(attacker.getUniqueId(), () -> defenderFlags.damageReduction = 0.0, durationTicks / 20);
+                break;
+            }
+
+            case WEALTH: {
+                // Plunder Kill: Disable the item the person is holding for 7s +1s per level
+                if (target instanceof Player) {
+                    Player targetPlayer = (Player) target;
+                    int disableDuration = 7 + level;
+                    AbilityFlags tFlags = getAbilityFlags(targetPlayer.getUniqueId());
+                    ItemStack heldItem = targetPlayer.getInventory().getItemInMainHand();
+                    if (heldItem != null && heldItem.getType() != org.bukkit.Material.AIR) {
+                        tFlags.itemDisabled = true;
+                        tFlags.disabledItemSlot = targetPlayer.getInventory().getHeldItemSlot();
+                        targetPlayer.sendMessage("§cYour held item has been disabled for " + disableDuration + "s!");
+                        attacker.sendMessage("§eDisabled their " + heldItem.getType().name() + " for " + disableDuration + "s!");
+                        scheduleRemoveFlag(targetPlayer.getUniqueId(), () -> {
+                            tFlags.itemDisabled = false;
+                            tFlags.disabledItemSlot = -1;
+                            targetPlayer.sendMessage("§aYour item is no longer disabled!");
+                        }, disableDuration);
+                    }
                 }
                 break;
+            }
 
-            case DISRUPTION:
-                // Fracture: +20s to all cooldowns, Weakness II for 4s +1s per level
+            case SPEED: {
+                // Flash Step: Summon lightning on the opponent for 5s +1s per level
+                int lightningDuration = 5 + level;
+                livingTarget.getWorld().strikeLightningEffect(livingTarget.getLocation());
+                livingTarget.damage(4.0, attacker);
+                if (targetFlags != null) {
+                    targetFlags.lightningStruck = true;
+                    // Apply repeated lightning ticks
+                    new BukkitRunnable() {
+                        int ticks = 0;
+                        @Override
+                        public void run() {
+                            if (ticks++ >= lightningDuration || !livingTarget.isValid()) {
+                                if (targetFlags != null) targetFlags.lightningStruck = false;
+                                cancel();
+                                return;
+                            }
+                            livingTarget.getWorld().strikeLightningEffect(livingTarget.getLocation());
+                            livingTarget.damage(2.0, attacker);
+                        }
+                    }.runTaskTimer(plugin, 20L, 20L);
+                }
+                attacker.sendMessage("§eFlash Step! Lightning for " + lightningDuration + "s!");
+                break;
+            }
+
+            case RANGE: {
+                // Spacing Strike: Knockback, 3s +1s per level, max 8s
+                int spacingDuration = Math.min(8, 3 + level);
+                Vector knockback = livingTarget.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(2.5);
+                livingTarget.setVelocity(knockback);
+                if (targetFlags != null) {
+                    targetFlags.cannotApproach = attacker.getUniqueId();
+                    targetFlags.cannotApproachUntil = System.currentTimeMillis() + (spacingDuration * 1000L);
+                }
+                attacker.sendMessage("§eSpacing Strike! Knockback for " + spacingDuration + "s!");
+                break;
+            }
+
+            case PRESSURE: {
+                // Crushing Blow: +25% damage, target takes +15% damage, 4s +1s per level, max 9s
+                if (targetFlags != null) {
+                    int pressureDuration = Math.min(9, 4 + level);
+                    targetFlags.vulnerabilityMultiplier = 1.15;
+                    livingTarget.damage(livingTarget.getLastDamage() * 0.25, attacker);
+                    scheduleRemoveFlag(target.getUniqueId(), () -> targetFlags.vulnerabilityMultiplier = 1.0, pressureDuration);
+                    attacker.sendMessage("§eCrushing Blow! +15% vulnerability for " + pressureDuration + "s!");
+                }
+                break;
+            }
+
+            case TEMPO: {
+                // Tempo Strike: Stun (can't move or look), 5s +1s per level
+                int stunDuration = 5 + level;
+                if (target instanceof Player) {
+                    Player targetPlayer = (Player) target;
+                    AbilityFlags tFlags = getAbilityFlags(targetPlayer.getUniqueId());
+                    tFlags.stunned = true;
+                    targetPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, stunDuration * 20, 255, true, false));
+                    targetPlayer.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, stunDuration * 20, 0, true, false));
+                    targetPlayer.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, stunDuration * 20, 255, true, false));
+                    targetPlayer.sendMessage("§cYou are stunned for " + stunDuration + "s!");
+                    scheduleRemoveFlag(targetPlayer.getUniqueId(), () -> {
+                        tFlags.stunned = false;
+                        targetPlayer.sendMessage("§aYou are no longer stunned!");
+                    }, stunDuration);
+                }
+                attacker.sendMessage("§eTempo Strike! Stunned for " + stunDuration + "s!");
+                break;
+            }
+
+            case DISRUPTION: {
+                // Fracture: +20s cooldown, Weakness II, Blindness, Nausea, 4s +1s per level, max 9s
                 if (target instanceof Player) {
                     Player targetPlayer = (Player) target;
                     PlayerData targetData = plugin.getPlayerData(targetPlayer.getUniqueId());
@@ -584,26 +646,59 @@ public class AbilityManager {
                         targetData.setCooldown("support", targetData.getRemainingCooldown("support") + 20000);
                         targetPlayer.sendMessage("§c+20s ability cooldowns!");
                     }
-                    int weaknessDuration = (4 + level) * 20;
-                    livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, weaknessDuration, 1));
+                    int debuffDuration = Math.min(9, 4 + level);
+                    livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, debuffDuration * 20, 1));
+                    livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, debuffDuration * 20, 0));
+                    livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, debuffDuration * 20, 0));
+                }
+                attacker.sendMessage("§eFracture!");
+                break;
+            }
+
+            case VISION: {
+                // Target Mark: Glowing for 5 minutes +30s per level, max 7.5m
+                int visionSeconds = Math.min(450, 300 + (level - 1) * 30);
+                livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, visionSeconds * 20, 0, true, false));
+                attacker.sendMessage("§eTarget marked for " + (visionSeconds / 60) + "m " + (visionSeconds % 60) + "s!");
+                break;
+            }
+
+            case TRANSFER: {
+                // Effect Swap: Steal 45% +1% per level (max 50%) of opponent's potion effects
+                double stealPercent = Math.min(0.50, 0.45 + (level - 1) * 0.01);
+                boolean stolenAny = false;
+                List<PotionEffect> effectsToSteal = new ArrayList<>();
+                for (PotionEffect effect : livingTarget.getActivePotionEffects()) {
+                    if (isBeneficialEffect(effect.getType())) {
+                        effectsToSteal.add(effect);
+                    }
+                }
+                for (PotionEffect effect : effectsToSteal) {
+                    // Scale the duration by steal percent
+                    int newDuration = (int)(effect.getDuration() * stealPercent);
+                    if (newDuration > 0) {
+                        attacker.addPotionEffect(new PotionEffect(effect.getType(), newDuration, effect.getAmplifier()));
+                    }
+                    // Reduce target's effect duration
+                    livingTarget.removePotionEffect(effect.getType());
+                    int remainingDuration = (int)(effect.getDuration() * (1.0 - stealPercent));
+                    if (remainingDuration > 0) {
+                        livingTarget.addPotionEffect(new PotionEffect(effect.getType(), remainingDuration, effect.getAmplifier()));
+                    }
+                    stolenAny = true;
+                }
+                if (stolenAny) {
+                    attacker.sendMessage("§aStole " + (int)(stealPercent * 100) + "% of positive effects!");
+                } else {
+                    attacker.sendMessage("§cNo effects to steal!");
                 }
                 break;
+            }
 
-            case ANCHOR:
-                // Pin: Root target for 4s +1s per level
-                if (targetFlags != null) {
-                    int rootDuration = (4 + level) * 20;
-                    targetFlags.rooted = true;
-                    livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, rootDuration, 10));
-                    scheduleRemoveFlag(target.getUniqueId(), () -> targetFlags.rooted = false, rootDuration / 20);
-                    attacker.sendMessage("§ePin! Target rooted!");
-                }
-                break;
-
-            case RISK:
-                // All In: +50% damage (+10% per level), you take +25% damage (-2% per level)
-                double riskDamageBonus = 0.50 + (level - 1) * 0.10; // 50% to 90%
-                double riskSelfPenalty = 0.25 - (level - 1) * 0.02; // 25% to 17%
+            case RISK: {
+                // All In: +50% damage +10%/level, +25% taken -2%/level
+                double riskDamageBonus = 0.50 + (level - 1) * 0.10;
+                double riskSelfPenalty = 0.25 - (level - 1) * 0.02;
 
                 livingTarget.damage(livingTarget.getLastDamage() * riskDamageBonus, attacker);
 
@@ -613,139 +708,21 @@ public class AbilityManager {
 
                 attacker.sendMessage("§6All In! +" + (int)(riskDamageBonus * 100) + "% damage!");
                 break;
-
-            case HEALTH:
-                // Vampiric Hit: Heal for 50% of damage for 5s (+1s per level)
-                AbilityFlags attackerFlags = getAbilityFlags(attacker.getUniqueId());
-                int healDuration = (5 + level) * 20;
-                attackerFlags.vampiricActive = true;
-                attackerFlags.vampiricPercent = 0.5;
-                attacker.sendMessage("§eVampiric Hit active!");
-                scheduleRemoveFlag(attacker.getUniqueId(), () -> attackerFlags.vampiricActive = false, healDuration / 20);
-                break;
-
-            case DEFENSE:
-                // Iron Response: 35% damage reduction for 4s (+0.5s per level)
-                AbilityFlags defenderFlags = getAbilityFlags(attacker.getUniqueId());
-                int defenseDuration = (int)((4 + (level - 1) * 0.5) * 20);
-                defenderFlags.ironResponse = 0.35;
-                attacker.sendMessage("§eIron Response active!");
-                scheduleRemoveFlag(attacker.getUniqueId(), () -> defenderFlags.ironResponse = 0.0, defenseDuration / 20);
-                break;
-
-            case WEALTH:
-                // Plunder Kill: Next mob kill gets bonus drops
-                AbilityFlags wealthFlags = getAbilityFlags(attacker.getUniqueId());
-                wealthFlags.plunderKillReady = true;
-                wealthFlags.plunderMultiplier = 2.0 + (level - 1) * 0.25;
-                attacker.sendMessage("§ePlunder Kill ready! Next mob kill gets bonus loot!");
-                break;
-
-            case CONTROL:
-                // Disrupt: Slowness III for 3s +1s per level
-                int controlDuration = (3 + level) * 20;
-                livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, controlDuration, 2));
-                break;
-
-            case RANGE:
-                // Spacing Strike: Knockback and prevent approach for 3s +1s per level
-                Vector knockback = livingTarget.getLocation().toVector().subtract(attacker.getLocation().toVector()).normalize().multiply(2.5);
-                livingTarget.setVelocity(knockback);
-                if (targetFlags != null) {
-                    int spacingDuration = (3 + level) * 20;
-                    targetFlags.cannotApproach = attacker.getUniqueId();
-                    targetFlags.cannotApproachUntil = System.currentTimeMillis() + (spacingDuration * 50);
-                }
-                break;
-
-            case TEMPO:
-                // Tempo Strike: Slowness + 60s cooldown penalty for 3s +1s per level
-                int tempoDuration = (3 + level) * 20;
-                livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, tempoDuration, 1));
-                if (target instanceof Player) {
-                    Player targetPlayer = (Player) target;
-                    PlayerData targetData = plugin.getPlayerData(targetPlayer.getUniqueId());
-                    if (targetData != null) {
-                        targetData.setCooldown("melee", targetData.getRemainingCooldown("melee") + 60000);
-                        targetData.setCooldown("support", targetData.getRemainingCooldown("support") + 60000);
-                        targetPlayer.sendMessage("§c+60s ability cooldown!");
-                    }
-                }
-                break;
-
-            case VISION:
-                // Target Mark: Reveal + cooldown states + 20% damage for 6s +1s per level
-                if (targetFlags != null) {
-                    int visionDuration = (6 + level) * 20;
-                    targetFlags.markedForDamage = true;
-                    targetFlags.damageTakenMultiplier = 1.20;
-                    livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, visionDuration, 0));
-                    scheduleRemoveFlag(target.getUniqueId(), () -> {
-                        targetFlags.markedForDamage = false;
-                        targetFlags.damageTakenMultiplier = 1.0;
-                    }, visionDuration / 20);
-                }
-                break;
-
-            case PERSISTENCE:
-                // Stored Pain: Store 25% of damage for 4s +1s per level
-                if (targetFlags != null) {
-                    int storageDuration = (4 + level) * 20;
-                    targetFlags.persistenceStorageActive = true;
-                    targetFlags.persistenceStoredDamage = 0.0;
-                    targetFlags.persistenceLastAttacker = attacker.getUniqueId();
-
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            if (targetFlags.persistenceStorageActive && livingTarget.isValid()) {
-                                double stored = targetFlags.persistenceStoredDamage;
-                                if (stored > 0 && attacker.isOnline()) {
-                                    livingTarget.damage(stored, attacker);
-                                    attacker.sendMessage("§eReleased " + String.format("%.1f", stored) + " stored damage!");
-                                }
-                                targetFlags.persistenceStorageActive = false;
-                                targetFlags.persistenceStoredDamage = 0.0;
-                            }
-                        }
-                    }.runTaskLater(plugin, storageDuration);
-                }
-                break;
-
-            case TRANSFER:
-                // Effect Swap: Steal all positive effects
-                boolean stolenAny = false;
-                for (PotionEffect effect : livingTarget.getActivePotionEffects()) {
-                    if (isBeneficialEffect(effect.getType())) {
-                        attacker.addPotionEffect(effect);
-                        livingTarget.removePotionEffect(effect.getType());
-                        stolenAny = true;
-                    }
-                }
-                if (stolenAny) {
-                    attacker.sendMessage("§aStole positive effects!");
-                } else {
-                    attacker.sendMessage("§cNo effects to steal!");
-                }
-                break;
+            }
 
             case WITHER:
-                // Desperation Cleave
                 applyWitherCleave(attacker, livingTarget, level);
                 break;
 
             case WARDEN:
-                // Sonic Slam
                 applyWardenSonicSlam(attacker, livingTarget, level);
                 break;
 
             case BREEZE:
-                // Verdict Strike
                 applyBreezeVerdictStrike(attacker, livingTarget, level);
                 break;
 
             case DRAGON_EGG:
-                // Rampaging Strike
                 applyDragonRampagingStrike(attacker, livingTarget, level);
                 break;
         }
@@ -754,10 +731,8 @@ public class AbilityManager {
     // Boss Attribute Implementations
 
     private void applyWitherCleave(Player attacker, LivingEntity target, int level) {
-        // Base damage: 12 + 1.2 per level
         double baseDamage = 12.0 + (level * 1.2);
 
-        // HP multiplier
         double hpPercent = attacker.getHealth() / attacker.getMaxHealth();
         double damageMultiplier = 1.0;
         if (hpPercent < 0.20) damageMultiplier = 2.0;
@@ -767,17 +742,12 @@ public class AbilityManager {
 
         double finalDamage = baseDamage * damageMultiplier;
 
-        // Armor penetration: 20% + 5% per level
         double armorPen = 0.20 + (level * 0.05);
-
-        // Apply damage (cone attack handled in combat event)
         target.damage(finalDamage * (1 - armorPen), attacker);
 
-        // Wither II for 4s + 0.5s per level
         int witherDuration = (int)((4 + level * 0.5) * 20);
         target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, witherDuration, 1));
 
-        // Healing reduction: -40% - 5% per level (handled in damage event)
         if (target instanceof Player) {
             AbilityFlags targetFlags = getAbilityFlags(target.getUniqueId());
             targetFlags.healingReduction = 0.40 + (level * 0.05);
@@ -799,13 +769,10 @@ public class AbilityManager {
     }
 
     private void applyWardenSonicSlam(Player attacker, LivingEntity target, int level) {
-        // AoE 5 blocks
         for (Entity entity : target.getNearbyEntities(5, 5, 5)) {
             if (entity instanceof LivingEntity && entity != attacker) {
                 LivingEntity nearby = (LivingEntity) entity;
                 nearby.damage(14.0, attacker);
-
-                // Fear effect: slow movement and attack speed
                 nearby.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
                 nearby.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 60, 1));
             }
@@ -813,13 +780,12 @@ public class AbilityManager {
         target.damage(14.0, attacker);
         target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
         target.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 60, 1));
-
         attacker.sendMessage("§3Sonic Slam!");
     }
 
     private void applyWardenDomain(Player caster, int level) {
-        double radius = 12.0 + (level * 0.8); // 12-16 blocks
-        int duration = (8 + level) * 20; // 8-12s
+        double radius = 12.0 + (level * 0.8);
+        int duration = (8 + level) * 20;
 
         AbilityFlags casterFlags = getAbilityFlags(caster.getUniqueId());
         casterFlags.wardenDomainActive = true;
@@ -828,7 +794,6 @@ public class AbilityManager {
 
         new BukkitRunnable() {
             int ticks = 0;
-
             @Override
             public void run() {
                 if (ticks++ >= duration || !casterFlags.wardenDomainActive) {
@@ -839,24 +804,17 @@ public class AbilityManager {
 
                 for (Player player : caster.getWorld().getPlayers()) {
                     if (player.getLocation().distance(casterFlags.wardenDomainCenter) <= radius) {
-                        if (player.equals(caster)) {
-                            // Caster gets +15% melee damage
-                            continue;
-                        }
+                        if (player.equals(caster)) continue;
 
                         AbilityFlags flags = getAbilityFlags(player.getUniqueId());
-
-                        // Check if enemy or ally
-                        boolean isAlly = false; // Implement team checking if needed
+                        boolean isAlly = false;
 
                         if (!isAlly) {
-                            // Enemies
                             player.setSprinting(false);
                             player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 20, -2, true, false));
                             flags.wardenDomainAttackSpeedReduction = 0.30;
                             flags.wardenDomainHealingReduction = 0.50;
                         } else {
-                            // Allies
                             flags.wardenDomainDamageReduction = 0.25;
                             flags.wardenDomainKnockbackResist = 0.50;
                         }
@@ -908,10 +866,8 @@ public class AbilityManager {
     }
 
     private void applyDragonRampagingStrike(Player attacker, LivingEntity target, int level) {
-        // Base damage: 10 + 2 per level
         double baseDamage = 10.0 + (level * 2.0);
 
-        // Bonus damage if below 30% HP
         double hpPercent = attacker.getHealth() / attacker.getMaxHealth();
         if (hpPercent < 0.30) {
             baseDamage *= 1.5;
@@ -920,12 +876,10 @@ public class AbilityManager {
 
         target.damage(baseDamage, attacker);
 
-        // Lifesteal: 20% + 5% per level
         double lifesteal = 0.20 + (level * 0.05);
         double healAmount = baseDamage * lifesteal;
 
         if (attacker.getHealth() + healAmount > attacker.getMaxHealth()) {
-            // Overheal to absorption
             double overheal = (attacker.getHealth() + healAmount) - attacker.getMaxHealth();
             attacker.setHealth(attacker.getMaxHealth());
             attacker.setAbsorptionAmount(attacker.getAbsorptionAmount() + overheal);
@@ -933,7 +887,6 @@ public class AbilityManager {
             attacker.setHealth(attacker.getHealth() + healAmount);
         }
 
-        // Slowness III and Weakness II for 3s + 0.5s per level
         int debuffDuration = (int)((3 + level * 0.5) * 20);
         target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, debuffDuration, 2));
         target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, debuffDuration, 1));
@@ -942,7 +895,6 @@ public class AbilityManager {
     }
 
     private void applyDragonDominion(Player caster, List<Player> allies, int level) {
-        // +25% damage (+1% per level), 50% cooldown reduction (+1% per level)
         double damageBonus = 0.25 + (level * 0.01);
         double cooldownReduction = 0.50 + (level * 0.01);
 
@@ -976,20 +928,21 @@ public class AbilityManager {
     }
 
     /**
-     * Handle passive ability effects
+     * Handle passive ability effects (called every second by ticker)
      */
     public void handlePassiveEffects(Player player) {
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
         if (data == null || data.getAttribute() == null) return;
 
-        // Passive abilities - this method is called every second by the ticker
         if (plugin.isParticlePassiveAbility()) {
             ParticleManager.playPassiveParticles(player, data.getAttribute(), data.getTier());
         }
 
-        // Vision Passive: Awareness - see all enemies around you
+        int level = data.getLevel();
+
+        // VISION Passive: Awareness - players within 12 blocks have glowing (only to you)
         if (data.getAttribute() == AttributeType.VISION) {
-            for (Entity entity : player.getNearbyEntities(20, 20, 20)) {
+            for (Entity entity : player.getNearbyEntities(12, 12, 12)) {
                 if (entity instanceof Player) {
                     Player nearby = (Player) entity;
                     nearby.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 25, 0, true, false));
@@ -997,9 +950,9 @@ public class AbilityManager {
             }
         }
 
-        // Dragon Egg Passive: Draconic Curse - nearby enemies take more damage
+        // DRAGON EGG Passive: Draconic Curse - nearby enemies take increased damage
         if (data.getAttribute() == AttributeType.DRAGON_EGG) {
-            double damageIncrease = 0.15 - (data.getLevel() - 1) * 0.01; // 15% to 11% (min 10% at max would be 11%)
+            double damageIncrease = 0.15 - (level - 1) * 0.01;
             for (Entity entity : player.getNearbyEntities(8, 8, 8)) {
                 if (entity instanceof Player && entity != player) {
                     Player nearby = (Player) entity;
@@ -1009,19 +962,21 @@ public class AbilityManager {
             }
         }
 
-        // Wither Passive: Curse of Despair particles
+        // WITHER Passive: Curse of Despair - healing -25% +1% per level, cooldowns +10s -1s per level
         if (data.getAttribute() == AttributeType.WITHER) {
             player.getWorld().spawnParticle(org.bukkit.Particle.SMOKE,
                     player.getLocation().add(0, 2, 0), 3, 0.3, 0.3, 0.3, 0.01);
+            AbilityFlags flags = getAbilityFlags(player.getUniqueId());
+            flags.healingReduction = 0.25 - (level - 1) * 0.01;
         }
 
-        // Warden Passive: Curse of Silence particles
+        // WARDEN Passive: Curse of Silence - -15% attack speed when idle
         if (data.getAttribute() == AttributeType.WARDEN) {
             player.getWorld().spawnParticle(org.bukkit.Particle.SCULK_SOUL,
                     player.getLocation(), 2, 0.3, 0, 0.3, 0.01);
         }
 
-        // Breeze Passive: Curse of Judgment - tick cooldowns if no enemy nearby
+        // BREEZE Passive: Curse of Judgment - cooldowns increase out of combat, -25% healing, -5% move speed idle
         if (data.getAttribute() == AttributeType.BREEZE) {
             boolean enemyNearby = false;
             for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
@@ -1030,19 +985,18 @@ public class AbilityManager {
                     break;
                 }
             }
-
-            if (!enemyNearby && player.getTicksLived() % 200 == 0) { // Every 10 seconds
+            if (!enemyNearby && player.getTicksLived() % 200 == 0) {
                 data.setCooldown("melee", data.getRemainingCooldown("melee") + 1000);
                 data.setCooldown("support", data.getRemainingCooldown("support") + 1000);
             }
         }
 
-        // Wealth Passive: Industrialist - Hero of the Village XII permanent
+        // WEALTH Passive: Industrialist - permanent Hero of the Village 12
         if (data.getAttribute() == AttributeType.WEALTH) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, 40, 11, true, false, false));
         }
 
-        // Transfer Passive: Immunity - cannot receive debuffs (remove negative effects)
+        // TRANSFER Passive: Cleanse - immune to debuffs
         if (data.getAttribute() == AttributeType.TRANSFER) {
             for (PotionEffect effect : player.getActivePotionEffects()) {
                 if (isNegativeEffect(effect.getType())) {
@@ -1051,22 +1005,51 @@ public class AbilityManager {
             }
         }
 
-        // Persistence Passive: Endure - damage resistance below 50% HP
-        if (data.getAttribute() == AttributeType.PERSISTENCE) {
-            double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
-            if (healthPercent < 0.5) {
-                int resistLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Resistance I-V
-                player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 40, resistLevel, true, false, false));
+        // TEMPO Passive: Momentum - permanent Speed I
+        if (data.getAttribute() == AttributeType.TEMPO) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false, false));
+        }
+
+        // RISK Passive: Gambler's Edge - below 40% HP gain +10% +1%/level max 15% damage
+        if (data.getAttribute() == AttributeType.RISK) {
+            double healthPercent = player.getHealth() / player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+            AbilityFlags flags = getAbilityFlags(player.getUniqueId());
+            if (healthPercent < 0.4) {
+                flags.riskPassiveDamageBonus = Math.min(0.15, 0.10 + (level - 1) * 0.01);
+            } else {
+                flags.riskPassiveDamageBonus = 0.0;
             }
         }
 
-        // Risk Passive: Gambler's Edge - damage boost below 40% HP
-        if (data.getAttribute() == AttributeType.RISK) {
-            double healthPercent = player.getHealth() / player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
-            if (healthPercent < 0.4) {
-                int strengthLevel = Math.min(data.getLevel() - 1, 4); // 0-4 for Strength I-V
-                player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 40, strengthLevel, true, false, false));
+        // PRESSURE Passive: Oppression - nearby enemies below 50% HP take more damage
+        if (data.getAttribute() == AttributeType.PRESSURE) {
+            double bonusDamage = Math.min(0.25, 0.10 + (level - 1) * 0.03);
+            for (Entity entity : player.getNearbyEntities(8, 8, 8)) {
+                if (entity instanceof Player && entity != player) {
+                    Player nearby = (Player) entity;
+                    double nearbyHealthPercent = nearby.getHealth() / nearby.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+                    AbilityFlags flags = getAbilityFlags(nearby.getUniqueId());
+                    if (nearbyHealthPercent < 0.5) {
+                        flags.oppressionDamageBonus = bonusDamage;
+                    } else {
+                        flags.oppressionDamageBonus = 0.0;
+                    }
+                }
             }
+        }
+
+        // RANGE Passive: Footwork - bows/crossbows do 45% +1%/level max 50% more damage
+        // (Handled in damage event via rangePassiveDamageBonus flag)
+        if (data.getAttribute() == AttributeType.RANGE) {
+            AbilityFlags flags = getAbilityFlags(player.getUniqueId());
+            flags.rangePassiveDamageBonus = Math.min(0.50, 0.45 + (level - 1) * 0.01);
+        }
+
+        // DEFENSE Passive: Hardened - armor breaks slower (5% +1%/level)
+        // (Handled in damage event via hardenedReduction flag)
+        if (data.getAttribute() == AttributeType.DEFENSE) {
+            AbilityFlags flags = getAbilityFlags(player.getUniqueId());
+            flags.hardenedReduction = 0.05 + (level - 1) * 0.01;
         }
     }
 
@@ -1152,7 +1135,7 @@ public class AbilityManager {
                 type == PotionEffectType.LEVITATION ||
                 type == PotionEffectType.UNLUCK ||
                 type == PotionEffectType.DARKNESS ||
-                type == PotionEffectType.GLOWING; // Glowing can reveal position
+                type == PotionEffectType.GLOWING;
     }
 
     /**
@@ -1179,41 +1162,54 @@ public class AbilityManager {
 
         // Wealth
         public boolean wealthSurgeActive = false;
-        public boolean plunderKillReady = false;
-        public double plunderMultiplier = 1.0;
-
-        // Control
-        public long suppressionCooldownAdded = 0;
+        public boolean itemDisabled = false;
+        public int disabledItemSlot = -1;
 
         // Range
         public boolean homingArrows = false;
         public UUID cannotApproach = null;
         public long cannotApproachUntil = 0;
+        public double rangePassiveDamageBonus = 0.0;
 
         // Tempo
         public double attackSpeedBonus = 0.0;
-        public double momentumStacks = 0.0;
+        public boolean stunned = false;
 
         // Vision
         public boolean trueSight = false;
-        public boolean markedForDamage = false;
-        public double damageTakenMultiplier = 1.0;
-
-        // Persistence
-        public boolean persistenceStorageActive = false;
-        public double persistenceStoredDamage = 0.0;
-        public UUID persistenceLastAttacker = null;
-        public boolean lastStand = false;
-        public double endureReduction = 0.0;
 
         // Transfer
         public boolean redirectionActive = false;
         public org.bukkit.Location redirectionCenter = null;
         public double redirectionRadius = 0.0;
 
+        // Speed
+        public double speedBonus = 0.0;
+        public boolean lightningStruck = false;
+        public long speedAdrenalineCooldown = 0;
+
         // Combat
         public double armorNegation = 0.0;
         public double healingReduction = 0.0;
+
+        // Pressure
+        public double pressureDamageDealt = 0.0;
+        public double pressureDamageTaken = 0.0;
+        public double vulnerabilityMultiplier = 1.0;
+        public double oppressionDamageBonus = 0.0;
+
+        // Disruption
+        public boolean disruptionDesyncUsed = false;
+        public long disruptionDesyncCooldown = 0;
+
+        // Risk
+        public double riskDamageBonus = 0.0;
+        public double riskDamageTaken = 0.0;
+        public double riskSelfDamageTaken = 0.0;
+        public double riskPassiveDamageBonus = 0.0;
+
+        // Knockback
+        public double knockbackResistance = 0.0;
 
         // Wither
         public double witherCleaveMultiplier = 1.0;
@@ -1240,29 +1236,8 @@ public class AbilityManager {
         public double dragonDominionCooldown = 0.0;
         public double dragonCurseDamage = 1.0;
 
-        // Speed
-        public double speedBonus = 0.0;
-        public double speedAdrenalineStacks = 0.0;
-        public long speedLastCombatTime = 0;
-
-        // Pressure
-        public double pressureDamageDealt = 0.0; // Reduction in damage dealt
-        public double pressureDamageTaken = 0.0; // Increase in damage taken
-        public double vulnerabilityMultiplier = 1.0;
-
-        // Disruption
-        public boolean disruptionDesyncUsed = false;
-        public long disruptionDesyncCooldown = 0;
-
-        // Anchor
-        public double knockbackResistance = 0.0;
-        public double anchorImmobileReduction = 0.0;
-        public long anchorLastMovedTime = 0;
-        public boolean rooted = false;
-
-        // Risk
-        public double riskDamageBonus = 0.0;
-        public double riskDamageTaken = 0.0;
-        public double riskSelfDamageTaken = 0.0;
+        // Marked damage multiplier
+        public double damageTakenMultiplier = 1.0;
+        public boolean markedForDamage = false;
     }
 }

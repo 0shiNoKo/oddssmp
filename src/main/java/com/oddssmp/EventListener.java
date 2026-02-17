@@ -544,52 +544,33 @@ public class EventListener implements Listener {
             event.setDamage(event.getDamage() * (1.0 + attackerFlags.meleeDamageBonus));
         }
 
-        // TEMPO PASSIVE: Momentum - attack speed stacks
-        if (attackerData.getAttribute() == AttributeType.TEMPO) {
-            double maxStacks = 0.10 + (attackerData.getLevel() - 1) * 0.02;
-            if (attackerFlags.momentumStacks < maxStacks) {
-                attackerFlags.momentumStacks += 0.02;
-            }
+        // RISK PASSIVE: Gambler's Edge - bonus damage below 40% HP
+        if (attackerFlags.riskPassiveDamageBonus > 0) {
+            event.setDamage(event.getDamage() * (1.0 + attackerFlags.riskPassiveDamageBonus));
         }
 
-        // SPEED PASSIVE: Adrenaline - movement speed stacks
-        if (attackerData.getAttribute() == AttributeType.SPEED) {
-            double maxStacks = 0.10 + (attackerData.getLevel() - 1) * 0.02; // 10% to 20%
-            if (attackerFlags.speedAdrenalineStacks < maxStacks) {
-                attackerFlags.speedAdrenalineStacks += 0.02;
-                attackerFlags.speedLastCombatTime = System.currentTimeMillis();
-            }
-        }
-
-        // DISRUPTION PASSIVE: Desync - first hit adds cooldown
+        // DISRUPTION PASSIVE: Desync - first hit per fight adds cooldowns (+10s base +2s/level, max 20s)
         if (attackerData.getAttribute() == AttributeType.DISRUPTION && event.getEntity() instanceof Player) {
             Player target = (Player) event.getEntity();
             PlayerData targetData = plugin.getPlayerData(target.getUniqueId());
             AbilityManager.AbilityFlags targetFlags = plugin.getAbilityManager().getAbilityFlags(target.getUniqueId());
 
             if (targetData != null && !targetFlags.disruptionDesyncUsed) {
-                int cooldownAdd = 10 + (attackerData.getLevel() - 1) * 2; // 10s to 20s
+                int cooldownAdd = Math.min(20, 10 + attackerData.getLevel() * 2);
                 targetData.setCooldown("melee", targetData.getRemainingCooldown("melee") + (cooldownAdd * 1000));
                 targetData.setCooldown("support", targetData.getRemainingCooldown("support") + (cooldownAdd * 1000));
                 targetFlags.disruptionDesyncUsed = true;
-                targetFlags.disruptionDesyncCooldown = System.currentTimeMillis() + 30000; // Reset after 30s
-                target.sendMessage("§cDesync! +" + cooldownAdd + "s to next ability!");
+                targetFlags.disruptionDesyncCooldown = System.currentTimeMillis() + 30000;
+                target.sendMessage("§cDesync! +" + cooldownAdd + "s to abilities!");
             }
         }
 
-        // CONTROL PASSIVE: Suppression - add cooldown once per fight
-        if (attackerData.getAttribute() == AttributeType.CONTROL && event.getEntity() instanceof Player) {
-            Player target = (Player) event.getEntity();
-            PlayerData targetData = plugin.getPlayerData(target.getUniqueId());
-            AbilityManager.AbilityFlags targetFlags = plugin.getAbilityManager().getAbilityFlags(target.getUniqueId());
-
-            if (targetData != null && (targetFlags.suppressionCooldownAdded == 0 ||
-                    System.currentTimeMillis() - targetFlags.suppressionCooldownAdded > 60000)) {
-                int cooldownAdd = 10 + attackerData.getLevel(); // 10s to 15s
-                targetData.setCooldown("melee", targetData.getRemainingCooldown("melee") + (cooldownAdd * 1000));
-                targetData.setCooldown("support", targetData.getRemainingCooldown("support") + (cooldownAdd * 1000));
-                targetFlags.suppressionCooldownAdded = System.currentTimeMillis();
-                target.sendMessage("§c+" + cooldownAdd + "s ability cooldown!");
+        // PRESSURE PASSIVE: Oppression - bonus damage to low HP targets
+        if (event.getEntity() instanceof Player) {
+            Player victim = (Player) event.getEntity();
+            AbilityManager.AbilityFlags victimFlags = plugin.getAbilityManager().getAbilityFlags(victim.getUniqueId());
+            if (victimFlags.oppressionDamageBonus > 0) {
+                event.setDamage(event.getDamage() * (1.0 + victimFlags.oppressionDamageBonus));
             }
         }
 
@@ -615,19 +596,6 @@ public class EventListener implements Listener {
                 // DEFENSE SUPPORT: Shield Wall
                 if (victimFlags.damageReduction > 0) {
                     event.setDamage(event.getDamage() * (1.0 - victimFlags.damageReduction));
-                }
-
-                // PERSISTENCE PASSIVE: Endure - damage reduction below 50% HP
-                if (victimData.getAttribute() == AttributeType.PERSISTENCE) {
-                    if (victim.getHealth() / victim.getMaxHealth() < 0.5) {
-                        double reduction = 0.10 + (victimData.getLevel() - 1) * 0.05;
-                        event.setDamage(event.getDamage() * (1.0 - reduction));
-                    }
-                }
-
-                // PERSISTENCE MELEE: Stored Pain - store damage
-                if (victimFlags.persistenceStorageActive) {
-                    victimFlags.persistenceStoredDamage += event.getDamage() * 0.25;
                 }
 
                 // VISION MELEE: Target Mark - increased damage taken
@@ -666,14 +634,6 @@ public class EventListener implements Listener {
                     event.setDamage(event.getDamage() * attackerFlags.dragonDominionDamage);
                 }
 
-                // PRESSURE PASSIVE: Oppression - enemies below 50% HP take more damage
-                if (attackerData.getAttribute() == AttributeType.PRESSURE) {
-                    if (victim.getHealth() / victim.getMaxHealth() < 0.5) {
-                        double oppressionBonus = 0.10 + (attackerData.getLevel() - 1) * 0.03; // 10% to 25%
-                        event.setDamage(event.getDamage() * (1.0 + oppressionBonus));
-                    }
-                }
-
                 // PRESSURE SUPPORT: Intimidation Field - damage reduction
                 if (victimFlags.pressureDamageDealt > 0) {
                     event.setDamage(event.getDamage() * (1.0 - victimFlags.pressureDamageDealt));
@@ -685,23 +645,6 @@ public class EventListener implements Listener {
                 }
                 if (victimFlags.pressureDamageTaken > 0) {
                     event.setDamage(event.getDamage() * (1.0 + victimFlags.pressureDamageTaken));
-                }
-
-                // ANCHOR PASSIVE: Immobile - damage reduction while standing still
-                if (victimData.getAttribute() == AttributeType.ANCHOR) {
-                    long timeSinceMove = System.currentTimeMillis() - victimFlags.anchorLastMovedTime;
-                    if (timeSinceMove >= 2000) { // 2 seconds
-                        double reduction = 0.10 + (victimData.getLevel() - 1) * 0.05; // 10% to 35%
-                        event.setDamage(event.getDamage() * (1.0 - reduction));
-                    }
-                }
-
-                // RISK PASSIVE: Gambler's Edge - bonus damage below 40% HP
-                if (attackerData.getAttribute() == AttributeType.RISK) {
-                    if (attacker.getHealth() / attacker.getMaxHealth() < 0.4) {
-                        double gamblerBonus = 0.20 + (attackerData.getLevel() - 1) * 0.05; // 20% to 45%
-                        event.setDamage(event.getDamage() * (1.0 + gamblerBonus));
-                    }
                 }
 
                 // RISK SUPPORT: Double Or Nothing damage bonus/penalty
@@ -755,14 +698,6 @@ public class EventListener implements Listener {
 
         AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
 
-        // PERSISTENCE SUPPORT: Last Stand - cannot drop below 1 heart
-        if (flags.lastStand && player.getHealth() - event.getFinalDamage() < 0.5) {
-            event.setCancelled(true);
-            player.setHealth(0.5);
-            flags.lastStand = false;
-            player.sendMessage("§6Last Stand saved you!");
-            return;
-        }
     }
 
     /**
@@ -830,32 +765,20 @@ public class EventListener implements Listener {
             data.decrementLevel();
         }
 
-        // HEALTH PASSIVE: Vitality - lose hearts on death
+        // HEALTH PASSIVE: Vitality - lose 1 heart per level on death
         if (data.getAttribute() == AttributeType.HEALTH) {
             AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
             if (flags.vitalityHearts > 0) {
-                flags.vitalityHearts -= 2.0; // Lose 1 heart
-                if (flags.vitalityHearts < 0) flags.vitalityHearts = 0;
+                double heartsLost = data.getLevel() * 2.0; // Lose (level) hearts
+                flags.vitalityHearts = Math.max(0, flags.vitalityHearts - heartsLost);
                 applyMaxHealthBonus(player);
             }
         }
 
-        // MELEE PASSIVE: Bloodlust - lose all stacks
+        // MELEE PASSIVE: Bloodlust - lose all stacks on death
         if (data.getAttribute() == AttributeType.MELEE) {
             AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
             flags.meleeBloodlustStacks = 0.0;
-        }
-
-        // TEMPO PASSIVE: Momentum - lose all stacks
-        if (data.getAttribute() == AttributeType.TEMPO) {
-            AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
-            flags.momentumStacks = 0.0;
-        }
-
-        // SPEED PASSIVE: Adrenaline - lose all stacks
-        if (data.getAttribute() == AttributeType.SPEED) {
-            AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
-            flags.speedAdrenalineStacks = 0.0;
         }
 
         if (plugin.isLevelLossOnDeath()) {
@@ -874,19 +797,19 @@ public class EventListener implements Listener {
                     killerData.incrementLevel();
                 }
 
-                // MELEE PASSIVE: Bloodlust - gain stacks
+                // MELEE PASSIVE: Bloodlust - +1.5% per PvP kill, max 10% +1%/level (L5=15%)
                 if (killerData.getAttribute() == AttributeType.MELEE) {
                     AbilityManager.AbilityFlags killerFlags = plugin.getAbilityManager().getAbilityFlags(killer.getUniqueId());
-                    double maxStacks = 0.10 + (killerData.getLevel() - 1) * 0.02;
-                    killerFlags.meleeBloodlustStacks = Math.min(maxStacks, killerFlags.meleeBloodlustStacks + 0.02);
-                    killer.sendMessage("§aBloodlust: +" + (int)(killerFlags.meleeBloodlustStacks * 100) + "% damage");
+                    double maxStacks = 0.10 + killerData.getLevel() * 0.01; // 11% at L1, 15% at L5
+                    killerFlags.meleeBloodlustStacks = Math.min(maxStacks, killerFlags.meleeBloodlustStacks + 0.015);
+                    killer.sendMessage("§aBloodlust: +" + String.format("%.1f", killerFlags.meleeBloodlustStacks * 100) + "% damage");
                 }
 
-                // HEALTH PASSIVE: Vitality - gain hearts
+                // HEALTH PASSIVE: Vitality - +1 heart per PvP kill, max = level hearts
                 if (killerData.getAttribute() == AttributeType.HEALTH) {
                     AbilityManager.AbilityFlags killerFlags = plugin.getAbilityManager().getAbilityFlags(killer.getUniqueId());
-                    double heartsPerLevel = 2.0 * killerData.getLevel();
-                    killerFlags.vitalityHearts = Math.min(heartsPerLevel, killerFlags.vitalityHearts + 2.0);
+                    double maxHearts = killerData.getLevel() * 2.0; // L1=1 heart, L5=5 hearts (in half-hearts)
+                    killerFlags.vitalityHearts = Math.min(maxHearts, killerFlags.vitalityHearts + 2.0);
                     applyMaxHealthBonus(killer);
                     killer.sendMessage("§aVitality: +" + (int)(killerFlags.vitalityHearts / 2.0) + " hearts");
                 }

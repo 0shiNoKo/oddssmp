@@ -4,8 +4,8 @@ import org.bukkit.ChatColor;
 
 public enum Tier {
     STABLE(ChatColor.GREEN, 1.0, 0.0, 120, 50),
-    WARPED(ChatColor.LIGHT_PURPLE, 1.3, 0.15, 90, 35),
-    EXTREME(ChatColor.RED, 1.6, 0.35, 60, 15);
+    WARPED(ChatColor.LIGHT_PURPLE, 1.25, 0.15, 90, 35),
+    EXTREME(ChatColor.RED, 1.5, 0.35, 60, 15);
 
     private final ChatColor color;
     private final double effectMultiplier;
