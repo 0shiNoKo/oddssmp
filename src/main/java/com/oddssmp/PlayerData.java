@@ -6,7 +6,6 @@ import java.util.UUID;
 
 public class PlayerData {
     private AttributeType attribute;
-    private Tier tier;
     private int level;
     private int kills;
     private int deaths;
@@ -18,7 +17,6 @@ public class PlayerData {
 
     public PlayerData() {
         this.attribute = null;
-        this.tier = null;
         this.level = 1;
         this.kills = 0;
         this.deaths = 0;
@@ -27,10 +25,9 @@ public class PlayerData {
         this.lastAttacker = null;
     }
 
-    public PlayerData(AttributeType attribute, Tier tier) {
+    public PlayerData(AttributeType attribute) {
         this();
         this.attribute = attribute;
-        this.tier = tier;
     }
 
     // Getters and Setters
@@ -40,14 +37,6 @@ public class PlayerData {
 
     public void setAttribute(AttributeType attribute) {
         this.attribute = attribute;
-    }
-
-    public Tier getTier() {
-        return tier;
-    }
-
-    public void setTier(Tier tier) {
-        this.tier = tier;
     }
 
     public int getLevel() {
@@ -120,13 +109,6 @@ public class PlayerData {
      */
     public double getLevelScaling() {
         return 1.0 + ((level - 1) * 0.1);
-    }
-
-    /**
-     * Get total multiplier (tier * level scaling)
-     */
-    public double getTotalMultiplier() {
-        return tier.getEffectMultiplier() * getLevelScaling();
     }
 
     // Combat tracking

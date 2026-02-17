@@ -102,7 +102,6 @@ public class EventListener implements Listener {
     public void playSlotAnimationAndAssign(Player player) {
         // Pre-determine the final result
         AttributeType finalAttribute = AttributeType.getRandomAttribute(false);
-        Tier finalTier = Tier.getRandomTier();
 
         // Get all possible attributes for animation
         AttributeType[] allAttributes = AttributeType.values();
@@ -126,17 +125,15 @@ public class EventListener implements Listener {
                 if (tick >= nextSwitch) {
                     // Show current attribute
                     AttributeType showAttr;
-                    Tier showTier;
 
                     // After 40 ticks, start slowing down and eventually show final
                     if (tick > 60) {
                         // Final reveal
                         showAttr = finalAttribute;
-                        showTier = finalTier;
 
                         // Show final result
                         player.sendTitle(
-                            showTier.getColor() + "§l" + showAttr.getIcon() + " " + showAttr.getDisplayName(),
+                            "§e§l" + showAttr.getIcon() + " " + showAttr.getDisplayName(),
                             "§7Your attribute has been chosen!",
                             0, 60, 20
                         );
@@ -146,11 +143,11 @@ public class EventListener implements Listener {
                         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
 
                         // Actually assign the attribute
-                        PlayerData newData = new PlayerData(finalAttribute, finalTier);
+                        PlayerData newData = new PlayerData(finalAttribute);
                         plugin.setPlayerData(player.getUniqueId(), newData);
 
                         // Play particles
-                        ParticleManager.playSupportParticles(player, finalAttribute, finalTier, 1);
+                        ParticleManager.playSupportParticles(player, finalAttribute, 1);
 
                         // Update tab
                         plugin.updatePlayerTab(player);
@@ -158,7 +155,7 @@ public class EventListener implements Listener {
                         // Send chat message
                         player.sendMessage("");
                         player.sendMessage("§6§l✦ §aYou have been assigned an attribute! §6§l✦");
-                        player.sendMessage("  " + finalTier.getColor() + finalTier.name() + " " + finalAttribute.getIcon() + " " + finalAttribute.getDisplayName());
+                        player.sendMessage("  §e" + finalAttribute.getIcon() + " " + finalAttribute.getDisplayName());
                         player.sendMessage("");
 
                         cancel();
@@ -173,11 +170,10 @@ public class EventListener implements Listener {
                     }
 
                     showAttr = allAttributes[currentIndex];
-                    showTier = Tier.values()[(int)(Math.random() * 3)];
 
                     // Show spinning title
                     player.sendTitle(
-                        showTier.getColor() + showAttr.getIcon() + " " + showAttr.getDisplayName(),
+                        "§e" + showAttr.getIcon() + " " + showAttr.getDisplayName(),
                         "§e§l« ROLLING »",
                         0, 10, 0
                     );
@@ -206,10 +202,10 @@ public class EventListener implements Listener {
      * Grant boss attribute and broadcast
      */
     private void grantBossAttribute(Player player, AttributeType attribute, String itemName, String color) {
-        PlayerData newData = new PlayerData(attribute, Tier.EXTREME);
+        PlayerData newData = new PlayerData(attribute);
         plugin.setPlayerData(player.getUniqueId(), newData);
 
-        ParticleManager.playSupportParticles(player, attribute, Tier.EXTREME, 1);
+        ParticleManager.playSupportParticles(player, attribute, 1);
 
         Bukkit.broadcastMessage("");
         Bukkit.broadcastMessage("§c§l⚠ " + color + "§l" + itemName + " OBTAINED §c§l⚠");
@@ -310,7 +306,7 @@ public class EventListener implements Listener {
             data.incrementLevel();
 
             // Effects
-            ParticleManager.playSupportParticles(player, data.getAttribute(), data.getTier(), data.getLevel());
+            ParticleManager.playSupportParticles(player, data.getAttribute(), data.getLevel());
             player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.5f);
 
             // Save and update
@@ -319,55 +315,6 @@ public class EventListener implements Listener {
 
             player.sendMessage("§a§l✦ UPGRADED! §7" + data.getAttribute().getDisplayName() +
                     " §aLevel " + oldLevel + " → " + data.getLevel() + "!");
-            return;
-        }
-
-        // Handle Tier Upgrader
-        if (OddsSMP.isTierUpgrader(item)) {
-            event.setCancelled(true);
-
-            if (data == null || data.getAttribute() == null) {
-                player.sendMessage("§cYou don't have an attribute to upgrade!");
-                return;
-            }
-
-            Tier currentTier = data.getTier();
-            Tier newTier = null;
-
-            // Determine next tier
-            if (currentTier == Tier.STABLE) {
-                newTier = Tier.WARPED;
-            } else if (currentTier == Tier.WARPED) {
-                newTier = Tier.EXTREME;
-            } else {
-                player.sendMessage("§cYour attribute is already at the highest tier (Extreme)!");
-                return;
-            }
-
-            // Consume item
-            item.setAmount(item.getAmount() - 1);
-
-            // Upgrade tier
-            data.setTier(newTier);
-
-            // Effects
-            ParticleManager.playSupportParticles(player, data.getAttribute(), newTier, data.getLevel());
-            player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
-            player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 0.3f, 1.5f);
-
-            // Save and update
-            plugin.savePlayerData(player.getUniqueId());
-            plugin.updatePlayerTab(player);
-
-            player.sendMessage("");
-            player.sendMessage("§5§l§m                                                    ");
-            player.sendMessage("§5§l⚡ TIER UPGRADED! ⚡");
-            player.sendMessage("");
-            player.sendMessage("  §7" + data.getAttribute().getIcon() + " " + data.getAttribute().getDisplayName());
-            player.sendMessage("  " + currentTier.getColor() + currentTier.name() + " §7→ " + newTier.getColor() + "§l" + newTier.name());
-            player.sendMessage("");
-            player.sendMessage("§5§l§m                                                    ");
-            player.sendMessage("");
             return;
         }
 
@@ -397,21 +344,20 @@ public class EventListener implements Listener {
 
             // Get new random attribute
             AttributeType newAttr = AttributeType.getRandomAttribute(false);
-            Tier newTier = Tier.getRandomTier();
 
             // Set new data (level resets to 1)
-            PlayerData newData = new PlayerData(newAttr, newTier);
+            PlayerData newData = new PlayerData(newAttr);
             plugin.setPlayerData(player.getUniqueId(), newData);
 
             // Effects
-            ParticleManager.playSupportParticles(player, newAttr, newTier, 1);
+            ParticleManager.playSupportParticles(player, newAttr, 1);
             player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.0f, 1.2f);
 
             // Update tab
             plugin.updatePlayerTab(player);
 
-            player.sendMessage("§d§l✦ REROLLED! §7" + oldAttr.getDisplayName() + " §d→ " +
-                    newTier.getColor() + newTier.name() + " " + newAttr.getIcon() + " " + newAttr.getDisplayName() + "§d!");
+            player.sendMessage("§d§l✦ REROLLED! §7" + oldAttr.getDisplayName() + " §d→ §e" +
+                    newAttr.getIcon() + " " + newAttr.getDisplayName() + "§d!");
             return;
         }
     }

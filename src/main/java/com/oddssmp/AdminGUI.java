@@ -204,31 +204,6 @@ public class AdminGUI {
                 "",
                 "§e§lLeft: §7-0.25s  §e§lRight: §7+0.25s")));
 
-        // Tier Multipliers (global settings)
-        gui.setItem(37, createItem(Material.LIME_DYE, "§a§lStable Tier", Arrays.asList(
-                "§7Effect: §e" + (int)(settings.getStableMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getStableCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getStableDrawback() * 100) + "%",
-                "",
-                "§e§lLeft: §7-10s CD  §e§lRight: §7+10s CD",
-                "§e§lShift+Left: §7-10% effect")));
-
-        gui.setItem(38, createItem(Material.PURPLE_DYE, "§d§lWarped Tier", Arrays.asList(
-                "§7Effect: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getWarpedCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getWarpedDrawback() * 100) + "%",
-                "",
-                "§e§lLeft: §7-10s CD  §e§lRight: §7+10s CD",
-                "§e§lShift+Left: §7-10% effect")));
-
-        gui.setItem(39, createItem(Material.RED_DYE, "§c§lExtreme Tier", Arrays.asList(
-                "§7Effect: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getExtremeCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getExtremeDrawback() * 100) + "%",
-                "",
-                "§e§lLeft: §7-10s CD  §e§lRight: §7+10s CD",
-                "§e§lShift+Left: §7-10% effect")));
-
         // Quick presets
         gui.setItem(45, createItem(Material.PAPER, "§e§lPreset: Balanced", Arrays.asList(
                 "§7Standard competitive values",
@@ -279,27 +254,9 @@ public class AdminGUI {
     public void openCooldownAdjuster(Player admin, AttributeType attribute, String abilityType) {
         Inventory gui = Bukkit.createInventory(null, 27, "§e§l" + abilityType + " Cooldown: " + attribute.getDisplayName());
 
-        // Stable tier
-        gui.setItem(10, createItem(Material.LIME_CONCRETE, "§a§lStable Tier", Arrays.asList(
+        // Base cooldown
+        gui.setItem(13, createItem(Material.CLOCK, "§e§lBase Cooldown", Arrays.asList(
                 "§7Current: §e120s",
-                "",
-                "§e§lLeft: §7-10s",
-                "§e§lRight: §7+10s",
-                "§e§lShift+Left: §7-30s",
-                "§e§lShift+Right: §7+30s")));
-
-        // Warped tier
-        gui.setItem(12, createItem(Material.PURPLE_CONCRETE, "§d§lWarped Tier", Arrays.asList(
-                "§7Current: §e90s",
-                "",
-                "§e§lLeft: §7-10s",
-                "§e§lRight: §7+10s",
-                "§e§lShift+Left: §7-30s",
-                "§e§lShift+Right: §7+30s")));
-
-        // Extreme tier
-        gui.setItem(14, createItem(Material.RED_CONCRETE, "§c§lExtreme Tier", Arrays.asList(
-                "§7Current: §e60s",
                 "",
                 "§e§lLeft: §7-10s",
                 "§e§lRight: §7+10s",
@@ -334,8 +291,7 @@ public class AdminGUI {
 
             List<String> lore = new ArrayList<>();
             if (data != null && data.getAttribute() != null) {
-                lore.add("§7Attribute: " + data.getTier().getColor() + data.getAttribute().getDisplayName());
-                lore.add("§7Tier: " + data.getTier().getColor() + data.getTier().name());
+                lore.add("§7Attribute: §e" + data.getAttribute().getDisplayName());
                 lore.add("§7Level: §e" + data.getLevel() + "§7/§e5");
                 lore.add("§7Kills: §a" + data.getKills());
                 lore.add("§7Deaths: §c" + data.getDeaths());
@@ -374,13 +330,12 @@ public class AdminGUI {
 
         // Assign Random
         gui.setItem(10, createItem(Material.ENDER_PEARL, "§a§lAssign Random Attribute", Arrays.asList(
-                "§7Assigns a random attribute",
-                "§7with random tier")));
+                "§7Assigns a random attribute")));
 
         // Reroll
         gui.setItem(12, createItem(Material.BLAZE_POWDER, "§e§lReroll Attribute", Arrays.asList(
                 "§7Reroll current attribute",
-                "§7New random attribute + tier")));
+                "§7Get a new random attribute")));
 
         // Upgrade
         gui.setItem(14, createItem(Material.EXPERIENCE_BOTTLE, "§b§lUpgrade Level", Arrays.asList(
@@ -396,11 +351,6 @@ public class AdminGUI {
         gui.setItem(19, createItem(Material.ENCHANTED_BOOK, "§d§lChoose Specific Attribute", Arrays.asList(
                 "§7Open attribute selector",
                 "§7Pick exact attribute")));
-
-        // Choose Tier
-        gui.setItem(21, createItem(Material.NETHER_STAR, "§6§lChange Tier", Arrays.asList(
-                "§7Change attribute tier",
-                "§7Stable/Warped/Extreme")));
 
         // Reset
         gui.setItem(23, createItem(Material.BARRIER, "§c§lReset Player", Arrays.asList(
@@ -472,60 +422,12 @@ public class AdminGUI {
             AttributeType attr = attributes[i];
             List<String> lore = new ArrayList<>();
             lore.add("§7Click to assign this attribute");
-            lore.add("§7Tier will be randomized");
-            lore.add("");
-            lore.add("§e§lLeft Click: §7Random Tier");
-            lore.add("§a§lShift + Left: §7Force STABLE");
-            lore.add("§d§lShift + Right: §7Force WARPED");
-            lore.add("§c§lRight Click: §7Force EXTREME");
 
             gui.setItem(i, createItem(materials[i], attr.getIcon() + " §e" + attr.getDisplayName(), lore));
         }
 
         // Back button
         gui.setItem(49, createItem(Material.BARRIER, "§c§lBack", Arrays.asList("§7Return to player options")));
-
-        admin.openInventory(gui);
-    }
-
-    /**
-     * Tier selector menu
-     */
-    public void openTierSelector(Player admin, Player target) {
-        Inventory gui = Bukkit.createInventory(null, 27, "§6§lSelect Tier for " + target.getName());
-
-        PlayerData data = plugin.getPlayerData(target.getUniqueId());
-        if (data == null || data.getAttribute() == null) {
-            admin.sendMessage("§cPlayer must have an attribute first!");
-            return;
-        }
-
-        // Stable
-        gui.setItem(11, createItem(Material.LIME_DYE, "§a§lSTABLE TIER", Arrays.asList(
-                "§7Base effect, no drawback",
-                "§7Cooldown: 120s",
-                "§7Effect: 100%",
-                "",
-                "§7Current: " + data.getAttribute().getDisplayName())));
-
-        // Warped
-        gui.setItem(13, createItem(Material.PURPLE_DYE, "§d§lWARPED TIER", Arrays.asList(
-                "§7Stronger + minor drawback",
-                "§7Cooldown: 90s",
-                "§7Effect: 130%",
-                "",
-                "§7Current: " + data.getAttribute().getDisplayName())));
-
-        // Extreme
-        gui.setItem(15, createItem(Material.RED_DYE, "§c§lEXTREME TIER", Arrays.asList(
-                "§7Strongest + major drawback",
-                "§7Cooldown: 60s",
-                "§7Effect: 160%",
-                "",
-                "§7Current: " + data.getAttribute().getDisplayName())));
-
-        // Back button
-        gui.setItem(22, createItem(Material.BARRIER, "§7§lBack", Arrays.asList("§7Return to player options")));
 
         admin.openInventory(gui);
     }
@@ -574,8 +476,8 @@ public class AdminGUI {
     public void openServerStats(Player admin) {
         Inventory gui = Bukkit.createInventory(null, 54, "§a§lServer Statistics");
 
-        // Count players by tier
-        int stableCount = 0, warpedCount = 0, extremeCount = 0, noAttrCount = 0;
+        // Count players
+        int withAttrCount = 0, noAttrCount = 0;
         Player topKiller = null, topLevel = null;
         int maxKills = 0, maxLevel = 0;
 
@@ -586,11 +488,7 @@ public class AdminGUI {
                 continue;
             }
 
-            switch (data.getTier()) {
-                case STABLE: stableCount++; break;
-                case WARPED: warpedCount++; break;
-                case EXTREME: extremeCount++; break;
-            }
+            withAttrCount++;
 
             if (data.getKills() > maxKills) {
                 maxKills = data.getKills();
@@ -603,21 +501,11 @@ public class AdminGUI {
             }
         }
 
-        // Tier distribution
-        gui.setItem(10, createItem(Material.LIME_WOOL, "§a§lStable Tier Players", Arrays.asList(
-                "§7Count: §e" + stableCount,
+        // Player distribution
+        gui.setItem(10, createItem(Material.LIME_WOOL, "§a§lPlayers with Attributes", Arrays.asList(
+                "§7Count: §e" + withAttrCount,
                 "§7Percentage: §e" + (Bukkit.getOnlinePlayers().size() > 0 ?
-                        (stableCount * 100 / Bukkit.getOnlinePlayers().size()) : 0) + "%")));
-
-        gui.setItem(12, createItem(Material.PURPLE_WOOL, "§d§lWarped Tier Players", Arrays.asList(
-                "§7Count: §e" + warpedCount,
-                "§7Percentage: §e" + (Bukkit.getOnlinePlayers().size() > 0 ?
-                        (warpedCount * 100 / Bukkit.getOnlinePlayers().size()) : 0) + "%")));
-
-        gui.setItem(14, createItem(Material.RED_WOOL, "§c§lExtreme Tier Players", Arrays.asList(
-                "§7Count: §e" + extremeCount,
-                "§7Percentage: §e" + (Bukkit.getOnlinePlayers().size() > 0 ?
-                        (extremeCount * 100 / Bukkit.getOnlinePlayers().size()) : 0) + "%")));
+                        (withAttrCount * 100 / Bukkit.getOnlinePlayers().size()) : 0) + "%")));
 
         gui.setItem(16, createItem(Material.GRAY_WOOL, "§7§lNo Attribute", Arrays.asList(
                 "§7Count: §e" + noAttrCount)));
@@ -724,12 +612,6 @@ public class AdminGUI {
         gui.setItem(16, createItem(Material.BELL, "§e§lBroadcast Settings", Arrays.asList(
                 "§7Server announcements",
                 "§7Level ups, kills, bosses",
-                "",
-                "§eClick to configure")));
-
-        gui.setItem(28, createItem(Material.NETHER_STAR, "§d§lTier Settings", Arrays.asList(
-                "§7Tier configuration",
-                "§7Cooldowns, effects, drawbacks",
                 "",
                 "§eClick to configure")));
 
@@ -1078,92 +960,6 @@ public class AdminGUI {
                         "§7Current: " + (plugin.isBroadcastBossDefeat() ? "§aEnabled" : "§cDisabled"),
                         "",
                         "§eClick to toggle")));
-
-        // Back button
-        gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
-
-        admin.openInventory(gui);
-    }
-
-    /**
-     * Tier Settings sub-menu
-     */
-    public void openTierSettings(Player admin) {
-        Inventory gui = Bukkit.createInventory(null, 54, "§d§lTier Settings");
-
-        AttributeSettings settings = plugin.getAttributeSettings();
-
-        // Row 1: Stable Tier
-        gui.setItem(10, createItem(Material.LIME_WOOL, "§a§lStable Tier", Arrays.asList(
-                "§7Base tier - no drawbacks",
-                "",
-                "§7Effect: §e" + (int)(settings.getStableMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getStableCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getStableDrawback() * 100) + "%")));
-
-        gui.setItem(11, createItem(Material.LIME_DYE, "§a§lStable Effect", Arrays.asList(
-                "§7Effect multiplier",
-                "",
-                "§7Current: §e" + (int)(settings.getStableMultiplier() * 100) + "%",
-                "",
-                "§eLeft Click: -10%",
-                "§eRight Click: +10%")));
-
-        gui.setItem(12, createItem(Material.CLOCK, "§a§lStable Cooldown", Arrays.asList(
-                "§7Base cooldown in seconds",
-                "",
-                "§7Current: §e" + settings.getStableCooldown() + "s",
-                "",
-                "§eLeft Click: -10s",
-                "§eRight Click: +10s")));
-
-        // Row 2: Warped Tier
-        gui.setItem(19, createItem(Material.PURPLE_WOOL, "§d§lWarped Tier", Arrays.asList(
-                "§7Enhanced tier - minor drawbacks",
-                "",
-                "§7Effect: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getWarpedCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getWarpedDrawback() * 100) + "%")));
-
-        gui.setItem(20, createItem(Material.PURPLE_DYE, "§d§lWarped Effect", Arrays.asList(
-                "§7Effect multiplier",
-                "",
-                "§7Current: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%",
-                "",
-                "§eLeft Click: -10%",
-                "§eRight Click: +10%")));
-
-        gui.setItem(21, createItem(Material.CLOCK, "§d§lWarped Cooldown", Arrays.asList(
-                "§7Base cooldown in seconds",
-                "",
-                "§7Current: §e" + settings.getWarpedCooldown() + "s",
-                "",
-                "§eLeft Click: -10s",
-                "§eRight Click: +10s")));
-
-        // Row 3: Extreme Tier
-        gui.setItem(28, createItem(Material.RED_WOOL, "§c§lExtreme Tier", Arrays.asList(
-                "§7Maximum tier - major drawbacks",
-                "",
-                "§7Effect: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%",
-                "§7Cooldown: §e" + settings.getExtremeCooldown() + "s",
-                "§7Drawback: §e" + (int)(settings.getExtremeDrawback() * 100) + "%")));
-
-        gui.setItem(29, createItem(Material.RED_DYE, "§c§lExtreme Effect", Arrays.asList(
-                "§7Effect multiplier",
-                "",
-                "§7Current: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%",
-                "",
-                "§eLeft Click: -10%",
-                "§eRight Click: +10%")));
-
-        gui.setItem(30, createItem(Material.CLOCK, "§c§lExtreme Cooldown", Arrays.asList(
-                "§7Base cooldown in seconds",
-                "",
-                "§7Current: §e" + settings.getExtremeCooldown() + "s",
-                "",
-                "§eLeft Click: -10s",
-                "§eRight Click: +10s")));
 
         // Back button
         gui.setItem(49, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to settings menu")));
@@ -1686,17 +1482,6 @@ public class AdminGUI {
                         "",
                         "§eClick to toggle")));
 
-        gui.setItem(26, createItem(
-                plugin.getParticleTierUpRaw() ? Material.NETHER_STAR : Material.FIREWORK_STAR,
-                "§6§lTier Up",
-                Arrays.asList(
-                        "§7Particles when upgrading tier",
-                        "§7(epic effects, ascension)",
-                        "",
-                        "§7Current: " + (plugin.getParticleTierUpRaw() ? "§aEnabled" : "§cDisabled"),
-                        "",
-                        "§eClick to toggle")));
-
         // Row 4: Boss Particles
         gui.setItem(27, createItem(Material.PAPER, "§5§l--- BOSS PARTICLES ---", Arrays.asList("§7Particle effects for bosses")));
 
@@ -1915,18 +1700,18 @@ public class AdminGUI {
 
         List<String> supportLore = new ArrayList<>(Arrays.asList(supportDesc));
         supportLore.add("");
-        supportLore.add("§7Cooldown: §e" + data.getTier().getCooldownSeconds() + "s");
-        supportLore.add("§7Effect: §e" + (int)(data.getTotalMultiplier() * 100) + "%");
+        supportLore.add("§7Cooldown: §e120s");
+        supportLore.add("§7Level: §e" + data.getLevel());
 
         List<String> meleeLore = new ArrayList<>(Arrays.asList(meleeDesc));
         meleeLore.add("");
-        meleeLore.add("§7Cooldown: §e" + data.getTier().getCooldownSeconds() + "s");
-        meleeLore.add("§7Effect: §e" + (int)(data.getTotalMultiplier() * 100) + "%");
+        meleeLore.add("§7Cooldown: §e120s");
+        meleeLore.add("§7Level: §e" + data.getLevel());
 
         List<String> passiveLore = new ArrayList<>(Arrays.asList(passiveDesc));
         passiveLore.add("");
         passiveLore.add("§7Always active");
-        passiveLore.add("§7Effect: §e" + (int)(data.getTotalMultiplier() * 100) + "%");
+        passiveLore.add("§7Level: §e" + data.getLevel());
 
         // Support ability
         gui.setItem(11, createItem(Material.EMERALD, "§a§lSupport Ability", supportLore));
@@ -1982,25 +1767,6 @@ public class AdminGUI {
             gui.setItem(i, createItem(materials[i], attr.getIcon() + " §e§l" + attr.getDisplayName(), lore));
         }
 
-        // Tier info
-        gui.setItem(45, createItem(Material.LIME_DYE, "§a§lStable Tier", Arrays.asList(
-                "§7Probability: §a50%",
-                "§7Effect: §e100%",
-                "§7Cooldown: §e120s",
-                "§7No drawbacks")));
-
-        gui.setItem(46, createItem(Material.PURPLE_DYE, "§d§lWarped Tier", Arrays.asList(
-                "§7Probability: §d35%",
-                "§7Effect: §e130%",
-                "§7Cooldown: §e90s",
-                "§7Minor drawbacks")));
-
-        gui.setItem(47, createItem(Material.RED_DYE, "§c§lExtreme Tier", Arrays.asList(
-                "§7Probability: §c15%",
-                "§7Effect: §e160%",
-                "§7Cooldown: §e60s",
-                "§c§lMajor drawbacks!")));
-
         // Level info
         gui.setItem(49, createItem(Material.EXPERIENCE_BOTTLE, "§b§lLevel System", Arrays.asList(
                 "§7Levels: §e1-5",
@@ -2049,15 +1815,6 @@ public class AdminGUI {
         // Passive ability
         gui.setItem(15, createItem(Material.BOOK, "§b§lPassive Ability", passiveLore));
 
-        // Tier scaling info
-        gui.setItem(22, createItem(Material.NETHER_STAR, "§6§lTier Scaling", Arrays.asList(
-                "§a§lStable: §7100% effect",
-                "§d§lWarped: §7130% effect",
-                "§c§lExtreme: §7160% effect",
-                "",
-                "§7Higher tiers = stronger but",
-                "§7with increased drawbacks!")));
-
         // Back button
         gui.setItem(18, createItem(Material.ARROW, "§7§lBack", Arrays.asList("§7Return to attribute list")));
 
@@ -2078,7 +1835,6 @@ public class AdminGUI {
         gui.setItem(5, createClickableItem(WeaponAltar.createDragonHeart(), "§eClick to receive"));
         gui.setItem(6, createClickableItem(OddsSMP.createUpgrader(), "§eClick to receive"));
         gui.setItem(7, createClickableItem(OddsSMP.createReroller(), "§eClick to receive"));
-        gui.setItem(8, createClickableItem(OddsSMP.createTierUpgrader(), "§eClick to receive"));
 
         // Label
         gui.setItem(0, createItem(Material.CHEST, "§e§lSpecial Items", Arrays.asList(
@@ -2147,8 +1903,7 @@ public class AdminGUI {
 
         List<String> lore = new ArrayList<>();
         if (data != null && data.getAttribute() != null) {
-            lore.add("§7Attribute: " + data.getTier().getColor() + data.getAttribute().getDisplayName());
-            lore.add("§7Tier: " + data.getTier().getColor() + data.getTier().name());
+            lore.add("§7Attribute: §e" + data.getAttribute().getDisplayName());
             lore.add("§7Level: §e" + data.getLevel() + "§7/§e5");
             lore.add("§7Kills: §a" + data.getKills());
             lore.add("§7Deaths: §c" + data.getDeaths());

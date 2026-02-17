@@ -58,7 +58,7 @@ public class AbilityManager {
 
         // Play particles and sound
         if (plugin.isParticleSupportAbility()) {
-            ParticleManager.playSupportParticles(player, data.getAttribute(), data.getTier(), data.getLevel());
+            ParticleManager.playSupportParticles(player, data.getAttribute(), data.getLevel());
         }
         playSupportSound(player, data.getAttribute());
 
@@ -123,7 +123,7 @@ public class AbilityManager {
 
         // Play particles and sound
         if (plugin.isParticleMeleeAbility()) {
-            ParticleManager.playMeleeParticles(attacker, target, data.getAttribute(), data.getTier());
+            ParticleManager.playMeleeParticles(attacker, target, data.getAttribute());
         }
         playMeleeSound(attacker, data.getAttribute());
 
@@ -935,7 +935,7 @@ public class AbilityManager {
         if (data == null || data.getAttribute() == null) return;
 
         if (plugin.isParticlePassiveAbility()) {
-            ParticleManager.playPassiveParticles(player, data.getAttribute(), data.getTier());
+            ParticleManager.playPassiveParticles(player, data.getAttribute());
         }
 
         int level = data.getLevel();

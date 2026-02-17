@@ -76,10 +76,6 @@ public class GUIListener implements Listener {
         else if (title.contains("Select Attribute")) {
             handleAttributeSelector(player, title, itemName, event.getClick());
         }
-        // Tier Selector
-        else if (title.contains("Select Tier")) {
-            handleTierSelector(player, title, itemName);
-        }
         // Cooldown Manager
         else if (title.contains("Cooldown Manager")) {
             handleCooldownManager(player, title, itemName, event.getClick());
@@ -360,66 +356,6 @@ public class GUIListener implements Listener {
             return;
         }
 
-        // Stable Tier
-        if (itemName.contains("Stable Tier")) {
-            if (clickType.isShiftClick()) {
-                double newMult = Math.max(0.5, settings.getStableMultiplier() - 0.1);
-                settings.setTierMultiplier(Tier.STABLE, newMult);
-                player.sendMessage("§aStable tier effect: §e" + (int)(newMult * 100) + "%");
-            } else if (clickType == ClickType.LEFT) {
-                int newCd = Math.max(10, settings.getStableCooldown() - 10);
-                settings.setTierCooldown(Tier.STABLE, newCd);
-                player.sendMessage("§aStable tier cooldown: §e" + newCd + "s");
-            } else if (clickType == ClickType.RIGHT) {
-                int newCd = Math.min(300, settings.getStableCooldown() + 10);
-                settings.setTierCooldown(Tier.STABLE, newCd);
-                player.sendMessage("§aStable tier cooldown: §e" + newCd + "s");
-            }
-            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
-            adminGUI.openAttributeValueEditor(player, attribute);
-            return;
-        }
-
-        // Warped Tier
-        if (itemName.contains("Warped Tier")) {
-            if (clickType.isShiftClick()) {
-                double newMult = Math.max(0.5, settings.getWarpedMultiplier() - 0.1);
-                settings.setTierMultiplier(Tier.WARPED, newMult);
-                player.sendMessage("§dWarped tier effect: §e" + (int)(newMult * 100) + "%");
-            } else if (clickType == ClickType.LEFT) {
-                int newCd = Math.max(10, settings.getWarpedCooldown() - 10);
-                settings.setTierCooldown(Tier.WARPED, newCd);
-                player.sendMessage("§dWarped tier cooldown: §e" + newCd + "s");
-            } else if (clickType == ClickType.RIGHT) {
-                int newCd = Math.min(300, settings.getWarpedCooldown() + 10);
-                settings.setTierCooldown(Tier.WARPED, newCd);
-                player.sendMessage("§dWarped tier cooldown: §e" + newCd + "s");
-            }
-            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
-            adminGUI.openAttributeValueEditor(player, attribute);
-            return;
-        }
-
-        // Extreme Tier
-        if (itemName.contains("Extreme Tier")) {
-            if (clickType.isShiftClick()) {
-                double newMult = Math.max(0.5, settings.getExtremeMultiplier() - 0.1);
-                settings.setTierMultiplier(Tier.EXTREME, newMult);
-                player.sendMessage("§cExtreme tier effect: §e" + (int)(newMult * 100) + "%");
-            } else if (clickType == ClickType.LEFT) {
-                int newCd = Math.max(10, settings.getExtremeCooldown() - 10);
-                settings.setTierCooldown(Tier.EXTREME, newCd);
-                player.sendMessage("§cExtreme tier cooldown: §e" + newCd + "s");
-            } else if (clickType == ClickType.RIGHT) {
-                int newCd = Math.min(300, settings.getExtremeCooldown() + 10);
-                settings.setTierCooldown(Tier.EXTREME, newCd);
-                player.sendMessage("§cExtreme tier cooldown: §e" + newCd + "s");
-            }
-            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
-            adminGUI.openAttributeValueEditor(player, attribute);
-            return;
-        }
-
         // Preset handlers
         if (itemName.contains("Preset: Balanced")) {
             if (clickType.isShiftClick()) {
@@ -486,7 +422,6 @@ public class GUIListener implements Listener {
             return;
         }
 
-        // Tier-specific cooldown adjustments
         player.sendMessage("§e§lCooldown adjustment coming soon!");
         player.sendMessage("§7You clicked: " + itemName);
     }
@@ -532,8 +467,6 @@ public class GUIListener implements Listener {
             downgradeLevel(player, target);
         } else if (itemName.contains("Choose Specific")) {
             adminGUI.openAttributeSelector(player, target);
-        } else if (itemName.contains("Change Tier")) {
-            adminGUI.openTierSelector(player, target);
         } else if (itemName.contains("Reset Player")) {
             resetPlayer(player, target);
         } else if (itemName.contains("Remove Attribute")) {
@@ -567,61 +500,10 @@ public class GUIListener implements Listener {
         // Parse attribute from item name
         for (AttributeType attr : AttributeType.values()) {
             if (itemName.contains(attr.getDisplayName())) {
-                Tier tier;
-
-                // Determine tier based on click type
-                if (clickType == ClickType.SHIFT_LEFT) {
-                    tier = Tier.STABLE;
-                } else if (clickType == ClickType.SHIFT_RIGHT) {
-                    tier = Tier.WARPED;
-                } else if (clickType == ClickType.RIGHT) {
-                    tier = Tier.EXTREME;
-                } else {
-                    tier = Tier.getRandomTier();
-                }
-
-                assignAttribute(player, target, attr, tier);
+                assignAttribute(player, target, attr);
                 adminGUI.openPlayerOptions(player, target);
                 break;
             }
-        }
-    }
-
-    private void handleTierSelector(Player player, String title, String itemName) {
-        String targetName = title.replace("§6§lSelect Tier for ", "");
-        Player target = Bukkit.getPlayer(targetName);
-
-        if (target == null) {
-            player.sendMessage("§cPlayer not found!");
-            player.closeInventory();
-            return;
-        }
-
-        if (itemName.contains("Back")) {
-            adminGUI.openPlayerOptions(player, target);
-            return;
-        }
-
-        PlayerData data = plugin.getPlayerData(target.getUniqueId());
-        if (data == null || data.getAttribute() == null) {
-            player.sendMessage("§cPlayer must have an attribute first!");
-            return;
-        }
-
-        Tier newTier = null;
-        if (itemName.contains("STABLE")) newTier = Tier.STABLE;
-        else if (itemName.contains("WARPED")) newTier = Tier.WARPED;
-        else if (itemName.contains("EXTREME")) newTier = Tier.EXTREME;
-
-        if (newTier != null) {
-            data.setTier(newTier);
-            ParticleManager.playSupportParticles(target, data.getAttribute(), newTier, data.getLevel());
-            plugin.updatePlayerTab(target);
-
-            player.sendMessage("§aChanged " + target.getName() + "'s tier to " + newTier.getColor() + newTier.name());
-            target.sendMessage("§eYour tier was changed to " + newTier.getColor() + newTier.name());
-
-            adminGUI.openPlayerOptions(player, target);
         }
     }
 
@@ -772,8 +654,8 @@ public class GUIListener implements Listener {
                     plugin.getEventListener().removeAttributeEffects(p, oldAttribute);
                 }
 
-                plugin.setPlayerData(p.getUniqueId(), new PlayerData(AttributeType.DRAGON_EGG, Tier.EXTREME));
-                ParticleManager.playSupportParticles(p, AttributeType.DRAGON_EGG, Tier.EXTREME, 1);
+                plugin.setPlayerData(p.getUniqueId(), new PlayerData(AttributeType.DRAGON_EGG));
+                ParticleManager.playSupportParticles(p, AttributeType.DRAGON_EGG, 1);
                 plugin.updatePlayerTab(p);
                 plugin.getEventListener().applyDragonEggEffects(p);
                 p.sendMessage("§6§l§kA§r §c§lYOU RECEIVED THE DRAGON EGG §6§l§kA");
@@ -822,8 +704,6 @@ public class GUIListener implements Listener {
                 adminGUI.openBossSettings(player);
             } else if (itemName.contains("Broadcast Settings")) {
                 adminGUI.openBroadcastSettings(player);
-            } else if (itemName.contains("Tier Settings")) {
-                adminGUI.openTierSettings(player);
             } else if (itemName.contains("Multiplier Settings")) {
                 adminGUI.openMultiplierSettings(player);
             } else if (itemName.contains("Quick Presets")) {
@@ -868,12 +748,6 @@ public class GUIListener implements Listener {
         // Broadcast Settings sub-menu
         if (title.equals("§e§lBroadcast Settings")) {
             handleBroadcastSettings(player, itemName);
-            return;
-        }
-
-        // Tier Settings sub-menu
-        if (title.equals("§d§lTier Settings")) {
-            handleTierSettings(player, itemName, clickType, settings);
             return;
         }
 
@@ -1090,54 +964,6 @@ public class GUIListener implements Listener {
         }
         player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
         adminGUI.openBroadcastSettings(player);
-    }
-
-    private void handleTierSettings(Player player, String itemName, ClickType clickType, AttributeSettings settings) {
-        if (itemName.contains("Stable Effect")) {
-            if (clickType == ClickType.LEFT) {
-                settings.setTierMultiplier(Tier.STABLE, settings.getStableMultiplier() - 0.1);
-            } else {
-                settings.setTierMultiplier(Tier.STABLE, settings.getStableMultiplier() + 0.1);
-            }
-            player.sendMessage("§aStable tier effect: §e" + (int)(settings.getStableMultiplier() * 100) + "%");
-        } else if (itemName.contains("Stable Cooldown")) {
-            if (clickType == ClickType.LEFT) {
-                settings.setTierCooldown(Tier.STABLE, settings.getStableCooldown() - 10);
-            } else {
-                settings.setTierCooldown(Tier.STABLE, settings.getStableCooldown() + 10);
-            }
-            player.sendMessage("§aStable tier cooldown: §e" + settings.getStableCooldown() + "s");
-        } else if (itemName.contains("Warped Effect")) {
-            if (clickType == ClickType.LEFT) {
-                settings.setTierMultiplier(Tier.WARPED, settings.getWarpedMultiplier() - 0.1);
-            } else {
-                settings.setTierMultiplier(Tier.WARPED, settings.getWarpedMultiplier() + 0.1);
-            }
-            player.sendMessage("§dWarped tier effect: §e" + (int)(settings.getWarpedMultiplier() * 100) + "%");
-        } else if (itemName.contains("Warped Cooldown")) {
-            if (clickType == ClickType.LEFT) {
-                settings.setTierCooldown(Tier.WARPED, settings.getWarpedCooldown() - 10);
-            } else {
-                settings.setTierCooldown(Tier.WARPED, settings.getWarpedCooldown() + 10);
-            }
-            player.sendMessage("§dWarped tier cooldown: §e" + settings.getWarpedCooldown() + "s");
-        } else if (itemName.contains("Extreme Effect")) {
-            if (clickType == ClickType.LEFT) {
-                settings.setTierMultiplier(Tier.EXTREME, settings.getExtremeMultiplier() - 0.1);
-            } else {
-                settings.setTierMultiplier(Tier.EXTREME, settings.getExtremeMultiplier() + 0.1);
-            }
-            player.sendMessage("§cExtreme tier effect: §e" + (int)(settings.getExtremeMultiplier() * 100) + "%");
-        } else if (itemName.contains("Extreme Cooldown")) {
-            if (clickType == ClickType.LEFT) {
-                settings.setTierCooldown(Tier.EXTREME, settings.getExtremeCooldown() - 10);
-            } else {
-                settings.setTierCooldown(Tier.EXTREME, settings.getExtremeCooldown() + 10);
-            }
-            player.sendMessage("§cExtreme tier cooldown: §e" + settings.getExtremeCooldown() + "s");
-        }
-        player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
-        adminGUI.openTierSettings(player);
     }
 
     private void handleMultiplierSettings(Player player, String itemName, ClickType clickType, AttributeSettings settings) {
@@ -1390,9 +1216,6 @@ public class GUIListener implements Listener {
         } else if (itemName.contains("Attribute Remove")) {
             plugin.setParticleAttributeRemove(!plugin.getParticleAttributeRemoveRaw());
             player.sendMessage("§7Attribute remove particles " + (plugin.getParticleAttributeRemoveRaw() ? "§aenabled" : "§cdisabled"));
-        } else if (itemName.contains("Tier Up")) {
-            plugin.setParticleTierUp(!plugin.getParticleTierUpRaw());
-            player.sendMessage("§6Tier up particles " + (plugin.getParticleTierUpRaw() ? "§aenabled" : "§cdisabled"));
         }
         // Boss particles
         else if (itemName.contains("Boss Ambient")) {
@@ -1602,7 +1425,7 @@ public class GUIListener implements Listener {
         admin.sendMessage("§aStarted attribute roll for " + target.getName() + "!");
     }
 
-    private void assignAttribute(Player admin, Player target, AttributeType attr, Tier tier) {
+    private void assignAttribute(Player admin, Player target, AttributeType attr) {
         // Get old attribute for cleanup
         PlayerData oldData = plugin.getPlayerData(target.getUniqueId());
         AttributeType oldAttribute = oldData != null ? oldData.getAttribute() : null;
@@ -1613,9 +1436,9 @@ public class GUIListener implements Listener {
         }
 
         // Assign new attribute
-        PlayerData data = new PlayerData(attr, tier);
+        PlayerData data = new PlayerData(attr);
         plugin.setPlayerData(target.getUniqueId(), data);
-        ParticleManager.playSupportParticles(target, attr, tier, 1);
+        ParticleManager.playSupportParticles(target, attr, 1);
         plugin.updatePlayerTab(target);
 
         // Apply Dragon Egg effects if needed
@@ -1623,8 +1446,8 @@ public class GUIListener implements Listener {
             plugin.getEventListener().applyDragonEggEffects(target);
         }
 
-        admin.sendMessage("§aAssigned " + tier.getColor() + tier.name() + " " + attr.getDisplayName() + " §ato " + target.getName());
-        target.sendMessage("§aYou received " + tier.getColor() + tier.name() + " " + attr.getIcon() + " " + attr.getDisplayName() + "§a!");
+        admin.sendMessage("§aAssigned §e" + attr.getDisplayName() + " §ato " + target.getName());
+        target.sendMessage("§aYou received §e" + attr.getIcon() + " " + attr.getDisplayName() + "§a!");
     }
 
     private void rerollAttribute(Player admin, Player target) {
@@ -1651,7 +1474,7 @@ public class GUIListener implements Listener {
 
         int oldLevel = data.getLevel();
         data.incrementLevel();
-        ParticleManager.playSupportParticles(target, data.getAttribute(), data.getTier(), data.getLevel());
+        ParticleManager.playSupportParticles(target, data.getAttribute(), data.getLevel());
         plugin.updatePlayerTab(target);
 
         admin.sendMessage("§aUpgraded " + target.getName() + " from level " + oldLevel + " to " + data.getLevel());
@@ -1730,9 +1553,9 @@ public class GUIListener implements Listener {
         }
 
         // Grant Dragon Egg
-        PlayerData data = new PlayerData(AttributeType.DRAGON_EGG, Tier.EXTREME);
+        PlayerData data = new PlayerData(AttributeType.DRAGON_EGG);
         plugin.setPlayerData(target.getUniqueId(), data);
-        ParticleManager.playSupportParticles(target, AttributeType.DRAGON_EGG, Tier.EXTREME, 1);
+        ParticleManager.playSupportParticles(target, AttributeType.DRAGON_EGG, 1);
         plugin.updatePlayerTab(target);
 
         // Broadcast announcement
@@ -1764,8 +1587,8 @@ public class GUIListener implements Listener {
         }
 
         // Test all three particle types
-        ParticleManager.playSupportParticles(target, data.getAttribute(), data.getTier(), data.getLevel());
-        ParticleManager.playPassiveParticles(target, data.getAttribute(), data.getTier());
+        ParticleManager.playSupportParticles(target, data.getAttribute(), data.getLevel());
+        ParticleManager.playPassiveParticles(target, data.getAttribute());
 
         // Find nearby entity for melee test
         org.bukkit.entity.Entity nearestEntity = target.getNearbyEntities(10, 10, 10).stream()
@@ -1774,7 +1597,7 @@ public class GUIListener implements Listener {
                 .orElse(null);
 
         if (nearestEntity != null) {
-            ParticleManager.playMeleeParticles(target, nearestEntity, data.getAttribute(), data.getTier());
+            ParticleManager.playMeleeParticles(target, nearestEntity, data.getAttribute());
         }
 
         admin.sendMessage("§aTested abilities for " + target.getName());
@@ -1862,8 +1685,6 @@ public class GUIListener implements Listener {
             itemToGive = OddsSMP.createUpgrader();
         } else if (itemName.contains("Attribute Reroller")) {
             itemToGive = OddsSMP.createReroller();
-        } else if (itemName.contains("Tier Upgrader")) {
-            itemToGive = OddsSMP.createTierUpgrader();
         } else {
             // Check for attribute weapons
             for (AttributeWeapon weapon : AttributeWeapon.values()) {

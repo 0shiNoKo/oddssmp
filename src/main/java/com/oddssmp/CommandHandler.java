@@ -79,11 +79,11 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /smp assign <player> [attribute] [tier]
+     * /smp assign <player> [attribute]
      */
     private boolean handleAssign(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("§cUsage: /smp assign <player> [attribute] [tier]");
+            sender.sendMessage("§cUsage: /smp assign <player> [attribute]");
             return true;
         }
 
@@ -94,7 +94,6 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         }
 
         AttributeType attribute;
-        Tier tier;
 
         // Parse attribute
         if (args.length >= 3) {
@@ -102,29 +101,12 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 attribute = AttributeType.valueOf(args[2].toUpperCase().replace(" ", "_"));
             } catch (IllegalArgumentException e) {
                 sender.sendMessage("§cInvalid attribute! Use tab completion.");
-                sender.sendMessage("§cAvailable: melee, health, wealth, defense, speed, control, range, pressure, tempo, disruption, vision, persistence, risk, anchor, transfer, wither, warden, breeze, dragon_egg");
+                sender.sendMessage("§cAvailable: melee, health, wealth, defense, speed, control, range, pressure, tempo, disruption, vision, risk, transfer, wither, warden, breeze, dragon_egg");
                 return true;
             }
         } else {
             // Random attribute (exclude Dragon Egg unless specified)
             attribute = AttributeType.getRandomAttribute(false);
-        }
-
-        // Parse tier
-        if (args.length >= 4) {
-            try {
-                tier = Tier.valueOf(args[3].toUpperCase());
-            } catch (IllegalArgumentException e) {
-                sender.sendMessage("§cInvalid tier! Options: STABLE, WARPED, EXTREME");
-                return true;
-            }
-        } else {
-            // Random tier based on probability
-            if (attribute == AttributeType.DRAGON_EGG) {
-                tier = Tier.EXTREME;
-            } else {
-                tier = Tier.getRandomTier();
-            }
         }
 
         // Get old attribute to clean up effects
@@ -137,11 +119,11 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         }
 
         // Create and assign player data
-        PlayerData data = new PlayerData(attribute, tier);
+        PlayerData data = new PlayerData(attribute);
         plugin.setPlayerData(target.getUniqueId(), data);
 
         // Play particles
-        ParticleManager.playSupportParticles(target, attribute, tier, 1);
+        ParticleManager.playSupportParticles(target, attribute, 1);
 
         // Update tab
         plugin.updatePlayerTab(target);
@@ -163,10 +145,8 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             plugin.getEventListener().applyDragonEggEffects(target);
         }
 
-        sender.sendMessage("§aAssigned " + tier.getColor() + tier.name() + " " + attribute.getDisplayName() +
-                " §ato " + target.getName());
-        target.sendMessage("§aYou received " + tier.getColor() + tier.name() + " " +
-                attribute.getIcon() + " " + attribute.getDisplayName() + "§a!");
+        sender.sendMessage("§aAssigned §e" + attribute.getDisplayName() + " §ato " + target.getName());
+        target.sendMessage("§aYou received §e" + attribute.getIcon() + " " + attribute.getDisplayName() + "§a!");
 
         return true;
     }
@@ -195,24 +175,21 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             plugin.getEventListener().removeAttributeEffects(target, oldAttribute);
         }
 
-        // Get new random attribute and tier
+        // Get new random attribute
         AttributeType attribute = AttributeType.getRandomAttribute(false);
-        Tier tier = Tier.getRandomTier();
 
         // Create new player data
-        PlayerData data = new PlayerData(attribute, tier);
+        PlayerData data = new PlayerData(attribute);
         plugin.setPlayerData(target.getUniqueId(), data);
 
         // Play particles
-        ParticleManager.playSupportParticles(target, attribute, tier, 1);
+        ParticleManager.playSupportParticles(target, attribute, 1);
 
         // Update tab
         plugin.updatePlayerTab(target);
 
-        sender.sendMessage("§aRerolled " + target.getName() + "'s attribute to " +
-                tier.getColor() + tier.name() + " " + attribute.getDisplayName());
-        target.sendMessage("§eYour attribute was rerolled to " + tier.getColor() + tier.name() + " " +
-                attribute.getIcon() + " " + attribute.getDisplayName() + "§e!");
+        sender.sendMessage("§aRerolled " + target.getName() + "'s attribute to §e" + attribute.getDisplayName());
+        target.sendMessage("§eYour attribute was rerolled to §e" + attribute.getIcon() + " " + attribute.getDisplayName() + "§e!");
 
         return true;
     }
@@ -254,7 +231,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         }
 
         // Play particles
-        ParticleManager.playSupportParticles(target, data.getAttribute(), data.getTier(), data.getLevel());
+        ParticleManager.playSupportParticles(target, data.getAttribute(), data.getLevel());
 
         // Update tab
         plugin.updatePlayerTab(target);
@@ -566,28 +543,6 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Give tier upgrader command
-        if (args[0].equalsIgnoreCase("givetierupgrader")) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("§cOnly players can receive items!");
-                return true;
-            }
-            Player player = (Player) sender;
-            int amount = 1;
-            if (args.length >= 2) {
-                try {
-                    amount = Integer.parseInt(args[1]);
-                } catch (NumberFormatException e) {
-                    amount = 1;
-                }
-            }
-            for (int i = 0; i < amount; i++) {
-                player.getInventory().addItem(OddsSMP.createTierUpgrader());
-            }
-            player.sendMessage("§aYou received " + amount + "x §5§lTier Upgrader§a!");
-            return true;
-        }
-
         // Test command
         if (args.length < 3) {
             sender.sendMessage("§cUsage: /admin <gui|test|boss|weapon|autoassign|assignall> [args]");
@@ -615,7 +570,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 
         switch (abilityType) {
             case "support":
-                ParticleManager.playSupportParticles(target, data.getAttribute(), data.getTier(), data.getLevel());
+                ParticleManager.playSupportParticles(target, data.getAttribute(), data.getLevel());
                 sender.sendMessage("§aPlayed support particles for " + target.getName());
                 break;
             case "melee":
@@ -625,14 +580,14 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                         .findFirst()
                         .orElse(null);
                 if (nearestEntity != null) {
-                    ParticleManager.playMeleeParticles(target, nearestEntity, data.getAttribute(), data.getTier());
+                    ParticleManager.playMeleeParticles(target, nearestEntity, data.getAttribute());
                     sender.sendMessage("§aPlayed melee particles for " + target.getName());
                 } else {
                     sender.sendMessage("§cNo nearby entities found!");
                 }
                 break;
             case "passive":
-                ParticleManager.playPassiveParticles(target, data.getAttribute(), data.getTier());
+                ParticleManager.playPassiveParticles(target, data.getAttribute());
                 sender.sendMessage("§aPlayed passive particles for " + target.getName());
                 break;
             default:
@@ -808,20 +763,18 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 
             // Assign random attribute
             AttributeType attribute = AttributeType.getRandomAttribute(false);
-            Tier tier = Tier.getRandomTier();
 
-            PlayerData newData = new PlayerData(attribute, tier);
+            PlayerData newData = new PlayerData(attribute);
             plugin.setPlayerData(player.getUniqueId(), newData);
 
             // Play particles
-            ParticleManager.playSupportParticles(player, attribute, tier, 1);
+            ParticleManager.playSupportParticles(player, attribute, 1);
 
             // Update tab
             plugin.updatePlayerTab(player);
 
             // Notify player
-            player.sendMessage("§a§l✦ You received " + tier.getColor() + tier.name() + " " +
-                    attribute.getIcon() + " " + attribute.getDisplayName() + "§a! ✦");
+            player.sendMessage("§a§l✦ You received §e" + attribute.getIcon() + " " + attribute.getDisplayName() + "§a! ✦");
 
             assigned++;
         }
@@ -891,7 +844,6 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/admin givehandle §7- Give yourself a Weapon Handle");
             sender.sendMessage("§e/admin giveupgrader [amount] §7- Give yourself Upgrader(s)");
             sender.sendMessage("§e/admin givereroller [amount] §7- Give yourself Reroller(s)");
-            sender.sendMessage("§e/admin givetierupgrader [amount] §7- Give yourself Tier Upgrader(s)");
             sender.sendMessage("§e/admin autoassign <on|off> [delay] §7- Toggle auto-assign on join");
             sender.sendMessage("§e/admin assignall §7- Give attributes to all players");
         }
@@ -899,7 +851,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         sender.sendMessage("§e/smp support §7- Activate support ability");
         sender.sendMessage("§e/smp melee §7- Activate melee ability");
         if (sender.hasPermission("oddssmp.admin")) {
-            sender.sendMessage("§e/smp assign <player> [attribute] [tier] §7- Assign attribute");
+            sender.sendMessage("§e/smp assign <player> [attribute] §7- Assign attribute");
             sender.sendMessage("§e/smp reroll <player> §7- Reroll attribute");
             sender.sendMessage("§e/smp upgrade <player> [amount] §7- Upgrade level");
             sender.sendMessage("§e/smp remove <player> §7- Remove attribute");
@@ -927,8 +879,6 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 for (AttributeType attr : AttributeType.values()) {
                     completions.add(attr.name().toLowerCase());
                 }
-            } else if (args.length == 4 && args[0].equalsIgnoreCase("assign")) {
-                completions.addAll(Arrays.asList("stable", "warped", "extreme"));
             } else if (args.length == 3 && args[0].equalsIgnoreCase("cooldown")) {
                 completions.addAll(Arrays.asList("support", "melee"));
             }
@@ -944,7 +894,6 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.add("givehandle");
                 completions.add("giveupgrader");
                 completions.add("givereroller");
-                completions.add("givetierupgrader");
                 completions.add("autoassign");
                 completions.add("assignall");
                 completions.add("debugdragon");
