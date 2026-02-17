@@ -199,6 +199,126 @@ public class EventListener implements Listener {
     }
 
     /**
+     * Play reroller slot machine animation and assign new attribute (excluding current)
+     */
+    public void playRerollerAnimation(Player player, AttributeType oldAttribute) {
+        // Pre-determine the final result (excluding current attribute)
+        AttributeType finalAttribute;
+        do {
+            finalAttribute = AttributeType.getRandomAttribute(false);
+        } while (finalAttribute == oldAttribute);
+
+        final AttributeType finalResult = finalAttribute;
+
+        // Remove old attribute effects before animation starts
+        removeAttributeEffects(player, oldAttribute);
+
+        // Get all possible attributes for animation
+        AttributeType[] allAttributes = AttributeType.values();
+
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int tick = 0;
+            int delay = 1;
+            int nextSwitch = 0;
+            int currentIndex = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    cancel();
+                    return;
+                }
+
+                tick++;
+
+                if (tick >= nextSwitch) {
+                    AttributeType showAttr;
+
+                    if (tick > 60) {
+                        // Final reveal
+                        showAttr = finalResult;
+
+                        player.sendTitle(
+                            "§e§l" + showAttr.getIcon() + " " + showAttr.getDisplayName(),
+                            "§7Rerolled from §c" + oldAttribute.getDisplayName(),
+                            0, 60, 20
+                        );
+
+                        player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+
+                        // Apply new attribute
+                        PlayerData data = plugin.getPlayerData(player.getUniqueId());
+                        data.setAttribute(finalResult);
+                        data.setLevel(1);
+                        data.clearCooldowns();
+                        plugin.getAbilityManager().removeAbilityFlags(player.getUniqueId());
+
+                        if (finalResult == AttributeType.DRAGON_EGG) {
+                            applyDragonEggEffects(player);
+                        }
+
+                        ParticleManager.playSupportParticles(player, finalResult, 1);
+                        plugin.updatePlayerTab(player);
+
+                        player.sendMessage("");
+                        player.sendMessage("§6§l§m                                                    ");
+                        player.sendMessage("§5§l⚡ ATTRIBUTE REROLLED! ⚡");
+                        player.sendMessage("");
+                        player.sendMessage("  §7Old: §c" + oldAttribute.getIcon() + " " + oldAttribute.getDisplayName());
+                        player.sendMessage("  §7New: §a" + finalResult.getIcon() + " " + finalResult.getDisplayName());
+                        player.sendMessage("");
+                        player.sendMessage("  §7Your level has been reset to §e1");
+                        player.sendMessage("§6§l§m                                                    ");
+                        player.sendMessage("");
+
+                        // Broadcast to nearby players
+                        for (Player nearby : player.getWorld().getPlayers()) {
+                            if (nearby.getLocation().distance(player.getLocation()) <= 50 && !nearby.equals(player)) {
+                                nearby.sendMessage("§6" + player.getName() + " §7rerolled their attribute to §e" +
+                                        finalResult.getDisplayName() + "§7!");
+                            }
+                        }
+
+                        plugin.getLogger().info(player.getName() + " rerolled from " + oldAttribute + " to " + finalResult);
+
+                        cancel();
+                        return;
+                    }
+
+                    // Still spinning
+                    currentIndex = (currentIndex + 1) % allAttributes.length;
+                    while (allAttributes[currentIndex].isBossAttribute() || allAttributes[currentIndex].isDragonEgg()) {
+                        currentIndex = (currentIndex + 1) % allAttributes.length;
+                    }
+
+                    showAttr = allAttributes[currentIndex];
+
+                    player.sendTitle(
+                        "§e" + showAttr.getIcon() + " " + showAttr.getDisplayName(),
+                        "§5§l« REROLLING »",
+                        0, 10, 0
+                    );
+
+                    player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.0f + (tick * 0.01f));
+
+                    if (tick < 20) {
+                        delay = 2;
+                    } else if (tick < 35) {
+                        delay = 4;
+                    } else if (tick < 50) {
+                        delay = 6;
+                    } else {
+                        delay = 10;
+                    }
+
+                    nextSwitch = tick + delay;
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    /**
      * Grant boss attribute and broadcast
      */
     private void grantBossAttribute(Player player, AttributeType attribute, String itemName, String color) {
