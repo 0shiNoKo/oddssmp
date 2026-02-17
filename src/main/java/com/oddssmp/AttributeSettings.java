@@ -23,23 +23,11 @@ public class AttributeSettings {
     private double globalDamageMultiplier = 1.0;
     private double levelScalingPercent = 10.0; // +10% per level
 
+    // Base cooldown in seconds
+    private int baseCooldown = 120;
+
     // Per-attribute settings
     private final Map<AttributeType, AttributeConfig> attributeConfigs = new HashMap<>();
-
-    // Tier cooldowns (in seconds)
-    private int stableCooldown = 120;
-    private int warpedCooldown = 90;
-    private int extremeCooldown = 60;
-
-    // Tier effect multipliers
-    private double stableMultiplier = 1.0;
-    private double warpedMultiplier = 1.3;
-    private double extremeMultiplier = 1.6;
-
-    // Tier drawback multipliers
-    private double stableDrawback = 0.0;
-    private double warpedDrawback = 0.15;
-    private double extremeDrawback = 0.35;
 
     public AttributeSettings(OddsSMP plugin) {
         this.plugin = plugin;
@@ -73,19 +61,7 @@ public class AttributeSettings {
         globalCooldownMultiplier = config.getDouble("global.cooldown-multiplier", 1.0);
         globalDamageMultiplier = config.getDouble("global.damage-multiplier", 1.0);
         levelScalingPercent = config.getDouble("global.level-scaling-percent", 10.0);
-
-        // Load tier settings
-        stableCooldown = config.getInt("tiers.stable.cooldown", 120);
-        warpedCooldown = config.getInt("tiers.warped.cooldown", 90);
-        extremeCooldown = config.getInt("tiers.extreme.cooldown", 60);
-
-        stableMultiplier = config.getDouble("tiers.stable.multiplier", 1.0);
-        warpedMultiplier = config.getDouble("tiers.warped.multiplier", 1.3);
-        extremeMultiplier = config.getDouble("tiers.extreme.multiplier", 1.6);
-
-        stableDrawback = config.getDouble("tiers.stable.drawback", 0.0);
-        warpedDrawback = config.getDouble("tiers.warped.drawback", 0.15);
-        extremeDrawback = config.getDouble("tiers.extreme.drawback", 0.35);
+        baseCooldown = config.getInt("global.base-cooldown", 120);
 
         // Load per-attribute settings
         for (AttributeType type : AttributeType.values()) {
@@ -119,19 +95,7 @@ public class AttributeSettings {
         config.set("global.cooldown-multiplier", globalCooldownMultiplier);
         config.set("global.damage-multiplier", globalDamageMultiplier);
         config.set("global.level-scaling-percent", levelScalingPercent);
-
-        // Save tier settings
-        config.set("tiers.stable.cooldown", stableCooldown);
-        config.set("tiers.warped.cooldown", warpedCooldown);
-        config.set("tiers.extreme.cooldown", extremeCooldown);
-
-        config.set("tiers.stable.multiplier", stableMultiplier);
-        config.set("tiers.warped.multiplier", warpedMultiplier);
-        config.set("tiers.extreme.multiplier", extremeMultiplier);
-
-        config.set("tiers.stable.drawback", stableDrawback);
-        config.set("tiers.warped.drawback", warpedDrawback);
-        config.set("tiers.extreme.drawback", extremeDrawback);
+        config.set("global.base-cooldown", baseCooldown);
 
         // Save per-attribute settings
         for (AttributeType type : AttributeType.values()) {
@@ -165,18 +129,7 @@ public class AttributeSettings {
         globalCooldownMultiplier = 1.0;
         globalDamageMultiplier = 1.0;
         levelScalingPercent = 10.0;
-
-        stableCooldown = 120;
-        warpedCooldown = 90;
-        extremeCooldown = 60;
-
-        stableMultiplier = 1.0;
-        warpedMultiplier = 1.3;
-        extremeMultiplier = 1.6;
-
-        stableDrawback = 0.0;
-        warpedDrawback = 0.15;
-        extremeDrawback = 0.35;
+        baseCooldown = 120;
 
         for (AttributeType type : AttributeType.values()) {
             attributeConfigs.put(type, new AttributeConfig(type));
@@ -284,31 +237,8 @@ public class AttributeSettings {
         return levelScalingPercent;
     }
 
-    public int getTierCooldown(Tier tier) {
-        switch (tier) {
-            case STABLE: return stableCooldown;
-            case WARPED: return warpedCooldown;
-            case EXTREME: return extremeCooldown;
-            default: return stableCooldown;
-        }
-    }
-
-    public double getTierMultiplier(Tier tier) {
-        switch (tier) {
-            case STABLE: return stableMultiplier;
-            case WARPED: return warpedMultiplier;
-            case EXTREME: return extremeMultiplier;
-            default: return stableMultiplier;
-        }
-    }
-
-    public double getTierDrawback(Tier tier) {
-        switch (tier) {
-            case STABLE: return stableDrawback;
-            case WARPED: return warpedDrawback;
-            case EXTREME: return extremeDrawback;
-            default: return stableDrawback;
-        }
+    public int getBaseCooldown() {
+        return baseCooldown;
     }
 
     public AttributeConfig getConfig(AttributeType type) {
@@ -318,9 +248,8 @@ public class AttributeSettings {
     /**
      * Calculate final cooldown for an ability
      */
-    public long calculateCooldown(AttributeType type, Tier tier, String abilityType) {
+    public long calculateCooldown(AttributeType type, String abilityType) {
         AttributeConfig attrConfig = attributeConfigs.get(type);
-        int baseCooldown = getTierCooldown(tier);
 
         double modifier = abilityType.equals("support") ?
                 attrConfig.supportCooldownModifier :
@@ -332,12 +261,11 @@ public class AttributeSettings {
     /**
      * Calculate final damage for an ability
      */
-    public double calculateDamage(AttributeType type, Tier tier, int level, double baseDamage) {
+    public double calculateDamage(AttributeType type, int level, double baseDamage) {
         AttributeConfig attrConfig = attributeConfigs.get(type);
-        double tierMult = getTierMultiplier(tier);
         double levelMult = 1.0 + (level - 1) * (levelScalingPercent / 100.0);
 
-        return baseDamage * attrConfig.meleeDamageMultiplier * tierMult * levelMult * globalDamageMultiplier;
+        return baseDamage * attrConfig.meleeDamageMultiplier * levelMult * globalDamageMultiplier;
     }
 
     // ==================== SETTERS ====================
@@ -354,43 +282,9 @@ public class AttributeSettings {
         this.levelScalingPercent = Math.max(0, Math.min(50, value));
     }
 
-    public void setTierCooldown(Tier tier, int seconds) {
-        seconds = Math.max(10, Math.min(300, seconds));
-        switch (tier) {
-            case STABLE: stableCooldown = seconds; break;
-            case WARPED: warpedCooldown = seconds; break;
-            case EXTREME: extremeCooldown = seconds; break;
-        }
+    public void setBaseCooldown(int seconds) {
+        this.baseCooldown = Math.max(10, Math.min(300, seconds));
     }
-
-    public void setTierMultiplier(Tier tier, double multiplier) {
-        multiplier = Math.max(0.5, Math.min(3.0, multiplier));
-        switch (tier) {
-            case STABLE: stableMultiplier = multiplier; break;
-            case WARPED: warpedMultiplier = multiplier; break;
-            case EXTREME: extremeMultiplier = multiplier; break;
-        }
-    }
-
-    public void setTierDrawback(Tier tier, double drawback) {
-        drawback = Math.max(0, Math.min(1.0, drawback));
-        switch (tier) {
-            case STABLE: stableDrawback = drawback; break;
-            case WARPED: warpedDrawback = drawback; break;
-            case EXTREME: extremeDrawback = drawback; break;
-        }
-    }
-
-    // Getters for tier values (for display)
-    public int getStableCooldown() { return stableCooldown; }
-    public int getWarpedCooldown() { return warpedCooldown; }
-    public int getExtremeCooldown() { return extremeCooldown; }
-    public double getStableMultiplier() { return stableMultiplier; }
-    public double getWarpedMultiplier() { return warpedMultiplier; }
-    public double getExtremeMultiplier() { return extremeMultiplier; }
-    public double getStableDrawback() { return stableDrawback; }
-    public double getWarpedDrawback() { return warpedDrawback; }
-    public double getExtremeDrawback() { return extremeDrawback; }
 
     /**
      * Per-attribute configuration
@@ -398,7 +292,7 @@ public class AttributeSettings {
     public static class AttributeConfig {
         public final AttributeType type;
 
-        // Cooldown modifiers (multiplied with tier cooldown)
+        // Cooldown modifiers (multiplied with base cooldown)
         public double supportCooldownModifier = 1.0;
         public double meleeCooldownModifier = 1.0;
 

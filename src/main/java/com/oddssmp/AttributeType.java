@@ -43,14 +43,14 @@ public enum AttributeType {
     public static AttributeType getRandomAttribute(boolean includeDragonEgg) {
         AttributeType[] normalAttributes = {
                 MELEE, HEALTH, DEFENSE, WEALTH, SPEED,
-                CONTROL, RANGE, PRESSURE, TEMPO, DISRUPTION,
-                VISION, PERSISTENCE, ANCHOR, TRANSFER, RISK
+                RANGE, PRESSURE, TEMPO, DISRUPTION,
+                VISION, TRANSFER, RISK
         };
 
         if (includeDragonEgg) {
-            AttributeType[] withDragon = new AttributeType[16];
-            System.arraycopy(normalAttributes, 0, withDragon, 0, 15);
-            withDragon[15] = DRAGON_EGG;
+            AttributeType[] withDragon = new AttributeType[13];
+            System.arraycopy(normalAttributes, 0, withDragon, 0, 12);
+            withDragon[12] = DRAGON_EGG;
             return withDragon[(int) (Math.random() * withDragon.length)];
         }
 

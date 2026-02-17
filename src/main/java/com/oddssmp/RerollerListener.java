@@ -128,18 +128,15 @@ public class RerollerListener implements Listener {
 
         // Save old attribute for message
         AttributeType oldAttribute = data.getAttribute();
-        Tier oldTier = data.getTier();
 
         // Remove old attribute effects
         plugin.getEventListener().removeAttributeEffects(player, oldAttribute);
 
-        // Get new random attribute and tier
+        // Get new random attribute
         AttributeType newAttribute = AttributeType.getRandomAttribute(false);
-        Tier newTier = Tier.getRandomTier();
 
         // Apply new attribute
         data.setAttribute(newAttribute);
-        data.setTier(newTier);
         data.setLevel(1); // Reset to level 1
         data.clearCooldowns();
         plugin.getAbilityManager().removeAbilityFlags(player.getUniqueId());
@@ -157,7 +154,7 @@ public class RerollerListener implements Listener {
         }
 
         // Play effects
-        ParticleManager.playSupportParticles(player, newAttribute, newTier, 1);
+        ParticleManager.playSupportParticles(player, newAttribute, 1);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 0.8f);
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 1.2f);
 
@@ -169,10 +166,8 @@ public class RerollerListener implements Listener {
         player.sendMessage("§6§l§m                                                    ");
         player.sendMessage("§5§l⚡ ATTRIBUTE REROLLED! ⚡");
         player.sendMessage("");
-        player.sendMessage("  §7Old: " + oldTier.getColor() + oldTier.name() + " " +
-                oldAttribute.getIcon() + " " + oldAttribute.getDisplayName());
-        player.sendMessage("  §7New: " + newTier.getColor() + newTier.name() + " " +
-                newAttribute.getIcon() + " " + newAttribute.getDisplayName());
+        player.sendMessage("  §7Old: §e" + oldAttribute.getIcon() + " " + oldAttribute.getDisplayName());
+        player.sendMessage("  §7New: §e" + newAttribute.getIcon() + " " + newAttribute.getDisplayName());
         player.sendMessage("");
         player.sendMessage("  §7Your level has been reset to §e1");
         player.sendMessage("§6§l§m                                                    ");
@@ -181,8 +176,8 @@ public class RerollerListener implements Listener {
         // Broadcast to nearby players
         for (Player nearby : player.getWorld().getPlayers()) {
             if (nearby.getLocation().distance(player.getLocation()) <= 50 && !nearby.equals(player)) {
-                nearby.sendMessage("§6" + player.getName() + " §7rerolled their attribute to " +
-                        newTier.getColor() + newAttribute.getDisplayName() + "§7!");
+                nearby.sendMessage("§6" + player.getName() + " §7rerolled their attribute to §e" +
+                        newAttribute.getDisplayName() + "§7!");
             }
         }
 

@@ -61,7 +61,6 @@ public class OddsSMP extends JavaPlugin {
     private boolean particleLevelUp = true;
     private boolean particleAttributeAssign = true;
     private boolean particleAttributeRemove = true;
-    private boolean particleTierUp = true;
     // Boss particles
     private boolean particleBossAmbient = true;
     private boolean particleBossAbility = true;
@@ -224,7 +223,6 @@ public class OddsSMP extends JavaPlugin {
             try {
                 UUID uuid = UUID.fromString(uuidStr);
                 String attrName = dataConfig.getString(uuidStr + ".attribute");
-                String tierName = dataConfig.getString(uuidStr + ".tier");
                 int level = dataConfig.getInt(uuidStr + ".level", 1);
                 int kills = dataConfig.getInt(uuidStr + ".kills", 0);
                 int deaths = dataConfig.getInt(uuidStr + ".deaths", 0);
@@ -234,13 +232,12 @@ public class OddsSMP extends JavaPlugin {
                 if (attrName != null && !attrName.isEmpty()) {
                     try {
                         AttributeType attr = AttributeType.valueOf(attrName);
-                        Tier tier = tierName != null ? Tier.valueOf(tierName) : Tier.STABLE;
-                        data = new PlayerData(attr, tier);
+                        data = new PlayerData(attr);
                         data.setLevel(level);
                         for (int i = 0; i < kills; i++) data.incrementKills();
                         for (int i = 0; i < deaths; i++) data.incrementDeaths();
                     } catch (IllegalArgumentException e) {
-                        getLogger().warning("Invalid attribute/tier for " + uuidStr + ": " + attrName);
+                        getLogger().warning("Invalid attribute for " + uuidStr + ": " + attrName);
                     }
                 }
 
@@ -267,7 +264,6 @@ public class OddsSMP extends JavaPlugin {
 
             if (data.getAttribute() != null) {
                 dataConfig.set(path + ".attribute", data.getAttribute().name());
-                dataConfig.set(path + ".tier", data.getTier().name());
                 dataConfig.set(path + ".level", data.getLevel());
                 dataConfig.set(path + ".kills", data.getKills());
                 dataConfig.set(path + ".deaths", data.getDeaths());
@@ -398,7 +394,7 @@ public class OddsSMP extends JavaPlugin {
         StringBuilder message = new StringBuilder();
 
         // Attribute name with icon
-        message.append(data.getTier().getColor())
+        message.append("§e")
                 .append(data.getAttribute().getIcon())
                 .append(" ")
                 .append(data.getAttribute().getDisplayName())
@@ -454,7 +450,6 @@ public class OddsSMP extends JavaPlugin {
 
         if (data.getAttribute() != null) {
             dataConfig.set(path + ".attribute", data.getAttribute().name());
-            dataConfig.set(path + ".tier", data.getTier().name());
             dataConfig.set(path + ".level", data.getLevel());
             dataConfig.set(path + ".kills", data.getKills());
             dataConfig.set(path + ".deaths", data.getDeaths());
@@ -483,7 +478,6 @@ public class OddsSMP extends JavaPlugin {
         String path = uuid.toString();
         if (dataConfig.contains(path)) {
             String attrName = dataConfig.getString(path + ".attribute");
-            String tierName = dataConfig.getString(path + ".tier");
             int level = dataConfig.getInt(path + ".level", 1);
             int kills = dataConfig.getInt(path + ".kills", 0);
             int deaths = dataConfig.getInt(path + ".deaths", 0);
@@ -491,8 +485,7 @@ public class OddsSMP extends JavaPlugin {
             if (attrName != null && !attrName.isEmpty()) {
                 try {
                     AttributeType attr = AttributeType.valueOf(attrName);
-                    Tier tier = tierName != null ? Tier.valueOf(tierName) : Tier.STABLE;
-                    PlayerData data = new PlayerData(attr, tier);
+                    PlayerData data = new PlayerData(attr);
                     data.setLevel(level);
                     for (int i = 0; i < kills; i++) data.incrementKills();
                     for (int i = 0; i < deaths; i++) data.incrementDeaths();
@@ -522,9 +515,9 @@ public class OddsSMP extends JavaPlugin {
             return;
         }
 
-        // Format: [ICON] PlayerName with tier color
+        // Format: [ICON] PlayerName
         String icon = data.getAttribute().getIcon();
-        String color = data.getTier().getColor().toString();
+        String color = "§e"; // Gold color for attributes
         String name = player.getName();
 
         // Add level indicator (stars)
@@ -709,10 +702,6 @@ public class OddsSMP extends JavaPlugin {
     public void setParticleAttributeRemove(boolean enabled) { this.particleAttributeRemove = enabled; }
     public boolean getParticleAttributeRemoveRaw() { return particleAttributeRemove; }
 
-    public boolean isParticleTierUp() { return particleMasterEnabled && particleTierUp; }
-    public void setParticleTierUp(boolean enabled) { this.particleTierUp = enabled; }
-    public boolean getParticleTierUpRaw() { return particleTierUp; }
-
     // Boss particles
     public boolean isParticleBossAmbient() { return particleMasterEnabled && particleBossAmbient; }
     public void setParticleBossAmbient(boolean enabled) { this.particleBossAmbient = enabled; }
@@ -802,7 +791,6 @@ public class OddsSMP extends JavaPlugin {
         particleLevelUp = true;
         particleAttributeAssign = true;
         particleAttributeRemove = true;
-        particleTierUp = true;
         particleBossAmbient = true;
         particleBossAbility = true;
         particleBossSpawn = true;
@@ -834,7 +822,6 @@ public class OddsSMP extends JavaPlugin {
         particleLevelUp = false;
         particleAttributeAssign = false;
         particleAttributeRemove = false;
-        particleTierUp = false;
         particleBossAmbient = false;
         particleBossAbility = false;
         particleBossSpawn = false;

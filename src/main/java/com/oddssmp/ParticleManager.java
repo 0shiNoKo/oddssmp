@@ -29,10 +29,9 @@ public class ParticleManager {
     /**
      * Play support ability particles for the given attribute
      */
-    public static void playSupportParticles(Player player, AttributeType attribute, Tier tier, int level) {
+    public static void playSupportParticles(Player player, AttributeType attribute, int level) {
         Location loc = player.getLocation().add(0, 1, 0);
-        boolean isExtreme = tier == Tier.EXTREME;
-        int particleCount = scaleCount(isExtreme ? 100 : 50);
+        int particleCount = scaleCount(50);
         double radius = 6.0 * (1.0 + level * 0.15);
 
         switch (attribute) {
@@ -40,44 +39,22 @@ public class ParticleManager {
                 spawnCircleParticles(loc, Particle.HAPPY_VILLAGER, radius, particleCount);
                 spawnCircleParticles(loc, Particle.CRIT, radius * 0.8, particleCount / 2);
                 spawnSpiralParticles(loc, Particle.SWEEP_ATTACK, radius, scaleCount(40));
-                if (isExtreme) {
-                    spawnCircleParticles(loc, Particle.CRIT, radius * 1.2, scaleCount(60));
-                    spawnBurstParticles(loc, Particle.ENCHANTED_HIT, scaleCount(80));
-                }
                 break;
 
             case SPEED:
                 spawnColoredParticles(loc, Color.YELLOW, radius, particleCount);
                 spawnColoredParticles(loc, Color.WHITE, radius * 0.8, particleCount / 2);
                 spawnSpiralParticles(loc, Particle.CLOUD, radius, scaleCount(60));
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.FIREWORK, scaleCount(100));
-                }
                 break;
 
             case PRESSURE:
                 spawnCircleParticles(loc, Particle.ELECTRIC_SPARK, radius, particleCount);
                 spawnColoredParticles(loc, Color.fromRGB(150, 0, 0), radius * 0.8, particleCount / 2);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.ELECTRIC_SPARK, scaleCount(120));
-                }
                 break;
 
             case DISRUPTION:
                 spawnColoredParticles(loc, Color.RED, radius, particleCount);
                 spawnCircleParticles(loc, Particle.LAVA, radius * 0.7, particleCount / 2);
-                if (isExtreme) {
-                    spawnDomeParticles(loc, Color.RED, radius, scaleCount(100));
-                }
-                break;
-
-            case ANCHOR:
-                spawnColoredParticles(loc, Color.GRAY, radius, particleCount);
-                spawnColoredParticles(loc, Color.SILVER, radius * 0.7, particleCount / 2);
-                spawnCircleParticles(loc, Particle.CRIT, radius, scaleCount(50));
-                if (isExtreme) {
-                    spawnDomeParticles(loc, Color.GRAY, radius, scaleCount(90));
-                }
                 break;
 
             case RISK:
@@ -85,82 +62,52 @@ public class ParticleManager {
                 player.getWorld().spawnParticle(Particle.GLOW, loc, scaleCount(80), radius, 1, radius, 0);
                 spawnColoredParticles(loc, Color.RED, radius * 0.8, particleCount / 2);
                 spawnColoredParticles(loc, Color.YELLOW, radius * 0.6, particleCount / 3);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.FIREWORK, scaleCount(120));
-                }
                 break;
 
             case HEALTH:
                 spawnCircleParticles(loc, Particle.HEART, radius, particleCount);
                 spawnCircleParticles(loc, Particle.GLOW, radius * 0.7, particleCount / 2);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.HEART, scaleCount(100));
-                }
                 break;
 
             case WEALTH:
                 spawnCircleParticles(loc, Particle.GLOW, radius, particleCount);
                 spawnCircleParticles(loc, Particle.END_ROD, radius * 0.8, particleCount / 2);
                 player.getWorld().spawnParticle(Particle.ENCHANT, loc, 100, radius, 1, radius, 1);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.GLOW, 120);
-                }
                 break;
 
             case DEFENSE:
                 spawnColoredParticles(loc, Color.BLUE, radius, particleCount);
                 spawnShieldParticles(loc, Color.BLUE, radius);
-                if (isExtreme) {
-                    spawnDomeParticles(loc, Color.BLUE, radius, 80);
-                }
                 break;
 
             case CONTROL:
                 spawnColoredParticles(loc, Color.PURPLE, radius, particleCount);
                 spawnSpiralParticles(loc, Particle.WITCH, radius, 50);
-                if (isExtreme) {
-                    spawnDomeParticles(loc, Color.PURPLE, radius, 90);
-                }
                 break;
 
             case RANGE:
                 spawnColoredParticles(loc, Color.ORANGE, radius, particleCount);
                 spawnCircleParticles(loc, Particle.SWEEP_ATTACK, radius, 50);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.SWEEP_ATTACK, 90);
-                }
                 break;
 
             case TEMPO:
                 spawnCircleParticles(loc, Particle.ENCHANT, radius, particleCount);
                 spawnCircleParticles(loc, Particle.PORTAL, radius * 0.8, particleCount / 2);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.ENCHANT, 120);
-                }
                 break;
 
             case VISION:
                 spawnCircleParticles(loc, Particle.GLOW, radius, particleCount);
                 spawnCircleParticles(loc, Particle.END_ROD, radius * 0.8, particleCount / 2);
-                if (isExtreme) {
-                    spawnDomeParticles(loc, Color.WHITE, radius, 100);
-                }
                 break;
 
             case PERSISTENCE:
                 spawnColoredParticles(loc, Color.RED, radius, particleCount);
                 spawnCircleParticles(loc, Particle.TOTEM_OF_UNDYING, radius * 0.8, 40);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.TOTEM_OF_UNDYING, 80);
-                }
                 break;
 
             case TRANSFER:
                 spawnColoredParticles(loc, Color.AQUA, radius, particleCount);
                 spawnSpiralParticles(loc, Particle.DOLPHIN, radius, 60);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.GLOW, 100);
-                }
                 break;
 
             case WITHER:
@@ -168,28 +115,18 @@ public class ParticleManager {
                 spawnCircleParticles(loc, Particle.SMOKE, radius, particleCount);
                 player.getWorld().spawnParticle(Particle.DUST, loc, 150, radius, 1, radius, 0,
                         new Particle.DustOptions(Color.fromRGB(80, 0, 80), 1.5f));
-                if (isExtreme) {
-                    player.getWorld().spawnParticle(Particle.DUST, loc, 100, radius * 1.2, 1.5, radius * 1.2, 0,
-                            new Particle.DustOptions(Color.fromRGB(80, 0, 80), 1.5f));
-                }
                 break;
 
             case WARDEN:
                 spawnColoredParticles(loc, Color.fromRGB(10, 50, 60), radius, particleCount * 2);
                 spawnCircleParticles(loc, Particle.SCULK_SOUL, radius, particleCount);
                 player.getWorld().spawnParticle(Particle.SCULK_CHARGE, loc, 100, radius, 1, radius, 0);
-                if (isExtreme) {
-                    spawnDomeParticles(loc, Color.fromRGB(10, 50, 60), radius, 100);
-                }
                 break;
 
             case BREEZE:
                 spawnColoredParticles(loc, Color.YELLOW, radius, particleCount);
                 spawnColoredParticles(loc, Color.WHITE, radius * 0.8, particleCount);
                 spawnCircleParticles(loc, Particle.GUST, radius, 80);
-                if (isExtreme) {
-                    spawnBurstParticles(loc, Particle.GUST, 120);
-                }
                 break;
 
             case DRAGON_EGG:
@@ -206,77 +143,67 @@ public class ParticleManager {
     /**
      * Play melee ability particles
      */
-    public static void playMeleeParticles(Player player, Entity target, AttributeType attribute, Tier tier) {
+    public static void playMeleeParticles(Player player, Entity target, AttributeType attribute) {
         Location start = player.getLocation().add(0, 1, 0);
         Location end = target.getLocation().add(0, 1, 0);
-        boolean isExtreme = tier == Tier.EXTREME;
 
         switch (attribute) {
             case MELEE:
-                drawLine(start, end, Particle.CRIT, isExtreme ? 60 : 30);
-                drawLine(start, end, Particle.SWEEP_ATTACK, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.ENCHANTED_HIT, end, isExtreme ? 50 : 25, 0.5, 0.5, 0.5, 0);
-                if (isExtreme) {
-                    target.getWorld().spawnParticle(Particle.EXPLOSION, end, 10);
-                }
+                drawLine(start, end, Particle.CRIT, 30);
+                drawLine(start, end, Particle.SWEEP_ATTACK, 20);
+                target.getWorld().spawnParticle(Particle.ENCHANTED_HIT, end, 25, 0.5, 0.5, 0.5, 0);
                 break;
 
             case HEALTH:
-                drawLine(start, end, Particle.HEART, isExtreme ? 50 : 25);
-                drawColoredLine(start, end, Color.RED, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, end, isExtreme ? 40 : 20, 0.5, 0.5, 0.5, 0);
+                drawLine(start, end, Particle.HEART, 25);
+                drawColoredLine(start, end, Color.RED, 20);
+                target.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, end, 20, 0.5, 0.5, 0.5, 0);
                 break;
 
             case WEALTH:
-                drawLine(start, end, Particle.GLOW, isExtreme ? 60 : 30);
-                drawLine(start, end, Particle.END_ROD, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.ENCHANT, end, isExtreme ? 100 : 50, 0.5, 0.5, 0.5, 1);
+                drawLine(start, end, Particle.GLOW, 30);
+                drawLine(start, end, Particle.END_ROD, 20);
+                target.getWorld().spawnParticle(Particle.ENCHANT, end, 50, 0.5, 0.5, 0.5, 1);
                 break;
 
             case DEFENSE:
-                drawColoredLine(start, end, Color.BLUE, isExtreme ? 50 : 25);
-                target.getWorld().spawnParticle(Particle.FIREWORK, end, isExtreme ? 50 : 25);
-                if (isExtreme) {
-                    spawnExplosionRing(end, Color.BLUE, 2.0, 40);
-                }
+                drawColoredLine(start, end, Color.BLUE, 25);
+                target.getWorld().spawnParticle(Particle.FIREWORK, end, 25);
                 break;
 
             case CONTROL:
-                drawColoredLine(start, end, Color.PURPLE, isExtreme ? 50 : 25);
-                drawLine(start, end, Particle.WITCH, isExtreme ? 40 : 20);
-                if (isExtreme) {
-                    spawnExplosionRing(end, Color.PURPLE, 2.5, 50);
-                }
+                drawColoredLine(start, end, Color.PURPLE, 25);
+                drawLine(start, end, Particle.WITCH, 20);
                 break;
 
             case RANGE:
-                drawColoredLine(start, end, Color.ORANGE, isExtreme ? 50 : 25);
-                drawLine(start, end, Particle.CRIT, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.SWEEP_ATTACK, end, isExtreme ? 60 : 30, 0.5, 0.5, 0.5, 0);
+                drawColoredLine(start, end, Color.ORANGE, 25);
+                drawLine(start, end, Particle.CRIT, 20);
+                target.getWorld().spawnParticle(Particle.SWEEP_ATTACK, end, 30, 0.5, 0.5, 0.5, 0);
                 break;
 
             case TEMPO:
-                drawLine(start, end, Particle.ENCHANT, isExtreme ? 50 : 25);
-                drawLine(start, end, Particle.PORTAL, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.GLOW, end, isExtreme ? 80 : 40, 0.5, 0.5, 0.5, 0);
+                drawLine(start, end, Particle.ENCHANT, 25);
+                drawLine(start, end, Particle.PORTAL, 20);
+                target.getWorld().spawnParticle(Particle.GLOW, end, 40, 0.5, 0.5, 0.5, 0);
                 break;
 
             case VISION:
-                drawLine(start, end, Particle.GLOW, isExtreme ? 60 : 30);
-                drawLine(start, end, Particle.END_ROD, isExtreme ? 50 : 25);
-                target.getWorld().spawnParticle(Particle.ENCHANT, end, isExtreme ? 100 : 50, 0.5, 0.5, 0.5, 1);
+                drawLine(start, end, Particle.GLOW, 30);
+                drawLine(start, end, Particle.END_ROD, 25);
+                target.getWorld().spawnParticle(Particle.ENCHANT, end, 50, 0.5, 0.5, 0.5, 1);
                 break;
 
             case PERSISTENCE:
-                drawColoredLine(start, end, Color.RED, isExtreme ? 50 : 25);
-                drawLine(start, end, Particle.HEART, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, end, isExtreme ? 50 : 25, 0.5, 0.5, 0.5, 0);
+                drawColoredLine(start, end, Color.RED, 25);
+                drawLine(start, end, Particle.HEART, 20);
+                target.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, end, 25, 0.5, 0.5, 0.5, 0);
                 break;
 
             case TRANSFER:
-                drawColoredLine(start, end, Color.AQUA, isExtreme ? 60 : 30);
-                drawLine(start, end, Particle.DOLPHIN, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.GLOW, end, isExtreme ? 80 : 40, 0.5, 0.5, 0.5, 0);
+                drawColoredLine(start, end, Color.AQUA, 30);
+                drawLine(start, end, Particle.DOLPHIN, 20);
+                target.getWorld().spawnParticle(Particle.GLOW, end, 40, 0.5, 0.5, 0.5, 0);
                 break;
 
             case WITHER:
@@ -311,35 +238,35 @@ public class ParticleManager {
                 break;
 
             case SPEED:
-                drawColoredLine(start, end, Color.YELLOW, isExtreme ? 60 : 30);
-                drawColoredLine(start, end, Color.WHITE, isExtreme ? 40 : 20);
-                drawLine(start, end, Particle.CLOUD, isExtreme ? 50 : 25);
-                target.getWorld().spawnParticle(Particle.FIREWORK, end, isExtreme ? 60 : 30, 0.5, 0.5, 0.5, 0);
+                drawColoredLine(start, end, Color.YELLOW, 30);
+                drawColoredLine(start, end, Color.WHITE, 20);
+                drawLine(start, end, Particle.CLOUD, 25);
+                target.getWorld().spawnParticle(Particle.FIREWORK, end, 30, 0.5, 0.5, 0.5, 0);
                 break;
 
             case PRESSURE:
-                drawLine(start, end, Particle.ELECTRIC_SPARK, isExtreme ? 60 : 30);
-                drawColoredLine(start, end, Color.fromRGB(150, 0, 0), isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, end, isExtreme ? 80 : 40, 0.5, 0.5, 0.5, 0);
+                drawLine(start, end, Particle.ELECTRIC_SPARK, 30);
+                drawColoredLine(start, end, Color.fromRGB(150, 0, 0), 20);
+                target.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, end, 40, 0.5, 0.5, 0.5, 0);
                 break;
 
             case DISRUPTION:
-                drawColoredLine(start, end, Color.RED, isExtreme ? 60 : 30);
-                drawLine(start, end, Particle.LAVA, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.LAVA, end, isExtreme ? 60 : 30, 0.5, 0.5, 0.5, 0);
+                drawColoredLine(start, end, Color.RED, 30);
+                drawLine(start, end, Particle.LAVA, 20);
+                target.getWorld().spawnParticle(Particle.LAVA, end, 30, 0.5, 0.5, 0.5, 0);
                 break;
 
             case ANCHOR:
-                drawColoredLine(start, end, Color.GRAY, isExtreme ? 60 : 30);
-                drawColoredLine(start, end, Color.SILVER, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.CRIT, end, isExtreme ? 80 : 40, 0.5, 0.5, 0.5, 0);
+                drawColoredLine(start, end, Color.GRAY, 30);
+                drawColoredLine(start, end, Color.SILVER, 20);
+                target.getWorld().spawnParticle(Particle.CRIT, end, 40, 0.5, 0.5, 0.5, 0);
                 break;
 
             case RISK:
-                drawLine(start, end, Particle.FIREWORK, isExtreme ? 80 : 40);
-                drawColoredLine(start, end, Color.RED, isExtreme ? 60 : 30);
-                drawColoredLine(start, end, Color.YELLOW, isExtreme ? 40 : 20);
-                target.getWorld().spawnParticle(Particle.GLOW, end, isExtreme ? 100 : 50, 0.5, 0.5, 0.5, 0);
+                drawLine(start, end, Particle.FIREWORK, 40);
+                drawColoredLine(start, end, Color.RED, 30);
+                drawColoredLine(start, end, Color.YELLOW, 20);
+                target.getWorld().spawnParticle(Particle.GLOW, end, 50, 0.5, 0.5, 0.5, 0);
                 break;
         }
     }
@@ -347,10 +274,9 @@ public class ParticleManager {
     /**
      * Play passive ability particles (ambient aura)
      */
-    public static void playPassiveParticles(Player player, AttributeType attribute, Tier tier) {
+    public static void playPassiveParticles(Player player, AttributeType attribute) {
         Location loc = player.getLocation().add(0, 1, 0);
-        boolean isExtreme = tier == Tier.EXTREME;
-        int count = isExtreme ? 25 : 12;
+        int count = 12;
 
         switch (attribute) {
             case MELEE:
