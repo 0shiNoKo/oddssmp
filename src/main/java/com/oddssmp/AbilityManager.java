@@ -664,7 +664,8 @@ public class AbilityManager {
             }
 
             case TRANSFER: {
-                // Effect Swap: Steal 100% of opponent's potion effects
+                // Effect Swap: Steal 20% of opponent's potion effects +1%/level max 25%
+                double stealPercent = Math.min(0.25, 0.20 + (level - 1) * 0.01);
                 boolean stolenAny = false;
                 List<PotionEffect> effectsToSteal = new ArrayList<>();
                 for (PotionEffect effect : livingTarget.getActivePotionEffects()) {
@@ -673,14 +674,29 @@ public class AbilityManager {
                     }
                 }
                 for (PotionEffect effect : effectsToSteal) {
-                    // Transfer full effect to attacker
-                    attacker.addPotionEffect(new PotionEffect(effect.getType(), effect.getDuration(), effect.getAmplifier()));
-                    // Remove effect from target completely
-                    livingTarget.removePotionEffect(effect.getType());
+                    // Calculate stolen duration
+                    int stolenDuration = (int)(effect.getDuration() * stealPercent);
+                    int remainingDuration = effect.getDuration() - stolenDuration;
+
+                    // Add stolen portion to attacker (stacks with existing)
+                    PotionEffect existing = attacker.getPotionEffect(effect.getType());
+                    int newDuration = stolenDuration;
+                    if (existing != null) {
+                        newDuration = existing.getDuration() + stolenDuration;
+                    }
+                    attacker.addPotionEffect(new PotionEffect(effect.getType(), newDuration, effect.getAmplifier()));
+
+                    // Reduce target's effect
+                    if (remainingDuration > 0) {
+                        livingTarget.removePotionEffect(effect.getType());
+                        livingTarget.addPotionEffect(new PotionEffect(effect.getType(), remainingDuration, effect.getAmplifier()));
+                    } else {
+                        livingTarget.removePotionEffect(effect.getType());
+                    }
                     stolenAny = true;
                 }
                 if (stolenAny) {
-                    attacker.sendMessage("§aStole all positive effects!");
+                    attacker.sendMessage("§aStole " + (int)(stealPercent * 100) + "% of positive effects!");
                 } else {
                     attacker.sendMessage("§cNo effects to steal!");
                 }

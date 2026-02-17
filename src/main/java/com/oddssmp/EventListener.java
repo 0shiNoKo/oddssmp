@@ -3,12 +3,16 @@ package com.oddssmp;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Arrow;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -23,6 +27,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -586,6 +592,24 @@ public class EventListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        // Handle projectile damage (arrows from bows/crossbows)
+        if (event.getDamager() instanceof Projectile) {
+            Projectile projectile = (Projectile) event.getDamager();
+            ProjectileSource shooter = projectile.getShooter();
+            if (shooter instanceof Player) {
+                Player attacker = (Player) shooter;
+                PlayerData attackerData = plugin.getPlayerData(attacker.getUniqueId());
+                if (attackerData != null && attackerData.getAttribute() == AttributeType.RANGE) {
+                    // RANGE PASSIVE: Footwork - bows/crossbows do 45% +1%/level max 50% more damage
+                    AbilityManager.AbilityFlags attackerFlags = plugin.getAbilityManager().getAbilityFlags(attacker.getUniqueId());
+                    if (attackerFlags.rangePassiveDamageBonus > 0) {
+                        event.setDamage(event.getDamage() * (1.0 + attackerFlags.rangePassiveDamageBonus));
+                    }
+                }
+            }
+            return;
+        }
+
         if (!(event.getDamager() instanceof Player)) return;
         Player attacker = (Player) event.getDamager();
 
@@ -648,11 +672,7 @@ public class EventListener implements Listener {
             if (victimData != null && victimData.getAttribute() != null) {
                 AbilityManager.AbilityFlags victimFlags = plugin.getAbilityManager().getAbilityFlags(victim.getUniqueId());
 
-                // DEFENSE PASSIVE: Hardened - permanent damage reduction
-                if (victimData.getAttribute() == AttributeType.DEFENSE) {
-                    double reduction = 0.05 + (victimData.getLevel() - 1) * 0.01;
-                    event.setDamage(event.getDamage() * (1.0 - reduction));
-                }
+                // DEFENSE PASSIVE: Hardened - armor breaks slower (handled in PlayerItemDamageEvent)
 
                 // DEFENSE MELEE: Iron Response
                 if (victimFlags.ironResponse > 0) {
@@ -741,14 +761,6 @@ public class EventListener implements Listener {
             }
         }
 
-        // RANGE PASSIVE: Footwork - prevent sprint toward attacker
-        if (attackerData.getAttribute() == AttributeType.RANGE && event.getEntity() instanceof Player) {
-            Player target = (Player) event.getEntity();
-            AbilityManager.AbilityFlags targetFlags = plugin.getAbilityManager().getAbilityFlags(target.getUniqueId());
-            int duration = 5 + attackerData.getLevel();
-            targetFlags.cannotApproach = attacker.getUniqueId();
-            targetFlags.cannotApproachUntil = System.currentTimeMillis() + (duration * 1000);
-        }
     }
 
     /**
@@ -764,6 +776,70 @@ public class EventListener implements Listener {
 
         AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
 
+    }
+
+    /**
+     * Handle SPEED passive double jump (Adrenaline)
+     */
+    @EventHandler
+    public void onToggleFlight(PlayerToggleFlightEvent event) {
+        Player player = event.getPlayer();
+        if (player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+            return;
+        }
+
+        PlayerData data = plugin.getPlayerData(player.getUniqueId());
+        if (data == null || data.getAttribute() != AttributeType.SPEED) return;
+
+        // Cancel the flight attempt
+        event.setCancelled(true);
+        player.setAllowFlight(false);
+        player.setFlying(false);
+
+        AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
+
+        // Check cooldown (20s -1s/level)
+        long cooldownMs = (20 - data.getLevel()) * 1000L;
+        if (System.currentTimeMillis() < flags.speedAdrenalineCooldown) {
+            long remaining = (flags.speedAdrenalineCooldown - System.currentTimeMillis()) / 1000;
+            player.sendMessage("§cAdrenaline on cooldown: " + remaining + "s");
+            return;
+        }
+
+        // Apply the boost in look direction
+        Vector direction = player.getLocation().getDirection();
+        Vector boost = direction.multiply(1.5).setY(direction.getY() + 0.8);
+        player.setVelocity(boost);
+
+        // Set cooldown
+        flags.speedAdrenalineCooldown = System.currentTimeMillis() + cooldownMs;
+
+        // Effects
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.5f);
+        player.sendMessage("§eAdrenaline boost!");
+    }
+
+    /**
+     * Handle armor durability (DEFENSE PASSIVE: Hardened)
+     */
+    @EventHandler
+    public void onArmorDamage(PlayerItemDamageEvent event) {
+        Player player = event.getPlayer();
+        PlayerData data = plugin.getPlayerData(player.getUniqueId());
+        if (data == null || data.getAttribute() != AttributeType.DEFENSE) return;
+
+        // Check if the item is armor
+        Material type = event.getItem().getType();
+        if (type.name().contains("HELMET") || type.name().contains("CHESTPLATE") ||
+            type.name().contains("LEGGINGS") || type.name().contains("BOOTS")) {
+            // DEFENSE PASSIVE: Hardened - armor breaks 5% slower +1%/level
+            double reduction = 0.05 + (data.getLevel() - 1) * 0.01;
+
+            // Random chance to prevent durability damage
+            if (Math.random() < reduction) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     /**
@@ -1050,19 +1126,13 @@ public class EventListener implements Listener {
 
         AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
 
-        // RANGE MELEE/PASSIVE: Cannot approach attacker
-        if (flags.cannotApproach != null && System.currentTimeMillis() < flags.cannotApproachUntil) {
-            Player target = Bukkit.getPlayer(flags.cannotApproach);
-            if (target != null && player.isSprinting()) {
-                Vector toTarget = target.getLocation().toVector().subtract(player.getLocation().toVector());
-                Vector moveDirection = event.getTo().toVector().subtract(event.getFrom().toVector());
-
-                if (toTarget.normalize().dot(moveDirection.normalize()) > 0.5) {
-                    player.setSprinting(false);
-                }
+        // SPEED PASSIVE: Adrenaline - enable double jump when on ground
+        if (data.getAttribute() == AttributeType.SPEED &&
+            player.getGameMode() != org.bukkit.GameMode.CREATIVE &&
+            player.getGameMode() != org.bukkit.GameMode.SPECTATOR) {
+            if (player.isOnGround() && !player.getAllowFlight()) {
+                player.setAllowFlight(true);
             }
-        } else if (flags.cannotApproach != null) {
-            flags.cannotApproach = null;
         }
 
         // BREEZE PASSIVE: Curse of Judgment - movement speed reduction
@@ -1078,15 +1148,6 @@ public class EventListener implements Listener {
             if (event.getFrom().getX() != event.getTo().getX() ||
                     event.getFrom().getZ() != event.getTo().getZ()) {
                 flags.anchorLastMovedTime = System.currentTimeMillis();
-            }
-        }
-
-        // SPEED PASSIVE: Adrenaline decay after 6s
-        if (data.getAttribute() == AttributeType.SPEED) {
-            long timeSinceCombat = System.currentTimeMillis() - flags.speedLastCombatTime;
-            if (timeSinceCombat > 6000 && flags.speedAdrenalineStacks > 0) {
-                flags.speedAdrenalineStacks -= 0.01; // Decay
-                if (flags.speedAdrenalineStacks < 0) flags.speedAdrenalineStacks = 0;
             }
         }
 

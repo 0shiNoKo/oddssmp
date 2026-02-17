@@ -1778,7 +1778,23 @@ public class AdminGUI {
      * Detailed attribute info (when clicking an attribute)
      */
     public void openDetailedAttributeInfo(Player player, AttributeType attribute) {
-        Inventory gui = Bukkit.createInventory(null, 27, attribute.getIcon() + " §e§l" + attribute.getDisplayName());
+        openDetailedAttributeInfo(player, attribute, null);
+    }
+
+    /**
+     * Detailed attribute info with optional player owner info
+     */
+    public void openDetailedAttributeInfo(Player player, AttributeType attribute, Player owner) {
+        String title;
+        if (owner != null) {
+            PlayerData data = plugin.getPlayerData(owner.getUniqueId());
+            int level = data != null ? data.getLevel() : 1;
+            title = attribute.getIcon() + " §e" + attribute.getDisplayName() + " §7- " + owner.getName() + " §eLv" + level;
+        } else {
+            title = attribute.getIcon() + " §e§l" + attribute.getDisplayName();
+        }
+
+        Inventory gui = Bukkit.createInventory(null, 27, title);
 
         String[] supportDesc = AbilityDescriptions.getDescription(attribute, "support");
         String[] meleeDesc = AbilityDescriptions.getDescription(attribute, "melee");
@@ -1801,6 +1817,19 @@ public class AdminGUI {
         passiveLore.add("§7Type: §bPassive");
         passiveLore.add("§7Cooldown: §aNone");
         passiveLore.add("§7Active: §aAlways");
+
+        // Player info item (if owner specified)
+        if (owner != null) {
+            PlayerData data = plugin.getPlayerData(owner.getUniqueId());
+            int level = data != null ? data.getLevel() : 1;
+            String stars = "§e" + "★".repeat(level) + "§7" + "☆".repeat(5 - level);
+            gui.setItem(4, createItem(Material.PLAYER_HEAD, "§e§l" + owner.getName(), Arrays.asList(
+                    "§7Attribute: §e" + attribute.getIcon() + " " + attribute.getDisplayName(),
+                    "§7Level: " + stars + " §7(" + level + "/5)",
+                    "",
+                    "§7Each level adds §e+10% §7to effects"
+            )));
+        }
 
         // Support ability
         gui.setItem(11, createItem(Material.EMERALD, "§a§lSupport Ability", supportLore));
