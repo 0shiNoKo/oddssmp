@@ -150,9 +150,7 @@ public class AdminGUI {
                 "§7Multiplier for support cooldown",
                 "§7Current: §e" + String.format("%.1fx", config.supportCooldownModifier),
                 "",
-                "§7Stable: §e" + (int)(settings.getStableCooldown() * config.supportCooldownModifier) + "s",
-                "§7Warped: §e" + (int)(settings.getWarpedCooldown() * config.supportCooldownModifier) + "s",
-                "§7Extreme: §e" + (int)(settings.getExtremeCooldown() * config.supportCooldownModifier) + "s",
+                "§7Cooldown: §e" + (int)(settings.getBaseCooldown() * config.supportCooldownModifier) + "s",
                 "",
                 "§e§lLeft: §7-0.1x  §e§lRight: §7+0.1x")));
 
@@ -173,9 +171,7 @@ public class AdminGUI {
                 "§7Multiplier for melee cooldown",
                 "§7Current: §e" + String.format("%.1fx", config.meleeCooldownModifier),
                 "",
-                "§7Stable: §e" + (int)(settings.getStableCooldown() * config.meleeCooldownModifier) + "s",
-                "§7Warped: §e" + (int)(settings.getWarpedCooldown() * config.meleeCooldownModifier) + "s",
-                "§7Extreme: §e" + (int)(settings.getExtremeCooldown() * config.meleeCooldownModifier) + "s",
+                "§7Cooldown: §e" + (int)(settings.getBaseCooldown() * config.meleeCooldownModifier) + "s",
                 "",
                 "§e§lLeft: §7-0.1x  §e§lRight: §7+0.1x")));
 
