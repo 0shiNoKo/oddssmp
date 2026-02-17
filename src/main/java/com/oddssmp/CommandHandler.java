@@ -419,7 +419,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         // Try to match an attribute name first
         try {
             AttributeType attribute = AttributeType.valueOf(arg.toUpperCase().replace(" ", "_"));
-            sendAttributeInfo(player, attribute, null);
+            plugin.getAdminGUI().openDetailedAttributeInfo(player, attribute);
             return true;
         } catch (IllegalArgumentException ignored) {}
 
@@ -431,58 +431,13 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 player.sendMessage("§c" + target.getName() + " doesn't have an attribute!");
                 return true;
             }
-            sendAttributeInfo(player, data.getAttribute(), target);
+            plugin.getAdminGUI().openDetailedAttributeInfo(player, data.getAttribute(), target);
             return true;
         }
 
         player.sendMessage("§cNo attribute or player found with name '§e" + arg + "§c'!");
         player.sendMessage("§7Usage: §e/smp info §7[attribute|player]");
         return true;
-    }
-
-    /**
-     * Send detailed attribute info in chat
-     */
-    private void sendAttributeInfo(Player viewer, AttributeType attribute, Player owner) {
-        String[] supportDesc = AbilityDescriptions.getDescription(attribute, "support");
-        String[] meleeDesc = AbilityDescriptions.getDescription(attribute, "melee");
-        String[] passiveDesc = AbilityDescriptions.getDescription(attribute, "passive");
-
-        viewer.sendMessage("");
-        viewer.sendMessage("§6§l§m                                                    ");
-
-        if (owner != null) {
-            PlayerData data = plugin.getPlayerData(owner.getUniqueId());
-            int level = data != null ? data.getLevel() : 1;
-            String stars = "§e" + "★".repeat(level) + "§7" + "☆".repeat(5 - level);
-            viewer.sendMessage("§e§l" + attribute.getIcon() + " " + attribute.getDisplayName() + " §7- " + owner.getName());
-            viewer.sendMessage("§7Level: " + stars + " §7(" + level + "/5)");
-        } else {
-            viewer.sendMessage("§e§l" + attribute.getIcon() + " " + attribute.getDisplayName());
-        }
-
-        viewer.sendMessage("");
-
-        // Support ability
-        for (String line : supportDesc) {
-            viewer.sendMessage("  " + line);
-        }
-        viewer.sendMessage("");
-
-        // Melee ability
-        for (String line : meleeDesc) {
-            viewer.sendMessage("  " + line);
-        }
-        viewer.sendMessage("");
-
-        // Passive ability
-        for (String line : passiveDesc) {
-            viewer.sendMessage("  " + line);
-        }
-
-        viewer.sendMessage("");
-        viewer.sendMessage("§6§l§m                                                    ");
-        viewer.sendMessage("");
     }
 
     /**
