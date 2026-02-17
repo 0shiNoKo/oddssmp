@@ -1143,19 +1143,6 @@ public class EventListener implements Listener {
             }
         }
 
-        // ANCHOR PASSIVE: Track last moved time
-        if (data.getAttribute() == AttributeType.ANCHOR) {
-            if (event.getFrom().getX() != event.getTo().getX() ||
-                    event.getFrom().getZ() != event.getTo().getZ()) {
-                flags.anchorLastMovedTime = System.currentTimeMillis();
-            }
-        }
-
-        // ANCHOR MELEE: Rooted check
-        if (flags.rooted) {
-            event.setCancelled(true);
-        }
-
         // DISRUPTION PASSIVE: Reset desync after cooldown
         if (flags.disruptionDesyncUsed && System.currentTimeMillis() > flags.disruptionDesyncCooldown) {
             flags.disruptionDesyncUsed = false;

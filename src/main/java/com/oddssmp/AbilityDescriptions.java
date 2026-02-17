@@ -190,29 +190,6 @@ public class AbilityDescriptions {
                         "§7(only visible to you)"
                 };
 
-            // PERSISTENCE
-            case "PERSISTENCE_MELEE":
-                return new String[]{
-                        "§c§lMelee: §7Stored Pain",
-                        "§7For 4s (+1s per level, max 8s):",
-                        "§725% of damage taken is stored",
-                        "§7At end: stored damage unleashed",
-                        "§7to last enemy hit"
-                };
-            case "PERSISTENCE_SUPPORT":
-                return new String[]{
-                        "§a§lSupport: §7Last Stand",
-                        "§7Allies cannot drop below 1 heart",
-                        "§7Duration: 2s +0.5s per level (max 4.5s)"
-                };
-            case "PERSISTENCE_PASSIVE":
-                return new String[]{
-                        "§b§lPassive: §7Endure",
-                        "§7Below 50% HP:",
-                        "§7+10% damage resistance",
-                        "§7+5% per level (max 35%)"
-                };
-
             // TRANSFER
             case "TRANSFER_MELEE":
                 return new String[]{
@@ -305,33 +282,6 @@ public class AbilityDescriptions {
                         "§7First hit per fight:",
                         "§7+§e15s §7to both opponent cooldowns",
                         "§7+2s/level (max §e+20s§7)"
-                };
-
-            // ANCHOR
-            case "ANCHOR_MELEE":
-                return new String[]{
-                        "§c§lMelee: §7Pin",
-                        "§7Next melee hit:",
-                        "§7Prevents sprinting, jumping, and knockback",
-                        "§74s +1s per level (max 9s)",
-                        "§7Cooldown: §e120s"
-                };
-            case "ANCHOR_SUPPORT":
-                return new String[]{
-                        "§a§lSupport: §7Hold The Line",
-                        "§7Allies within 6 blocks:",
-                        "§7+25% knockback resistance",
-                        "§7+20% damage reduction",
-                        "§7(+5% per level, max 45%)",
-                        "§7Duration: 6s"
-                };
-            case "ANCHOR_PASSIVE":
-                return new String[]{
-                        "§b§lPassive: §7Immobile",
-                        "§7While standing still for 2s:",
-                        "§7+10% damage resistance",
-                        "§7+5% per level (max 35%)",
-                        "§7Lost when moving"
                 };
 
             // RISK

@@ -100,11 +100,6 @@ public class ParticleManager {
                 spawnCircleParticles(loc, Particle.END_ROD, radius * 0.8, particleCount / 2);
                 break;
 
-            case PERSISTENCE:
-                spawnColoredParticles(loc, Color.RED, radius, particleCount);
-                spawnCircleParticles(loc, Particle.TOTEM_OF_UNDYING, radius * 0.8, 40);
-                break;
-
             case TRANSFER:
                 spawnColoredParticles(loc, Color.AQUA, radius, particleCount);
                 spawnSpiralParticles(loc, Particle.DOLPHIN, radius, 60);
@@ -194,12 +189,6 @@ public class ParticleManager {
                 target.getWorld().spawnParticle(Particle.ENCHANT, end, 50, 0.5, 0.5, 0.5, 1);
                 break;
 
-            case PERSISTENCE:
-                drawColoredLine(start, end, Color.RED, 25);
-                drawLine(start, end, Particle.HEART, 20);
-                target.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, end, 25, 0.5, 0.5, 0.5, 0);
-                break;
-
             case TRANSFER:
                 drawColoredLine(start, end, Color.AQUA, 30);
                 drawLine(start, end, Particle.DOLPHIN, 20);
@@ -254,12 +243,6 @@ public class ParticleManager {
                 drawColoredLine(start, end, Color.RED, 30);
                 drawLine(start, end, Particle.LAVA, 20);
                 target.getWorld().spawnParticle(Particle.LAVA, end, 30, 0.5, 0.5, 0.5, 0);
-                break;
-
-            case ANCHOR:
-                drawColoredLine(start, end, Color.GRAY, 30);
-                drawColoredLine(start, end, Color.SILVER, 20);
-                target.getWorld().spawnParticle(Particle.CRIT, end, 40, 0.5, 0.5, 0.5, 0);
                 break;
 
             case RISK:
@@ -319,11 +302,6 @@ public class ParticleManager {
                 player.getWorld().spawnParticle(Particle.END_ROD, loc, count / 2, 0.4, 0.6, 0.4, 0);
                 break;
 
-            case PERSISTENCE:
-                spawnColoredParticle(loc, Color.RED, count);
-                player.getWorld().spawnParticle(Particle.HEART, loc, count / 2, 0.4, 0.6, 0.4, 0);
-                break;
-
             case TRANSFER:
                 spawnColoredParticle(loc, Color.AQUA, count);
                 player.getWorld().spawnParticle(Particle.DOLPHIN, loc, count / 2, 0.4, 0.6, 0.4, 0);
@@ -366,11 +344,6 @@ public class ParticleManager {
             case DISRUPTION:
                 spawnColoredParticle(loc, Color.RED, count);
                 player.getWorld().spawnParticle(Particle.LAVA, loc, count / 3, 0.4, 0.6, 0.4, 0);
-                break;
-
-            case ANCHOR:
-                spawnColoredParticle(loc, Color.GRAY, count);
-                spawnColoredParticle(loc, Color.SILVER, count / 2);
                 break;
 
             case RISK:
@@ -761,56 +734,6 @@ public class ParticleManager {
             }
         }
         center.getWorld().spawnParticle(Particle.FLASH, center, 1);
-    }
-
-    /**
-     * Chain particles (for ANCHOR Pin)
-     */
-    public static void playChainParticles(Location start, Location end) {
-        Vector dir = end.toVector().subtract(start.toVector());
-        double length = dir.length();
-        dir.normalize();
-
-        for (int i = 0; i < (int)(length * 5); i++) {
-            double ratio = (double) i / (length * 5);
-            Vector offset = dir.clone().multiply(length * ratio);
-            Location loc = start.clone().add(offset);
-            // Alternating pattern for chain look
-            if (i % 2 == 0) {
-                start.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0,
-                        new Particle.DustOptions(Color.GRAY, 1.5f));
-            } else {
-                start.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0,
-                        new Particle.DustOptions(Color.fromRGB(60, 60, 60), 1.2f));
-            }
-        }
-    }
-
-    /**
-     * Anchor ground symbol (for ANCHOR Hold the Line)
-     */
-    public static void playAnchorSymbol(Location center) {
-        // Vertical line
-        for (int i = 0; i < 10; i++) {
-            Location loc = center.clone().add(0, 0.1, -0.5 + i * 0.1);
-            center.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0,
-                    new Particle.DustOptions(Color.GRAY, 1.2f));
-        }
-        // Horizontal line
-        for (int i = 0; i < 10; i++) {
-            Location loc = center.clone().add(-0.5 + i * 0.1, 0.1, 0.3);
-            center.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0,
-                    new Particle.DustOptions(Color.GRAY, 1.2f));
-        }
-        // Curved bottom
-        for (int i = -5; i <= 5; i++) {
-            double angle = Math.PI + Math.toRadians(i * 10);
-            double x = 0.3 * Math.cos(angle);
-            double z = 0.3 * Math.sin(angle) + 0.5;
-            Location loc = center.clone().add(x, 0.1, z);
-            center.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0,
-                    new Particle.DustOptions(Color.GRAY, 1.2f));
-        }
     }
 
     /**
