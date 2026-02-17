@@ -1231,5 +1231,9 @@ public class AbilityManager {
         // Marked damage multiplier
         public double damageTakenMultiplier = 1.0;
         public boolean markedForDamage = false;
+
+        // Wealth - Plunder Kill
+        public boolean plunderKillReady = false;
+        public double plunderMultiplier = 1.0;
     }
 }
