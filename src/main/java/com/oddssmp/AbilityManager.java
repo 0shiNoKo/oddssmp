@@ -1235,5 +1235,12 @@ public class AbilityManager {
         // Wealth - Plunder Kill
         public boolean plunderKillReady = false;
         public double plunderMultiplier = 1.0;
+
+        // Anchor - Last moved tracking
+        public long anchorLastMovedTime = 0;
+
+        // Speed - Adrenaline tracking
+        public long speedLastCombatTime = 0;
+        public double speedAdrenalineStacks = 0;
     }
 }
