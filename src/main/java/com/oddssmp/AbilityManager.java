@@ -664,8 +664,7 @@ public class AbilityManager {
             }
 
             case TRANSFER: {
-                // Effect Swap: Steal 45% +1% per level (max 50%) of opponent's potion effects
-                double stealPercent = Math.min(0.50, 0.45 + (level - 1) * 0.01);
+                // Effect Swap: Steal 100% of opponent's potion effects
                 boolean stolenAny = false;
                 List<PotionEffect> effectsToSteal = new ArrayList<>();
                 for (PotionEffect effect : livingTarget.getActivePotionEffects()) {
@@ -674,21 +673,14 @@ public class AbilityManager {
                     }
                 }
                 for (PotionEffect effect : effectsToSteal) {
-                    // Scale the duration by steal percent
-                    int newDuration = (int)(effect.getDuration() * stealPercent);
-                    if (newDuration > 0) {
-                        attacker.addPotionEffect(new PotionEffect(effect.getType(), newDuration, effect.getAmplifier()));
-                    }
-                    // Reduce target's effect duration
+                    // Transfer full effect to attacker
+                    attacker.addPotionEffect(new PotionEffect(effect.getType(), effect.getDuration(), effect.getAmplifier()));
+                    // Remove effect from target completely
                     livingTarget.removePotionEffect(effect.getType());
-                    int remainingDuration = (int)(effect.getDuration() * (1.0 - stealPercent));
-                    if (remainingDuration > 0) {
-                        livingTarget.addPotionEffect(new PotionEffect(effect.getType(), remainingDuration, effect.getAmplifier()));
-                    }
                     stolenAny = true;
                 }
                 if (stolenAny) {
-                    attacker.sendMessage("§aStole " + (int)(stealPercent * 100) + "% of positive effects!");
+                    attacker.sendMessage("§aStole all positive effects!");
                 } else {
                     attacker.sendMessage("§cNo effects to steal!");
                 }
@@ -1239,5 +1231,9 @@ public class AbilityManager {
         // Marked damage multiplier
         public double damageTakenMultiplier = 1.0;
         public boolean markedForDamage = false;
+
+        // Wealth - Plunder Kill
+        public boolean plunderKillReady = false;
+        public double plunderMultiplier = 1.0;
     }
 }
