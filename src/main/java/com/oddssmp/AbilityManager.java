@@ -1252,10 +1252,6 @@ public class AbilityManager {
         public boolean plunderKillReady = false;
         public double plunderMultiplier = 1.0;
 
-        // Anchor - Last moved tracking
-        public long anchorLastMovedTime = 0;
-        public boolean rooted = false;
-
         // Speed - Adrenaline tracking
         public long speedLastCombatTime = 0;
         public double speedAdrenalineStacks = 0;

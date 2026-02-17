@@ -621,15 +621,6 @@ public class WeaponAltar {
         CRAFTING_COSTS.put(AttributeWeapon.WATCHERS_BLADE, watcherCost);
         CUSTOM_ITEMS.put(AttributeWeapon.WATCHERS_BLADE, Arrays.asList("§c1x §lWeapon Handle"));
 
-        // Painbound Greatsword (Persistence)
-        Map<Material, Integer> painboundCost = new LinkedHashMap<>();
-        painboundCost.put(Material.NETHERITE_INGOT, 8);
-        painboundCost.put(Material.DIAMOND_BLOCK, 16);
-        painboundCost.put(Material.SOUL_SAND, 64);
-        painboundCost.put(Material.WITHER_SKELETON_SKULL, 3);
-        CRAFTING_COSTS.put(AttributeWeapon.PAINBOUND_GREATSWORD, painboundCost);
-        CUSTOM_ITEMS.put(AttributeWeapon.PAINBOUND_GREATSWORD, Arrays.asList("§c1x §lWeapon Handle"));
-
         // Mirror Edge (Transfer)
         Map<Material, Integer> mirrorCost = new LinkedHashMap<>();
         mirrorCost.put(Material.DIAMOND_BLOCK, 16);
@@ -665,15 +656,6 @@ public class WeaponAltar {
         fractureCost.put(Material.END_CRYSTAL, 4);
         CRAFTING_COSTS.put(AttributeWeapon.FRACTURE_ROD, fractureCost);
         CUSTOM_ITEMS.put(AttributeWeapon.FRACTURE_ROD, Arrays.asList("§c1x §lWeapon Handle"));
-
-        // Ironroot Halberd (Anchor)
-        Map<Material, Integer> ironrootCost = new LinkedHashMap<>();
-        ironrootCost.put(Material.NETHERITE_INGOT, 6);
-        ironrootCost.put(Material.IRON_BLOCK, 64);
-        ironrootCost.put(Material.COPPER_BLOCK, 64);
-        ironrootCost.put(Material.DIAMOND_BLOCK, 8);
-        CRAFTING_COSTS.put(AttributeWeapon.IRONROOT_HALBERD, ironrootCost);
-        CUSTOM_ITEMS.put(AttributeWeapon.IRONROOT_HALBERD, Arrays.asList("§c1x §lWeapon Handle"));
 
         // High Roller Blade (Risk)
         Map<Material, Integer> highrollerCost = new LinkedHashMap<>();

@@ -81,8 +81,6 @@ public class AdminGUI {
                 Material.CLOCK,            // Tempo
                 Material.TNT,              // Disruption
                 Material.SPYGLASS,         // Vision
-                Material.TOTEM_OF_UNDYING, // Persistence
-                Material.ANVIL,            // Anchor
                 Material.ENDER_PEARL,      // Transfer
                 Material.COMPARATOR,       // Risk
                 Material.WITHER_SKELETON_SKULL, // Wither
@@ -404,8 +402,6 @@ public class AdminGUI {
                 Material.CLOCK,            // Tempo
                 Material.TNT,              // Disruption
                 Material.SPYGLASS,         // Vision
-                Material.TOTEM_OF_UNDYING, // Persistence
-                Material.ANVIL,            // Anchor
                 Material.ENDER_PEARL,      // Transfer
                 Material.COMPARATOR,       // Risk
                 Material.WITHER_SKELETON_SKULL, // Wither
@@ -1743,8 +1739,6 @@ public class AdminGUI {
                 Material.CLOCK,            // Tempo
                 Material.TNT,              // Disruption
                 Material.SPYGLASS,         // Vision
-                Material.TOTEM_OF_UNDYING, // Persistence
-                Material.ANVIL,            // Anchor
                 Material.ENDER_PEARL,      // Transfer
                 Material.COMPARATOR,       // Risk
                 Material.WITHER_SKELETON_SKULL, // Wither

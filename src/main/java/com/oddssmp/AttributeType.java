@@ -12,8 +12,6 @@ public enum AttributeType {
     TEMPO("⏱", "Tempo"),
     DISRUPTION("🧠", "Disruption"),
     VISION("👁", "Vision"),
-    PERSISTENCE("♾", "Persistence"),
-    ANCHOR("⚓", "Anchor"),
     TRANSFER("🔁", "Transfer"),
     RISK("🎲", "Risk"),
     WITHER("💀", "Wither"),

@@ -44,10 +44,6 @@ public enum AttributeWeapon {
         7.0, 1.6, 300, "§b",
         "On hit: Mark target 5s", "Glow enemies within 6 blocks"),
 
-    PAINBOUND_GREATSWORD(AttributeType.PERSISTENCE, "Painbound Greatsword", Material.NETHERITE_SWORD,
-        10.5, 0.9, 300, "§8",
-        "On hit: Release stored damage", "Store 10% damage taken"),
-
     MIRROR_EDGE(AttributeType.TRANSFER, "Mirror Edge", Material.DIAMOND_SWORD,
         7.5, 1.6, 300, "§d",
         "On hit: Steal positive effects 4s", "-10% debuff duration"),
@@ -63,10 +59,6 @@ public enum AttributeWeapon {
     FRACTURE_ROD(AttributeType.DISRUPTION, "Fracture Rod", Material.BLAZE_ROD,
         6.5, 1.4, 300, "§5",
         "On hit: +10s cooldown to all abilities", "+10% debuff duration"),
-
-    IRONROOT_HALBERD(AttributeType.ANCHOR, "Ironroot Halberd", Material.NETHERITE_AXE,
-        9.0, 1.1, 300, "§7",
-        "On hit: No sprint/jump 3s", "+25% knockback resistance"),
 
     HIGH_ROLLER_BLADE(AttributeType.RISK, "High Roller Blade", Material.GOLDEN_SWORD,
         11.0, 1.6, 300, "§6",
