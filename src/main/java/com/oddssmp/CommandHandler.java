@@ -71,7 +71,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             case "melee":
                 return handleMeleeAbility(sender);
             case "info":
-                return handleInfo(sender);
+                return handleInfo(sender, args);
             default:
                 sendHelp(sender);
                 return true;
@@ -398,17 +398,91 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /smp info - Open attribute info GUI
+     * /smp info [attribute|player] - Show attribute info
      */
-    private boolean handleInfo(CommandSender sender) {
+    private boolean handleInfo(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cOnly players can use the info GUI!");
+            sender.sendMessage("§cOnly players can use this command!");
             return true;
         }
 
         Player player = (Player) sender;
-        plugin.getAdminGUI().openAttributeInfo(player);
+
+        // /smp info - no args, open GUI
+        if (args.length < 2) {
+            plugin.getAdminGUI().openAttributeInfo(player);
+            return true;
+        }
+
+        String arg = args[1];
+
+        // Try to match an attribute name first
+        try {
+            AttributeType attribute = AttributeType.valueOf(arg.toUpperCase().replace(" ", "_"));
+            sendAttributeInfo(player, attribute, null);
+            return true;
+        } catch (IllegalArgumentException ignored) {}
+
+        // Try to match a player name
+        Player target = Bukkit.getPlayer(arg);
+        if (target != null) {
+            PlayerData data = plugin.getPlayerData(target.getUniqueId());
+            if (data == null || data.getAttribute() == null) {
+                player.sendMessage("§c" + target.getName() + " doesn't have an attribute!");
+                return true;
+            }
+            sendAttributeInfo(player, data.getAttribute(), target);
+            return true;
+        }
+
+        player.sendMessage("§cNo attribute or player found with name '§e" + arg + "§c'!");
+        player.sendMessage("§7Usage: §e/smp info §7[attribute|player]");
         return true;
+    }
+
+    /**
+     * Send detailed attribute info in chat
+     */
+    private void sendAttributeInfo(Player viewer, AttributeType attribute, Player owner) {
+        String[] supportDesc = AbilityDescriptions.getDescription(attribute, "support");
+        String[] meleeDesc = AbilityDescriptions.getDescription(attribute, "melee");
+        String[] passiveDesc = AbilityDescriptions.getDescription(attribute, "passive");
+
+        viewer.sendMessage("");
+        viewer.sendMessage("§6§l§m                                                    ");
+
+        if (owner != null) {
+            PlayerData data = plugin.getPlayerData(owner.getUniqueId());
+            int level = data != null ? data.getLevel() : 1;
+            String stars = "§e" + "★".repeat(level) + "§7" + "☆".repeat(5 - level);
+            viewer.sendMessage("§e§l" + attribute.getIcon() + " " + attribute.getDisplayName() + " §7- " + owner.getName());
+            viewer.sendMessage("§7Level: " + stars + " §7(" + level + "/5)");
+        } else {
+            viewer.sendMessage("§e§l" + attribute.getIcon() + " " + attribute.getDisplayName());
+        }
+
+        viewer.sendMessage("");
+
+        // Support ability
+        for (String line : supportDesc) {
+            viewer.sendMessage("  " + line);
+        }
+        viewer.sendMessage("");
+
+        // Melee ability
+        for (String line : meleeDesc) {
+            viewer.sendMessage("  " + line);
+        }
+        viewer.sendMessage("");
+
+        // Passive ability
+        for (String line : passiveDesc) {
+            viewer.sendMessage("  " + line);
+        }
+
+        viewer.sendMessage("");
+        viewer.sendMessage("§6§l§m                                                    ");
+        viewer.sendMessage("");
     }
 
     /**
@@ -847,7 +921,9 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/admin autoassign <on|off> [delay] §7- Toggle auto-assign on join");
             sender.sendMessage("§e/admin assignall §7- Give attributes to all players");
         }
-        sender.sendMessage("§e/smp info §7- View all attributes info");
+        sender.sendMessage("§e/smp info §7- View all attributes (GUI)");
+        sender.sendMessage("§e/smp info <attribute> §7- View specific attribute info");
+        sender.sendMessage("§e/smp info <player> §7- View a player's attribute info");
         sender.sendMessage("§e/smp support §7- Activate support ability");
         sender.sendMessage("§e/smp melee §7- Activate melee ability");
         if (sender.hasPermission("oddssmp.admin")) {
@@ -870,6 +946,14 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 completions.addAll(Arrays.asList("info", "support", "melee"));
                 if (sender.hasPermission("oddssmp.admin")) {
                     completions.addAll(Arrays.asList("assign", "reroll", "upgrade", "remove", "reset", "cooldown"));
+                }
+            } else if (args.length == 2 && args[0].equalsIgnoreCase("info")) {
+                // Suggest attribute names and player names for /smp info
+                for (AttributeType attr : AttributeType.values()) {
+                    completions.add(attr.name().toLowerCase());
+                }
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    completions.add(p.getName());
                 }
             } else if (args.length == 2) {
                 return Bukkit.getOnlinePlayers().stream()

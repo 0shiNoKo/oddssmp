@@ -347,7 +347,8 @@ public class AbilityDescriptions {
                 return new String[]{
                         "§c§lMelee: §7Effect Swap",
                         "§7Next melee hit:",
-                        "§7Steals all positive effects"
+                        "§7Steals 100% of opponent's",
+                        "§7beneficial potion effects"
                 };
             case "TRANSFER_SUPPORT":
                 return new String[]{
