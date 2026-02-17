@@ -1238,6 +1238,7 @@ public class AbilityManager {
 
         // Anchor - Last moved tracking
         public long anchorLastMovedTime = 0;
+        public boolean rooted = false;
 
         // Speed - Adrenaline tracking
         public long speedLastCombatTime = 0;
