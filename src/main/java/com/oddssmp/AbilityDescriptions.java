@@ -114,6 +114,7 @@ public class AbilityDescriptions {
                         "§a§lSupport: §7Lockdown",
                         "§7Enemies within 6 blocks:",
                         "§7Cannot use abilities",
+                        "§7Take §c+25% §7damage from all sources",
                         "§7Duration: 5s +1s per level (max 10s)"
                 };
             case "CONTROL_PASSIVE":
@@ -273,6 +274,8 @@ public class AbilityDescriptions {
                 return new String[]{
                         "§a§lSupport: §7System Jam",
                         "§7Enemies cannot activate abilities",
+                        "§7Deals §e20% §7of enemy cooldowns as damage",
+                        "§7(e.g. 100s cooldown = 20 damage)",
                         "§7Duration: §e25s §7+1s/level (max 30s)",
                         "§7Cooldown: §e150s"
                 };
@@ -399,7 +402,8 @@ public class AbilityDescriptions {
             case "DRAGON_EGG_SUPPORT":
                 return new String[]{
                         "§a§lSupport: §6§lDominion",
-                        "§7Allies gain §e+25% §7damage (+1%/level, max 30%)",
+                        "§c§l⚠ REQUIRES 5 CONSECUTIVE HITS TO CHARGE",
+                        "§7Gain §e+25% §7damage (+1%/level, max 30%)",
                         "§7§e50% §7cooldown reduction (+1%/level, max 55%)",
                         "§7Duration: §e8s",
                         "§7Cooldown: §e300s"

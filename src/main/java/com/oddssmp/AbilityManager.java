@@ -402,8 +402,9 @@ public class AbilityManager {
 
             case DISRUPTION: {
                 // System Jam: Enemies cannot activate abilities, 25s +1s per level, max 30s
+                // Also deals damage equal to 20% of enemy's total cooldown time remaining
                 int disruptDuration = Math.min(30, 25 + level);
-                lockdownNearbyEnemies(caster, 6.0, disruptDuration * 20);
+                applySystemJam(caster, 6.0, disruptDuration);
                 break;
             }
 
@@ -873,10 +874,26 @@ public class AbilityManager {
     }
 
     private void applyDragonDominion(Player caster, int level) {
+        AbilityFlags flags = getAbilityFlags(caster.getUniqueId());
+
+        // Dominion requires 5 consecutive hits to charge
+        if (!flags.dragonDominionCharged) {
+            caster.sendMessage("§cDominion not charged! Land 5 consecutive hits first. (" + flags.dragonDominionHitCounter + "/5)");
+            // Refund the cooldown since ability didn't activate
+            PlayerData data = plugin.getPlayerData(caster.getUniqueId());
+            if (data != null) {
+                data.setCooldown("support", 0);
+            }
+            return;
+        }
+
+        // Consume the charge
+        flags.dragonDominionCharged = false;
+        flags.dragonDominionHitCounter = 0;
+
         double damageBonus = 0.25 + (level * 0.01);
         double cooldownReduction = 0.50 + (level * 0.01);
 
-        AbilityFlags flags = getAbilityFlags(caster.getUniqueId());
         flags.dragonDominionDamage = 1.0 + damageBonus;
         flags.dragonDominionCooldown = cooldownReduction;
 
@@ -1044,14 +1061,72 @@ public class AbilityManager {
     }
 
     private void lockdownNearbyEnemies(Player caster, double radius, int durationTicks) {
+        PlayerData casterData = plugin.getPlayerData(caster.getUniqueId());
+        boolean isControlLockdown = casterData != null && casterData.getAttribute() == AttributeType.CONTROL;
+
         for (Player enemy : getNearbyPlayers(caster, radius)) {
             AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
             flags.abilitiesLocked = true;
-            enemy.sendMessage("§cYour abilities are locked!");
+
+            // CONTROL: Lockdown also makes enemies take +25% damage from all sources
+            if (isControlLockdown) {
+                flags.controlLockdownVulnerable = true;
+                enemy.sendMessage("§cYour abilities are locked! §4(+25% damage taken)");
+            } else {
+                enemy.sendMessage("§cYour abilities are locked!");
+            }
+
+            scheduleRemoveFlag(enemy.getUniqueId(), () -> {
+                flags.abilitiesLocked = false;
+                flags.controlLockdownVulnerable = false;
+                enemy.sendMessage("§aAbilities unlocked!");
+            }, durationTicks / 20);
+        }
+    }
+
+    /**
+     * Apply System Jam: Lock abilities AND deal damage based on enemy cooldowns
+     */
+    private void applySystemJam(Player caster, double radius, int durationSeconds) {
+        int totalDamageDealt = 0;
+        int enemiesHit = 0;
+
+        for (Player enemy : getNearbyPlayers(caster, radius)) {
+            AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
+            PlayerData enemyData = plugin.getPlayerData(enemy.getUniqueId());
+
+            // Lock abilities
+            flags.abilitiesLocked = true;
+            enemy.sendMessage("§cSystem Jam! Abilities locked for " + durationSeconds + "s!");
+
             scheduleRemoveFlag(enemy.getUniqueId(), () -> {
                 flags.abilitiesLocked = false;
                 enemy.sendMessage("§aAbilities unlocked!");
-            }, durationTicks / 20);
+            }, durationSeconds);
+
+            // Calculate damage based on cooldown time remaining
+            if (enemyData != null) {
+                // Get remaining cooldowns in seconds
+                long meleeCooldown = enemyData.getRemainingCooldown("melee") / 1000;
+                long supportCooldown = enemyData.getRemainingCooldown("support") / 1000;
+                long totalCooldown = meleeCooldown + supportCooldown;
+
+                // Deal 20% of total cooldown as damage (1 damage per 5 seconds of cooldown)
+                double damage = totalCooldown * 0.20;
+
+                if (damage > 0) {
+                    enemy.damage(damage, caster);
+                    enemy.sendMessage("§4System Jam dealt " + String.format("%.1f", damage) + " damage! (Cooldown: " + totalCooldown + "s)");
+                    totalDamageDealt += damage;
+                }
+            }
+            enemiesHit++;
+        }
+
+        if (enemiesHit > 0) {
+            caster.sendMessage("§5System Jam! Locked " + enemiesHit + " enemies, dealt " + totalDamageDealt + " total damage!");
+        } else {
+            caster.sendMessage("§5System Jam! No enemies in range.");
         }
     }
 
@@ -1176,6 +1251,7 @@ public class AbilityManager {
         // Control
         public boolean controlSuppressionUsed = false;
         public long controlSuppressionCooldown = 0;
+        public boolean controlLockdownVulnerable = false;
 
         // Disruption
         public boolean disruptionDesyncUsed = false;
@@ -1214,6 +1290,9 @@ public class AbilityManager {
         public double dragonDominionDamage = 1.0;
         public double dragonDominionCooldown = 0.0;
         public double dragonCurseDamage = 1.0;
+        public int dragonDominionHitCounter = 0;
+        public long dragonDominionLastHitTime = 0;
+        public boolean dragonDominionCharged = false;
 
         // Marked damage multiplier
         public double damageTakenMultiplier = 1.0;
