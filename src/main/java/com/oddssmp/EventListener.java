@@ -35,6 +35,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
@@ -255,6 +256,10 @@ public class EventListener implements Listener {
 
                         // Apply new attribute
                         PlayerData data = plugin.getPlayerData(player.getUniqueId());
+                        if (data == null) {
+                            cancel();
+                            return;
+                        }
                         data.setAttribute(finalResult);
                         data.setLevel(1);
                         data.clearCooldowns();
@@ -350,6 +355,7 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.savePlayerData(event.getPlayer().getUniqueId());
+        plugin.getAbilityManager().removeAbilityFlags(event.getPlayer().getUniqueId());
     }
 
     /**
@@ -639,6 +645,22 @@ public class EventListener implements Listener {
             event.setDamage(event.getDamage() * (1.0 + attackerFlags.riskPassiveDamageBonus));
         }
 
+        // CONTROL PASSIVE: Suppression - players you hit get +10s cooldown (once per fight, +1s/level, max 15s)
+        if (attackerData.getAttribute() == AttributeType.CONTROL && event.getEntity() instanceof Player) {
+            Player target = (Player) event.getEntity();
+            PlayerData targetData = plugin.getPlayerData(target.getUniqueId());
+            AbilityManager.AbilityFlags targetFlags = plugin.getAbilityManager().getAbilityFlags(target.getUniqueId());
+
+            if (targetData != null && !targetFlags.controlSuppressionUsed) {
+                int cooldownAdd = Math.min(15, 10 + attackerData.getLevel());
+                targetData.setCooldown("melee", targetData.getRemainingCooldown("melee") + (cooldownAdd * 1000));
+                targetData.setCooldown("support", targetData.getRemainingCooldown("support") + (cooldownAdd * 1000));
+                targetFlags.controlSuppressionUsed = true;
+                targetFlags.controlSuppressionCooldown = System.currentTimeMillis() + 30000;
+                target.sendMessage("§cSuppressed! +" + cooldownAdd + "s to abilities!");
+            }
+        }
+
         // DISRUPTION PASSIVE: Desync - first hit per fight adds cooldowns (+10s base +2s/level, max 20s)
         if (attackerData.getAttribute() == AttributeType.DISRUPTION && event.getEntity() instanceof Player) {
             Player target = (Player) event.getEntity();
@@ -830,8 +852,7 @@ public class EventListener implements Listener {
 
         // Check if the item is armor
         Material type = event.getItem().getType();
-        if (type.name().contains("HELMET") || type.name().contains("CHESTPLATE") ||
-            type.name().contains("LEGGINGS") || type.name().contains("BOOTS")) {
+        if (isArmorMaterial(type)) {
             // DEFENSE PASSIVE: Hardened - armor breaks 5% slower +1%/level
             double reduction = 0.05 + (data.getLevel() - 1) * 0.01;
 
@@ -840,6 +861,57 @@ public class EventListener implements Listener {
                 event.setCancelled(true);
             }
         }
+    }
+
+    /**
+     * Handle homing arrows for RANGE support
+     */
+    @EventHandler
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
+        if (!(event.getEntity() instanceof Arrow)) return;
+        Arrow arrow = (Arrow) event.getEntity();
+        if (!(arrow.getShooter() instanceof Player)) return;
+
+        Player shooter = (Player) arrow.getShooter();
+        AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(shooter.getUniqueId());
+        if (!flags.homingArrows) return;
+
+        // Start homing tick task
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int ticks = 0;
+            @Override
+            public void run() {
+                if (arrow.isDead() || arrow.isOnGround() || ticks++ > 100) {
+                    cancel();
+                    return;
+                }
+
+                // Find nearest non-teammate player
+                Player nearest = null;
+                double nearestDist = 20.0; // 20 block detection range
+                for (org.bukkit.entity.Entity entity : arrow.getNearbyEntities(20, 20, 20)) {
+                    if (entity instanceof Player && !entity.equals(shooter)) {
+                        double dist = entity.getLocation().distance(arrow.getLocation());
+                        if (dist < nearestDist) {
+                            nearestDist = dist;
+                            nearest = (Player) entity;
+                        }
+                    }
+                }
+
+                if (nearest != null) {
+                    // Gently steer arrow toward target
+                    Vector toTarget = nearest.getLocation().add(0, 1, 0).toVector()
+                            .subtract(arrow.getLocation().toVector()).normalize();
+                    Vector current = arrow.getVelocity().normalize();
+                    double speed = arrow.getVelocity().length();
+
+                    // Blend current direction with target direction (30% homing strength)
+                    Vector newDir = current.multiply(0.7).add(toTarget.multiply(0.3)).normalize();
+                    arrow.setVelocity(newDir.multiply(speed));
+                }
+            }
+        }.runTaskTimer(plugin, 2L, 2L);
     }
 
     /**
@@ -1126,6 +1198,23 @@ public class EventListener implements Listener {
 
         AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
 
+        // RANGE MELEE: cannotApproach - prevent moving closer to attacker
+        if (flags.cannotApproach != null && System.currentTimeMillis() < flags.cannotApproachUntil) {
+            Player rangeAttacker = Bukkit.getPlayer(flags.cannotApproach);
+            if (rangeAttacker != null && rangeAttacker.isOnline() &&
+                rangeAttacker.getWorld().equals(player.getWorld())) {
+                double oldDist = event.getFrom().distance(rangeAttacker.getLocation());
+                double newDist = event.getTo().distance(rangeAttacker.getLocation());
+                if (newDist < oldDist) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        } else if (flags.cannotApproach != null && System.currentTimeMillis() >= flags.cannotApproachUntil) {
+            flags.cannotApproach = null;
+            flags.cannotApproachUntil = 0;
+        }
+
         // SPEED PASSIVE: Adrenaline - enable double jump when on ground
         if (data.getAttribute() == AttributeType.SPEED &&
             player.getGameMode() != org.bukkit.GameMode.CREATIVE &&
@@ -1141,6 +1230,11 @@ public class EventListener implements Listener {
             if (lastHit > 3000) { // Not attacking for 3 seconds
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 25, 0, true, false));
             }
+        }
+
+        // CONTROL PASSIVE: Reset suppression after cooldown
+        if (flags.controlSuppressionUsed && System.currentTimeMillis() > flags.controlSuppressionCooldown) {
+            flags.controlSuppressionUsed = false;
         }
 
         // DISRUPTION PASSIVE: Reset desync after cooldown
@@ -1165,6 +1259,34 @@ public class EventListener implements Listener {
             if (isHarmfulEffect(event.getNewEffect().getType())) {
                 event.setCancelled(true);
             }
+        }
+    }
+
+    /**
+     * Enforce itemDisabled flag - prevent using disabled item slot
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onItemUseDisabled(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
+        if (flags.itemDisabled && player.getInventory().getHeldItemSlot() == flags.disabledItemSlot) {
+            event.setCancelled(true);
+            player.sendMessage("§cThis item is disabled!");
+        }
+    }
+
+    /**
+     * Enforce itemDisabled flag on attack
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onAttackDisabled(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player)) return;
+        Player attacker = (Player) event.getDamager();
+        AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(attacker.getUniqueId());
+        if (flags.itemDisabled && attacker.getInventory().getHeldItemSlot() == flags.disabledItemSlot) {
+            // Reduce damage to unarmed level
+            event.setDamage(1.0);
+            attacker.sendMessage("§cYour weapon is disabled!");
         }
     }
 
@@ -1357,6 +1479,24 @@ public class EventListener implements Listener {
                 type == PotionEffectType.LEVITATION ||
                 type == PotionEffectType.UNLUCK ||
                 type == PotionEffectType.DARKNESS;
+    }
+
+    /**
+     * Check if material is armor
+     */
+    private boolean isArmorMaterial(Material type) {
+        switch (type) {
+            case LEATHER_HELMET: case LEATHER_CHESTPLATE: case LEATHER_LEGGINGS: case LEATHER_BOOTS:
+            case CHAINMAIL_HELMET: case CHAINMAIL_CHESTPLATE: case CHAINMAIL_LEGGINGS: case CHAINMAIL_BOOTS:
+            case IRON_HELMET: case IRON_CHESTPLATE: case IRON_LEGGINGS: case IRON_BOOTS:
+            case GOLDEN_HELMET: case GOLDEN_CHESTPLATE: case GOLDEN_LEGGINGS: case GOLDEN_BOOTS:
+            case DIAMOND_HELMET: case DIAMOND_CHESTPLATE: case DIAMOND_LEGGINGS: case DIAMOND_BOOTS:
+            case NETHERITE_HELMET: case NETHERITE_CHESTPLATE: case NETHERITE_LEGGINGS: case NETHERITE_BOOTS:
+            case TURTLE_HELMET:
+                return true;
+            default:
+                return false;
+        }
     }
 
     // ========== BOSS ITEM HELPERS ==========

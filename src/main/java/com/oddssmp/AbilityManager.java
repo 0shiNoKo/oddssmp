@@ -205,6 +205,10 @@ public class AbilityManager {
             case SPEED:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.5f);
                 break;
+            case CONTROL:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.8f, 1.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.6f, 1.5f);
+                break;
             case RANGE:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1.0f, 0.5f);
                 player.getWorld().playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1.0f, 1.0f);
@@ -276,6 +280,10 @@ public class AbilityManager {
             case SPEED:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.5f);
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.5f, 1.2f);
+                break;
+            case CONTROL:
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.6f, 1.5f);
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.5f, 2.0f);
                 break;
             case RANGE:
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 0.8f);
@@ -429,6 +437,13 @@ public class AbilityManager {
                 // System Jam: Enemies cannot activate abilities, 25s +1s per level, max 30s
                 int disruptDuration = Math.min(30, 25 + level);
                 lockdownNearbyEnemies(caster, 6.0, disruptDuration * 20);
+                break;
+            }
+
+            case CONTROL: {
+                // Lockdown: Enemies within 6 blocks cannot use abilities, 5s +1s per level, max 10s
+                int lockdownDuration = Math.min(10, 5 + level);
+                lockdownNearbyEnemies(caster, 6.0, lockdownDuration * 20);
                 break;
             }
 
@@ -588,6 +603,17 @@ public class AbilityManager {
                     }.runTaskTimer(plugin, 20L, 20L);
                 }
                 attacker.sendMessage("§eFlash Step! Lightning for " + lightningDuration + "s!");
+                break;
+            }
+
+            case CONTROL: {
+                // Disrupt: Slowness III for 3s +1s per level, max 8s
+                int disruptDuration = Math.min(8, 3 + level);
+                livingTarget.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, disruptDuration * 20, 2, true, true));
+                if (target instanceof Player) {
+                    ((Player) target).sendMessage("§cDisrupted! Slowness III for " + disruptDuration + "s!");
+                }
+                attacker.sendMessage("§eDisrupt applied! Slowness III for " + disruptDuration + "s!");
                 break;
             }
 
@@ -810,22 +836,23 @@ public class AbilityManager {
                     return;
                 }
 
-                for (Player player : caster.getWorld().getPlayers()) {
-                    if (player.getLocation().distance(casterFlags.wardenDomainCenter) <= radius) {
-                        if (player.equals(caster)) continue;
+                List<Player> domainEnemies = getNearbyEnemies(caster, radius);
+                List<Player> domainAllies = getNearbyAllies(caster, radius);
 
-                        AbilityFlags flags = getAbilityFlags(player.getUniqueId());
-                        boolean isAlly = false;
-
-                        if (!isAlly) {
-                            player.setSprinting(false);
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 20, -2, true, false));
-                            flags.wardenDomainAttackSpeedReduction = 0.30;
-                            flags.wardenDomainHealingReduction = 0.50;
-                        } else {
-                            flags.wardenDomainDamageReduction = 0.25;
-                            flags.wardenDomainKnockbackResist = 0.50;
-                        }
+                for (Player enemy : domainEnemies) {
+                    if (enemy.getLocation().distance(casterFlags.wardenDomainCenter) <= radius) {
+                        AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
+                        enemy.setSprinting(false);
+                        enemy.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 20, -2, true, false));
+                        flags.wardenDomainAttackSpeedReduction = 0.30;
+                        flags.wardenDomainHealingReduction = 0.50;
+                    }
+                }
+                for (Player ally : domainAllies) {
+                    if (ally.getLocation().distance(casterFlags.wardenDomainCenter) <= radius) {
+                        AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
+                        flags.wardenDomainDamageReduction = 0.25;
+                        flags.wardenDomainKnockbackResist = 0.50;
                     }
                 }
             }
@@ -920,18 +947,15 @@ public class AbilityManager {
     }
 
     private void applyPressureField(Player caster, double radius, int duration, double damageDealt, double damageTaken) {
-        for (Entity entity : caster.getWorld().getNearbyEntities(caster.getLocation(), radius, radius, radius)) {
-            if (entity instanceof Player && entity != caster) {
-                Player enemy = (Player) entity;
-                AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
-                flags.pressureDamageDealt = damageDealt;
-                flags.pressureDamageTaken = damageTaken;
-                enemy.sendMessage("§cIntimidation Field!");
-                scheduleRemoveFlag(enemy.getUniqueId(), () -> {
-                    flags.pressureDamageDealt = 0.0;
-                    flags.pressureDamageTaken = 0.0;
-                }, duration / 20);
-            }
+        for (Player enemy : getNearbyEnemies(caster, radius)) {
+            AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
+            flags.pressureDamageDealt = damageDealt;
+            flags.pressureDamageTaken = damageTaken;
+            enemy.sendMessage("§cIntimidation Field!");
+            scheduleRemoveFlag(enemy.getUniqueId(), () -> {
+                flags.pressureDamageDealt = 0.0;
+                flags.pressureDamageTaken = 0.0;
+            }, duration / 20);
         }
     }
 
@@ -1046,6 +1070,8 @@ public class AbilityManager {
             }
         }
 
+        // CONTROL Passive: Suppression - handled in damage event (adds cooldowns on hit)
+
         // RANGE Passive: Footwork - bows/crossbows do 45% +1%/level max 50% more damage
         // (Handled in damage event via rangePassiveDamageBonus flag)
         if (data.getAttribute() == AttributeType.RANGE) {
@@ -1065,26 +1091,63 @@ public class AbilityManager {
 
     private List<Player> getNearbyAllies(Player center, double radius) {
         List<Player> allies = new ArrayList<>();
+        org.bukkit.scoreboard.Team centerTeam = Bukkit.getScoreboardManager()
+                .getMainScoreboard().getEntryTeam(center.getName());
+
         for (Entity entity : center.getWorld().getNearbyEntities(center.getLocation(), radius, radius, radius)) {
             if (entity instanceof Player && entity != center) {
-                allies.add((Player) entity);
+                Player nearby = (Player) entity;
+                // If caster is on a team, only include teammates
+                // If caster has no team, include all nearby players (FFA mode)
+                if (centerTeam != null) {
+                    if (centerTeam.hasEntry(nearby.getName())) {
+                        allies.add(nearby);
+                    }
+                } else {
+                    // No team system - treat all as allies (FFA friendly fire setting controls this)
+                    if (plugin.isFriendlyFire()) {
+                        allies.add(nearby);
+                    }
+                }
             }
         }
         return allies;
     }
 
-    private void lockdownNearbyEnemies(Player caster, double radius, int durationTicks) {
-        for (Entity entity : caster.getWorld().getNearbyEntities(caster.getLocation(), radius, radius, radius)) {
-            if (entity instanceof Player && entity != caster) {
-                Player enemy = (Player) entity;
-                AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
-                flags.abilitiesLocked = true;
-                enemy.sendMessage("§cYour abilities are locked!");
-                scheduleRemoveFlag(enemy.getUniqueId(), () -> {
-                    flags.abilitiesLocked = false;
-                    enemy.sendMessage("§aAbilities unlocked!");
-                }, durationTicks / 20);
+    /**
+     * Get nearby enemies (non-teammates) within radius
+     */
+    private List<Player> getNearbyEnemies(Player center, double radius) {
+        List<Player> enemies = new ArrayList<>();
+        org.bukkit.scoreboard.Team centerTeam = Bukkit.getScoreboardManager()
+                .getMainScoreboard().getEntryTeam(center.getName());
+
+        for (Entity entity : center.getWorld().getNearbyEntities(center.getLocation(), radius, radius, radius)) {
+            if (entity instanceof Player && entity != center) {
+                Player nearby = (Player) entity;
+                if (centerTeam != null) {
+                    // On a team - enemies are non-teammates
+                    if (!centerTeam.hasEntry(nearby.getName())) {
+                        enemies.add(nearby);
+                    }
+                } else {
+                    // No team - everyone is an enemy
+                    enemies.add(nearby);
+                }
             }
+        }
+        return enemies;
+    }
+
+    private void lockdownNearbyEnemies(Player caster, double radius, int durationTicks) {
+        for (Player enemy : getNearbyEnemies(caster, radius)) {
+            AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
+            flags.abilitiesLocked = true;
+            enemy.sendMessage("§cYour abilities are locked!");
+            scheduleRemoveFlag(enemy.getUniqueId(), () -> {
+                flags.abilitiesLocked = false;
+                enemy.sendMessage("§aAbilities unlocked!");
+            }, durationTicks / 20);
         }
     }
 
@@ -1205,6 +1268,10 @@ public class AbilityManager {
         public double pressureDamageTaken = 0.0;
         public double vulnerabilityMultiplier = 1.0;
         public double oppressionDamageBonus = 0.0;
+
+        // Control
+        public boolean controlSuppressionUsed = false;
+        public long controlSuppressionCooldown = 0;
 
         // Disruption
         public boolean disruptionDesyncUsed = false;
