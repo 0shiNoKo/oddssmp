@@ -52,18 +52,14 @@ public class AbilityManager {
         int baseCooldown = getSupportCooldown(data.getAttribute());
         data.setCooldown(cooldownKey, baseCooldown * 1000L);
 
-        // Get nearby allies (includes self)
-        List<Player> allies = getNearbyAllies(player, getSupportRadius(data.getAttribute()));
-        allies.add(0, player);
-
         // Play particles and sound
         if (plugin.isParticleSupportAbility()) {
             ParticleManager.playSupportParticles(player, data.getAttribute(), data.getLevel());
         }
         playSupportSound(player, data.getAttribute());
 
-        // Apply support effects
-        applySupportEffect(player, allies, data);
+        // Apply support effects (self-only)
+        applySupportEffect(player, data);
 
         player.sendMessage("§a" + data.getAttribute().getDisplayName() + " Support activated!");
     }
@@ -168,18 +164,6 @@ public class AbilityManager {
                 return 300;
             default:
                 return 120;
-        }
-    }
-
-    /**
-     * Get support radius for attribute
-     */
-    private double getSupportRadius(AttributeType attr) {
-        switch (attr) {
-            case MELEE:
-                return 3.0;
-            default:
-                return 6.0;
         }
     }
 
@@ -331,22 +315,20 @@ public class AbilityManager {
     }
 
     /**
-     * Apply support effects based on attribute
+     * Apply support effects based on attribute (self-only)
      */
-    private void applySupportEffect(Player caster, List<Player> allies, PlayerData data) {
+    private void applySupportEffect(Player caster, PlayerData data) {
         AttributeType attr = data.getAttribute();
         int level = data.getLevel();
+        AbilityFlags casterFlags = getAbilityFlags(caster.getUniqueId());
 
         switch (attr) {
             case MELEE: {
                 // Battle Fervor: +15% melee damage for 6s +1s per level, max 11s
                 int duration = Math.min(11, 6 + level);
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.meleeDamageBonus = 0.15;
-                    ally.sendMessage("§a+15% melee damage for " + duration + "s!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.meleeDamageBonus = 0.0, duration);
-                }
+                casterFlags.meleeDamageBonus = 0.15;
+                caster.sendMessage("§a+15% melee damage for " + duration + "s!");
+                scheduleRemoveFlag(caster.getUniqueId(), () -> casterFlags.meleeDamageBonus = 0.0, duration);
                 break;
             }
 
@@ -354,11 +336,9 @@ public class AbilityManager {
                 // Fortify: Heal 3 hearts +0.5 per level, max 5.5
                 double heartsHeal = Math.min(5.5, 3.0 + (level - 1) * 0.5);
                 double healthHeal = heartsHeal * 2.0;
-                for (Player ally : allies) {
-                    double maxHealth = ally.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
-                    ally.setHealth(Math.min(ally.getHealth() + healthHeal, maxHealth));
-                    ally.sendMessage("§aHealed " + heartsHeal + " hearts!");
-                }
+                double maxHealth = caster.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+                caster.setHealth(Math.min(caster.getHealth() + healthHeal, maxHealth));
+                caster.sendMessage("§aHealed " + heartsHeal + " hearts!");
                 break;
             }
 
@@ -366,52 +346,41 @@ public class AbilityManager {
                 // Shield Wall: 4 absorption hearts +0.5 per level, max 6.5 hearts, 8s duration
                 double absHearts = Math.min(6.5, 4.0 + (level - 1) * 0.5);
                 double absAmount = absHearts * 2.0;
-                for (Player ally : allies) {
-                    ally.setAbsorptionAmount(ally.getAbsorptionAmount() + absAmount);
-                    ally.sendMessage("§a+" + absHearts + " absorption hearts!");
-                    // Remove absorption after 8s
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            if (ally.isOnline()) {
-                                ally.setAbsorptionAmount(Math.max(0, ally.getAbsorptionAmount() - absAmount));
-                            }
+                caster.setAbsorptionAmount(caster.getAbsorptionAmount() + absAmount);
+                caster.sendMessage("§a+" + absHearts + " absorption hearts!");
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (caster.isOnline()) {
+                            caster.setAbsorptionAmount(Math.max(0, caster.getAbsorptionAmount() - absAmount));
                         }
-                    }.runTaskLater(plugin, 8 * 20L);
-                }
+                    }
+                }.runTaskLater(plugin, 8 * 20L);
                 break;
             }
 
             case WEALTH: {
                 // Economic Surge: 100% villager discount + Fortune 7, 20s +2s per level, max 30s
                 int wealthDuration = Math.min(30, 20 + (level - 1) * 2);
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.wealthSurgeActive = true;
-                    ally.sendMessage("§aEconomic Surge! Villager discount + Fortune 7 for " + wealthDuration + "s!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.wealthSurgeActive = false, wealthDuration);
-                }
+                casterFlags.wealthSurgeActive = true;
+                caster.sendMessage("§aEconomic Surge! Villager discount + Fortune 7 for " + wealthDuration + "s!");
+                scheduleRemoveFlag(caster.getUniqueId(), () -> casterFlags.wealthSurgeActive = false, wealthDuration);
                 break;
             }
 
             case SPEED: {
                 // Rapid Formation: Speed III for 6s
-                for (Player ally : allies) {
-                    ally.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 6 * 20, 2, true, true));
-                    ally.sendMessage("§aSpeed III for 6s!");
-                }
+                caster.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 6 * 20, 2, true, true));
+                caster.sendMessage("§aSpeed III for 6s!");
                 break;
             }
 
             case RANGE: {
                 // Zone Control: Homing arrows, 5s +1s per level
                 int rangeDuration = 5 + level;
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.homingArrows = true;
-                    ally.sendMessage("§aHoming arrows for " + rangeDuration + "s!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.homingArrows = false, rangeDuration);
-                }
+                casterFlags.homingArrows = true;
+                caster.sendMessage("§aHoming arrows for " + rangeDuration + "s!");
+                scheduleRemoveFlag(caster.getUniqueId(), () -> casterFlags.homingArrows = false, rangeDuration);
                 break;
             }
 
@@ -426,17 +395,16 @@ public class AbilityManager {
             case TEMPO: {
                 // Overdrive: Haste V for 5s +1s per level
                 int tempoDuration = 5 + level;
-                for (Player ally : allies) {
-                    ally.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, tempoDuration * 20, 4, true, true));
-                    ally.sendMessage("§aHaste V for " + tempoDuration + "s!");
-                }
+                caster.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, tempoDuration * 20, 4, true, true));
+                caster.sendMessage("§aHaste V for " + tempoDuration + "s!");
                 break;
             }
 
             case DISRUPTION: {
                 // System Jam: Enemies cannot activate abilities, 25s +1s per level, max 30s
+                // Also deals damage equal to 20% of enemy's total cooldown time remaining
                 int disruptDuration = Math.min(30, 25 + level);
-                lockdownNearbyEnemies(caster, 6.0, disruptDuration * 20);
+                applySystemJam(caster, 6.0, disruptDuration);
                 break;
             }
 
@@ -448,42 +416,33 @@ public class AbilityManager {
             }
 
             case VISION: {
-                // True Sight: Point to a player (apply glowing), 5s +1s per level, max 10s
+                // True Sight: Apply glowing to self, 5s +1s per level, max 10s
                 int visionDuration = Math.min(10, 5 + level);
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.trueSight = true;
-                    ally.sendMessage("§aTrue Sight for " + visionDuration + "s!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.trueSight = false, visionDuration);
-                }
+                casterFlags.trueSight = true;
+                caster.sendMessage("§aTrue Sight for " + visionDuration + "s!");
+                scheduleRemoveFlag(caster.getUniqueId(), () -> casterFlags.trueSight = false, visionDuration);
                 break;
             }
 
             case TRANSFER: {
                 // Redirection: Reflect durability damage for 5s +1s per level, max 10s
                 int redirectDuration = Math.min(10, 5 + level);
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.redirectionActive = true;
-                    ally.sendMessage("§aRedirection active for " + redirectDuration + "s!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> flags.redirectionActive = false, redirectDuration);
-                }
+                casterFlags.redirectionActive = true;
+                caster.sendMessage("§aRedirection active for " + redirectDuration + "s!");
+                scheduleRemoveFlag(caster.getUniqueId(), () -> casterFlags.redirectionActive = false, redirectDuration);
                 break;
             }
 
             case RISK: {
                 // Double or Nothing: +30% damage +5%/level max 55%, +20% damage taken, 6s
                 double riskDamageBonus = Math.min(0.55, 0.30 + (level - 1) * 0.05);
-                for (Player ally : allies) {
-                    AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                    flags.riskDamageBonus = riskDamageBonus;
-                    flags.riskDamageTaken = 0.20;
-                    ally.sendMessage("§6Double Or Nothing! +" + (int)(riskDamageBonus * 100) + "% damage, +20% damage taken!");
-                    scheduleRemoveFlag(ally.getUniqueId(), () -> {
-                        flags.riskDamageBonus = 0.0;
-                        flags.riskDamageTaken = 0.0;
-                    }, 6);
-                }
+                casterFlags.riskDamageBonus = riskDamageBonus;
+                casterFlags.riskDamageTaken = 0.20;
+                caster.sendMessage("§6Double Or Nothing! +" + (int)(riskDamageBonus * 100) + "% damage, +20% damage taken!");
+                scheduleRemoveFlag(caster.getUniqueId(), () -> {
+                    casterFlags.riskDamageBonus = 0.0;
+                    casterFlags.riskDamageTaken = 0.0;
+                }, 6);
                 break;
             }
 
@@ -499,12 +458,12 @@ public class AbilityManager {
 
             case BREEZE:
                 // Trial Order
-                applyBreezeTrialOrder(caster, allies, level);
+                applyBreezeTrialOrder(caster, level);
                 break;
 
             case DRAGON_EGG:
                 // Dominion
-                applyDragonDominion(caster, allies, level);
+                applyDragonDominion(caster, level);
                 break;
         }
     }
@@ -836,23 +795,14 @@ public class AbilityManager {
                     return;
                 }
 
-                List<Player> domainEnemies = getNearbyEnemies(caster, radius);
-                List<Player> domainAllies = getNearbyAllies(caster, radius);
-
-                for (Player enemy : domainEnemies) {
-                    if (enemy.getLocation().distance(casterFlags.wardenDomainCenter) <= radius) {
-                        AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
-                        enemy.setSprinting(false);
-                        enemy.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 20, -2, true, false));
+                for (Player player : caster.getWorld().getPlayers()) {
+                    if (player.equals(caster)) continue;
+                    if (player.getLocation().distance(casterFlags.wardenDomainCenter) <= radius) {
+                        AbilityFlags flags = getAbilityFlags(player.getUniqueId());
+                        player.setSprinting(false);
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 20, -2, true, false));
                         flags.wardenDomainAttackSpeedReduction = 0.30;
                         flags.wardenDomainHealingReduction = 0.50;
-                    }
-                }
-                for (Player ally : domainAllies) {
-                    if (ally.getLocation().distance(casterFlags.wardenDomainCenter) <= radius) {
-                        AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                        flags.wardenDomainDamageReduction = 0.25;
-                        flags.wardenDomainKnockbackResist = 0.50;
                     }
                 }
             }
@@ -881,23 +831,17 @@ public class AbilityManager {
         attacker.sendMessage("§eTarget Judged!");
     }
 
-    private void applyBreezeTrialOrder(Player caster, List<Player> allies, int level) {
-        double radius = 8.0 + level;
+    private void applyBreezeTrialOrder(Player caster, int level) {
         int duration = (6 + level) * 20;
+        AbilityFlags flags = getAbilityFlags(caster.getUniqueId());
+        flags.breezeCooldownReduction = 0.20;
+        flags.breezeDamageReduction = 0.10;
 
-        for (Player ally : allies) {
-            if (ally.getLocation().distance(caster.getLocation()) <= radius) {
-                AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-                flags.breezeCooldownReduction = 0.20;
-                flags.breezeDamageReduction = 0.10;
-
-                ally.sendMessage("§eTrial Order! -20% cooldowns, +10% damage reduction!");
-                scheduleRemoveFlag(ally.getUniqueId(), () -> {
-                    flags.breezeCooldownReduction = 0.0;
-                    flags.breezeDamageReduction = 0.0;
-                }, duration / 20);
-            }
-        }
+        caster.sendMessage("§eTrial Order! -20% cooldowns, +10% damage reduction!");
+        scheduleRemoveFlag(caster.getUniqueId(), () -> {
+            flags.breezeCooldownReduction = 0.0;
+            flags.breezeDamageReduction = 0.0;
+        }, duration / 20);
     }
 
     private void applyDragonRampagingStrike(Player attacker, LivingEntity target, int level) {
@@ -929,25 +873,39 @@ public class AbilityManager {
         attacker.sendMessage("§6Rampaging Strike! Healed " + String.format("%.1f", healAmount) + " HP!");
     }
 
-    private void applyDragonDominion(Player caster, List<Player> allies, int level) {
+    private void applyDragonDominion(Player caster, int level) {
+        AbilityFlags flags = getAbilityFlags(caster.getUniqueId());
+
+        // Dominion requires 5 consecutive hits to charge
+        if (!flags.dragonDominionCharged) {
+            caster.sendMessage("§cDominion not charged! Land 5 consecutive hits first. (" + flags.dragonDominionHitCounter + "/5)");
+            // Refund the cooldown since ability didn't activate
+            PlayerData data = plugin.getPlayerData(caster.getUniqueId());
+            if (data != null) {
+                data.setCooldown("support", 0);
+            }
+            return;
+        }
+
+        // Consume the charge
+        flags.dragonDominionCharged = false;
+        flags.dragonDominionHitCounter = 0;
+
         double damageBonus = 0.25 + (level * 0.01);
         double cooldownReduction = 0.50 + (level * 0.01);
 
-        for (Player ally : allies) {
-            AbilityFlags flags = getAbilityFlags(ally.getUniqueId());
-            flags.dragonDominionDamage = 1.0 + damageBonus;
-            flags.dragonDominionCooldown = cooldownReduction;
+        flags.dragonDominionDamage = 1.0 + damageBonus;
+        flags.dragonDominionCooldown = cooldownReduction;
 
-            ally.sendMessage("§6§lDOMINION! +" + (int)(damageBonus * 100) + "% damage, " + (int)(cooldownReduction * 100) + "% cooldown reduction!");
-            scheduleRemoveFlag(ally.getUniqueId(), () -> {
-                flags.dragonDominionDamage = 1.0;
-                flags.dragonDominionCooldown = 0.0;
-            }, 8);
-        }
+        caster.sendMessage("§6§lDOMINION! +" + (int)(damageBonus * 100) + "% damage, " + (int)(cooldownReduction * 100) + "% cooldown reduction!");
+        scheduleRemoveFlag(caster.getUniqueId(), () -> {
+            flags.dragonDominionDamage = 1.0;
+            flags.dragonDominionCooldown = 0.0;
+        }, 8);
     }
 
     private void applyPressureField(Player caster, double radius, int duration, double damageDealt, double damageTaken) {
-        for (Player enemy : getNearbyEnemies(caster, radius)) {
+        for (Player enemy : getNearbyPlayers(caster, radius)) {
             AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
             flags.pressureDamageDealt = damageDealt;
             flags.pressureDamageTaken = damageTaken;
@@ -1089,65 +1047,86 @@ public class AbilityManager {
 
     // Helper methods
 
-    private List<Player> getNearbyAllies(Player center, double radius) {
-        List<Player> allies = new ArrayList<>();
-        org.bukkit.scoreboard.Team centerTeam = Bukkit.getScoreboardManager()
-                .getMainScoreboard().getEntryTeam(center.getName());
-
-        for (Entity entity : center.getWorld().getNearbyEntities(center.getLocation(), radius, radius, radius)) {
-            if (entity instanceof Player && entity != center) {
-                Player nearby = (Player) entity;
-                // If caster is on a team, only include teammates
-                // If caster has no team, include all nearby players (FFA mode)
-                if (centerTeam != null) {
-                    if (centerTeam.hasEntry(nearby.getName())) {
-                        allies.add(nearby);
-                    }
-                } else {
-                    // No team system - treat all as allies (FFA friendly fire setting controls this)
-                    if (plugin.isFriendlyFire()) {
-                        allies.add(nearby);
-                    }
-                }
-            }
-        }
-        return allies;
-    }
-
     /**
-     * Get nearby enemies (non-teammates) within radius
+     * Get nearby players (non-self) within radius
      */
-    private List<Player> getNearbyEnemies(Player center, double radius) {
-        List<Player> enemies = new ArrayList<>();
-        org.bukkit.scoreboard.Team centerTeam = Bukkit.getScoreboardManager()
-                .getMainScoreboard().getEntryTeam(center.getName());
-
+    private List<Player> getNearbyPlayers(Player center, double radius) {
+        List<Player> players = new ArrayList<>();
         for (Entity entity : center.getWorld().getNearbyEntities(center.getLocation(), radius, radius, radius)) {
             if (entity instanceof Player && entity != center) {
-                Player nearby = (Player) entity;
-                if (centerTeam != null) {
-                    // On a team - enemies are non-teammates
-                    if (!centerTeam.hasEntry(nearby.getName())) {
-                        enemies.add(nearby);
-                    }
-                } else {
-                    // No team - everyone is an enemy
-                    enemies.add(nearby);
-                }
+                players.add((Player) entity);
             }
         }
-        return enemies;
+        return players;
     }
 
     private void lockdownNearbyEnemies(Player caster, double radius, int durationTicks) {
-        for (Player enemy : getNearbyEnemies(caster, radius)) {
+        PlayerData casterData = plugin.getPlayerData(caster.getUniqueId());
+        boolean isControlLockdown = casterData != null && casterData.getAttribute() == AttributeType.CONTROL;
+
+        for (Player enemy : getNearbyPlayers(caster, radius)) {
             AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
             flags.abilitiesLocked = true;
-            enemy.sendMessage("§cYour abilities are locked!");
+
+            // CONTROL: Lockdown also makes enemies take +25% damage from all sources
+            if (isControlLockdown) {
+                flags.controlLockdownVulnerable = true;
+                enemy.sendMessage("§cYour abilities are locked! §4(+25% damage taken)");
+            } else {
+                enemy.sendMessage("§cYour abilities are locked!");
+            }
+
+            scheduleRemoveFlag(enemy.getUniqueId(), () -> {
+                flags.abilitiesLocked = false;
+                flags.controlLockdownVulnerable = false;
+                enemy.sendMessage("§aAbilities unlocked!");
+            }, durationTicks / 20);
+        }
+    }
+
+    /**
+     * Apply System Jam: Lock abilities AND deal damage based on enemy cooldowns
+     */
+    private void applySystemJam(Player caster, double radius, int durationSeconds) {
+        int totalDamageDealt = 0;
+        int enemiesHit = 0;
+
+        for (Player enemy : getNearbyPlayers(caster, radius)) {
+            AbilityFlags flags = getAbilityFlags(enemy.getUniqueId());
+            PlayerData enemyData = plugin.getPlayerData(enemy.getUniqueId());
+
+            // Lock abilities
+            flags.abilitiesLocked = true;
+            enemy.sendMessage("§cSystem Jam! Abilities locked for " + durationSeconds + "s!");
+
             scheduleRemoveFlag(enemy.getUniqueId(), () -> {
                 flags.abilitiesLocked = false;
                 enemy.sendMessage("§aAbilities unlocked!");
-            }, durationTicks / 20);
+            }, durationSeconds);
+
+            // Calculate damage based on cooldown time remaining
+            if (enemyData != null) {
+                // Get remaining cooldowns in seconds
+                long meleeCooldown = enemyData.getRemainingCooldown("melee") / 1000;
+                long supportCooldown = enemyData.getRemainingCooldown("support") / 1000;
+                long totalCooldown = meleeCooldown + supportCooldown;
+
+                // Deal 20% of total cooldown as damage (1 damage per 5 seconds of cooldown)
+                double damage = totalCooldown * 0.20;
+
+                if (damage > 0) {
+                    enemy.damage(damage, caster);
+                    enemy.sendMessage("§4System Jam dealt " + String.format("%.1f", damage) + " damage! (Cooldown: " + totalCooldown + "s)");
+                    totalDamageDealt += damage;
+                }
+            }
+            enemiesHit++;
+        }
+
+        if (enemiesHit > 0) {
+            caster.sendMessage("§5System Jam! Locked " + enemiesHit + " enemies, dealt " + totalDamageDealt + " total damage!");
+        } else {
+            caster.sendMessage("§5System Jam! No enemies in range.");
         }
     }
 
@@ -1272,6 +1251,7 @@ public class AbilityManager {
         // Control
         public boolean controlSuppressionUsed = false;
         public long controlSuppressionCooldown = 0;
+        public boolean controlLockdownVulnerable = false;
 
         // Disruption
         public boolean disruptionDesyncUsed = false;
@@ -1310,6 +1290,9 @@ public class AbilityManager {
         public double dragonDominionDamage = 1.0;
         public double dragonDominionCooldown = 0.0;
         public double dragonCurseDamage = 1.0;
+        public int dragonDominionHitCounter = 0;
+        public long dragonDominionLastHitTime = 0;
+        public boolean dragonDominionCharged = false;
 
         // Marked damage multiplier
         public double damageTakenMultiplier = 1.0;

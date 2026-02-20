@@ -630,6 +630,27 @@ public class EventListener implements Listener {
         // Apply melee ability if ready
         plugin.getAbilityManager().applyMeleeOnHit(attacker, event.getEntity());
 
+        // DRAGON EGG: Track consecutive hits for Dominion charging
+        if (attackerData.getAttribute() == AttributeType.DRAGON_EGG) {
+            long now = System.currentTimeMillis();
+            // Reset counter if more than 3 seconds since last hit
+            if (now - attackerFlags.dragonDominionLastHitTime > 3000) {
+                attackerFlags.dragonDominionHitCounter = 0;
+            }
+            attackerFlags.dragonDominionLastHitTime = now;
+
+            if (!attackerFlags.dragonDominionCharged) {
+                attackerFlags.dragonDominionHitCounter++;
+                if (attackerFlags.dragonDominionHitCounter >= 5) {
+                    attackerFlags.dragonDominionCharged = true;
+                    attacker.sendMessage("§6§lDOMINION CHARGED! §eUse your support ability!");
+                    attacker.playSound(attacker.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.5f);
+                } else {
+                    attacker.sendMessage("§6Dominion charging: §e" + attackerFlags.dragonDominionHitCounter + "/5 hits");
+                }
+            }
+        }
+
         // MELEE PASSIVE: Bloodlust - bonus damage from kills
         if (attackerData.getAttribute() == AttributeType.MELEE && attackerFlags.meleeBloodlustStacks > 0) {
             event.setDamage(event.getDamage() * (1.0 + attackerFlags.meleeBloodlustStacks));
@@ -753,6 +774,11 @@ public class EventListener implements Listener {
                 }
                 if (victimFlags.pressureDamageTaken > 0) {
                     event.setDamage(event.getDamage() * (1.0 + victimFlags.pressureDamageTaken));
+                }
+
+                // CONTROL: Lockdown vulnerability - take +25% damage from all sources
+                if (victimFlags.controlLockdownVulnerable) {
+                    event.setDamage(event.getDamage() * 1.25);
                 }
 
                 // RISK SUPPORT: Double Or Nothing damage bonus/penalty
