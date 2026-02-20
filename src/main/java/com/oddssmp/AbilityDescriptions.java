@@ -143,8 +143,8 @@ public class AbilityDescriptions {
             case "RANGE_PASSIVE":
                 return new String[]{
                         "§b§lPassive: §7Footwork",
-                        "§7Bows and crossbows deal §e45% §7more damage",
-                        "§7+1%/level (max §e50%§7)"
+                        "§7Bows and crossbows deal §e20% §7more damage",
+                        "§7+1%/level (max §e25%§7)"
                 };
 
             // TEMPO
@@ -195,9 +195,10 @@ public class AbilityDescriptions {
             case "TRANSFER_MELEE":
                 return new String[]{
                         "§c§lMelee: §7Effect Swap",
-                        "§7Steals §e20% §7of opponent's potion effects",
-                        "§7Adds onto your potions",
-                        "§7+1%/level (max §e25%§7)",
+                        "§7Sacrifice one of YOUR positive effects",
+                        "§7to inflict a negative effect on the target",
+                        "§7(e.g. Speed -> Slowness, Strength -> Weakness)",
+                        "§7Negative effect duration: §e1 minute",
                         "§7Cooldown: §e120s"
                 };
             case "TRANSFER_SUPPORT":

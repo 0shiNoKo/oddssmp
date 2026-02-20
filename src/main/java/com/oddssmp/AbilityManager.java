@@ -649,41 +649,36 @@ public class AbilityManager {
             }
 
             case TRANSFER: {
-                // Effect Swap: Steal 20% of opponent's potion effects +1%/level max 25%
-                double stealPercent = Math.min(0.25, 0.20 + (level - 1) * 0.01);
-                boolean stolenAny = false;
-                List<PotionEffect> effectsToSteal = new ArrayList<>();
-                for (PotionEffect effect : livingTarget.getActivePotionEffects()) {
+                // Effect Swap: Sacrifice one of YOUR positive effects to inflict a negative effect on the target (1 minute)
+                PotionEffect sacrificed = null;
+                for (PotionEffect effect : attacker.getActivePotionEffects()) {
                     if (isBeneficialEffect(effect.getType())) {
-                        effectsToSteal.add(effect);
+                        sacrificed = effect;
+                        break;
                     }
                 }
-                for (PotionEffect effect : effectsToSteal) {
-                    // Calculate stolen duration
-                    int stolenDuration = (int)(effect.getDuration() * stealPercent);
-                    int remainingDuration = effect.getDuration() - stolenDuration;
 
-                    // Add stolen portion to attacker (stacks with existing)
-                    PotionEffect existing = attacker.getPotionEffect(effect.getType());
-                    int newDuration = stolenDuration;
-                    if (existing != null) {
-                        newDuration = existing.getDuration() + stolenDuration;
-                    }
-                    attacker.addPotionEffect(new PotionEffect(effect.getType(), newDuration, effect.getAmplifier()));
-
-                    // Reduce target's effect
-                    if (remainingDuration > 0) {
-                        livingTarget.removePotionEffect(effect.getType());
-                        livingTarget.addPotionEffect(new PotionEffect(effect.getType(), remainingDuration, effect.getAmplifier()));
-                    } else {
-                        livingTarget.removePotionEffect(effect.getType());
-                    }
-                    stolenAny = true;
+                if (sacrificed == null) {
+                    attacker.sendMessage("§cNo positive effects to sacrifice!");
+                    break;
                 }
-                if (stolenAny) {
-                    attacker.sendMessage("§aStole " + (int)(stealPercent * 100) + "% of positive effects!");
-                } else {
-                    attacker.sendMessage("§cNo effects to steal!");
+
+                // Remove the positive effect from caster
+                PotionEffectType sacrificedType = sacrificed.getType();
+                attacker.removePotionEffect(sacrificedType);
+
+                // Convert to a negative effect on the target (60s = 1200 ticks)
+                int negativeDuration = 1200;
+                PotionEffectType negativeEffect = getCorruptedEffect(sacrificedType);
+                int amplifier = Math.min(sacrificed.getAmplifier(), 1); // Cap at level II
+
+                livingTarget.addPotionEffect(new PotionEffect(negativeEffect, negativeDuration, amplifier, true, true));
+
+                String sacrificedName = formatEffectName(sacrificedType);
+                String negativeName = formatEffectName(negativeEffect);
+                attacker.sendMessage("§dSacrificed §e" + sacrificedName + " §d→ inflicted §c" + negativeName + " §d(1m)!");
+                if (livingTarget instanceof Player) {
+                    ((Player) livingTarget).sendMessage("§cEffect Swap! You've been afflicted with " + negativeName + "!");
                 }
                 break;
             }
@@ -1030,11 +1025,11 @@ public class AbilityManager {
 
         // CONTROL Passive: Suppression - handled in damage event (adds cooldowns on hit)
 
-        // RANGE Passive: Footwork - bows/crossbows do 45% +1%/level max 50% more damage
+        // RANGE Passive: Footwork - bows/crossbows do 20% +1%/level max 25% more damage
         // (Handled in damage event via rangePassiveDamageBonus flag)
         if (data.getAttribute() == AttributeType.RANGE) {
             AbilityFlags flags = getAbilityFlags(player.getUniqueId());
-            flags.rangePassiveDamageBonus = Math.min(0.50, 0.45 + (level - 1) * 0.01);
+            flags.rangePassiveDamageBonus = Math.min(0.25, 0.20 + (level - 1) * 0.01);
         }
 
         // DEFENSE Passive: Hardened - armor breaks slower (5% +1%/level)
@@ -1150,6 +1145,41 @@ public class AbilityManager {
     /**
      * Check if a potion effect is beneficial
      */
+    /**
+     * Convert a positive effect into a corresponding negative effect for Transfer melee
+     */
+    private PotionEffectType getCorruptedEffect(PotionEffectType positive) {
+        if (positive == PotionEffectType.SPEED) return PotionEffectType.SLOWNESS;
+        if (positive == PotionEffectType.HASTE) return PotionEffectType.MINING_FATIGUE;
+        if (positive == PotionEffectType.STRENGTH) return PotionEffectType.WEAKNESS;
+        if (positive == PotionEffectType.REGENERATION) return PotionEffectType.POISON;
+        if (positive == PotionEffectType.RESISTANCE) return PotionEffectType.WITHER;
+        if (positive == PotionEffectType.JUMP_BOOST) return PotionEffectType.SLOWNESS;
+        if (positive == PotionEffectType.FIRE_RESISTANCE) return PotionEffectType.POISON;
+        if (positive == PotionEffectType.NIGHT_VISION) return PotionEffectType.BLINDNESS;
+        if (positive == PotionEffectType.INVISIBILITY) return PotionEffectType.GLOWING;
+        if (positive == PotionEffectType.HEALTH_BOOST) return PotionEffectType.WITHER;
+        if (positive == PotionEffectType.ABSORPTION) return PotionEffectType.WEAKNESS;
+        if (positive == PotionEffectType.SATURATION) return PotionEffectType.HUNGER;
+        if (positive == PotionEffectType.SLOW_FALLING) return PotionEffectType.LEVITATION;
+        if (positive == PotionEffectType.LUCK) return PotionEffectType.UNLUCK;
+        if (positive == PotionEffectType.DOLPHINS_GRACE) return PotionEffectType.SLOWNESS;
+        if (positive == PotionEffectType.CONDUIT_POWER) return PotionEffectType.MINING_FATIGUE;
+        // Default fallback
+        return PotionEffectType.POISON;
+    }
+
+    private String formatEffectName(PotionEffectType type) {
+        String name = type.getKey().getKey().replace("_", " ");
+        String[] words = name.split(" ");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (result.length() > 0) result.append(" ");
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return result.toString();
+    }
+
     private boolean isBeneficialEffect(PotionEffectType type) {
         return type == PotionEffectType.SPEED ||
                 type == PotionEffectType.HASTE ||
