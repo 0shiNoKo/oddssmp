@@ -390,6 +390,15 @@ public class EventListener implements Listener {
             if (altar != null) {
                 event.setCancelled(true);
 
+                // Creative mode + stick = remove altar
+                ItemStack heldItem = player.getInventory().getItemInMainHand();
+                if (player.getGameMode() == org.bukkit.GameMode.CREATIVE &&
+                    heldItem != null && heldItem.getType() == Material.STICK) {
+                    plugin.removeAltar(altar);
+                    player.sendMessage("§aRemoved " + altar.getWeapon().getColor() + "§l" + altar.getWeapon().getName() + " §aaltar!");
+                    return;
+                }
+
                 // Check if sneaking to view requirements, otherwise try to craft
                 if (player.isSneaking()) {
                     // Show requirements

@@ -516,6 +516,16 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             return handleSpawnWeaponCommand(sender, args);
         }
 
+        // Remove all altars command
+        if (args[0].equalsIgnoreCase("removealtars") || args[0].equalsIgnoreCase("clearaltars")) {
+            int count = plugin.getActiveAltars().size();
+            for (WeaponAltar altar : new java.util.ArrayList<>(plugin.getActiveAltars())) {
+                plugin.removeAltar(altar);
+            }
+            sender.sendMessage("§aRemoved §e" + count + " §aweapon altar(s)!");
+            return true;
+        }
+
         // Give weapon handle command
         if (args[0].equalsIgnoreCase("givehandle")) {
             if (!(sender instanceof Player)) {
@@ -870,6 +880,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/admin weapon §7- Open attribute weapons GUI");
             sender.sendMessage("§e/admin customitems §7- Open custom items GUI (all items)");
             sender.sendMessage("§e/admin spwe <weapon> §7- Spawn weapon crafting altar");
+            sender.sendMessage("§e/admin removealtars §7- Remove all weapon altars");
             sender.sendMessage("§e/admin givehandle §7- Give yourself a Weapon Handle");
             sender.sendMessage("§e/admin giveupgrader [amount] §7- Give yourself Upgrader(s)");
             sender.sendMessage("§e/admin givereroller [amount] §7- Give yourself Reroller(s)");
