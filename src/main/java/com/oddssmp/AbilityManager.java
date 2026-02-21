@@ -47,6 +47,10 @@ public class AbilityManager {
             player.sendMessage("§cYour abilities are locked!");
             return;
         }
+        if (playerFlags.stunned) {
+            player.sendMessage("§cYou are stunned!");
+            return;
+        }
 
         // Get cooldown based on attribute type
         int baseCooldown = getSupportCooldown(data.getAttribute());
@@ -85,6 +89,10 @@ public class AbilityManager {
         AbilityFlags playerFlags = getAbilityFlags(player.getUniqueId());
         if (playerFlags.abilitiesLocked) {
             player.sendMessage("§cYour abilities are locked!");
+            return;
+        }
+        if (playerFlags.stunned) {
+            player.sendMessage("§cYou are stunned!");
             return;
         }
 
@@ -393,8 +401,8 @@ public class AbilityManager {
             }
 
             case TEMPO: {
-                // Overdrive: Haste V for 5s +1s per level
-                int tempoDuration = 5 + level;
+                // Overdrive: Haste V for 15s
+                int tempoDuration = 15;
                 caster.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, tempoDuration * 20, 4, true, true));
                 caster.sendMessage("§aHaste V for " + tempoDuration + "s!");
                 break;

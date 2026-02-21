@@ -7,6 +7,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
@@ -39,6 +40,7 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
 public class EventListener implements Listener {
@@ -388,6 +390,15 @@ public class EventListener implements Listener {
             if (altar != null) {
                 event.setCancelled(true);
 
+                // Creative mode + stick = remove altar
+                ItemStack heldItem = player.getInventory().getItemInMainHand();
+                if (player.getGameMode() == org.bukkit.GameMode.CREATIVE &&
+                    heldItem != null && heldItem.getType() == Material.STICK) {
+                    plugin.removeAltar(altar);
+                    player.sendMessage("§aRemoved " + altar.getWeapon().getColor() + "§l" + altar.getWeapon().getName() + " §aaltar!");
+                    return;
+                }
+
                 // Check if sneaking to view requirements, otherwise try to craft
                 if (player.isSneaking()) {
                     // Show requirements
@@ -403,8 +414,11 @@ public class EventListener implements Listener {
                     if (altar.hasRequiredMaterials(player)) {
                         altar.craftWeapon(player);
                     } else {
-                        player.sendMessage("§cYou don't have the required materials!");
-                        player.sendMessage("§7Hold SHIFT and right-click to see requirements.");
+                        player.sendMessage("§cYou're missing materials:");
+                        for (String missing : altar.getMissingMaterials(player)) {
+                            player.sendMessage("  " + missing);
+                        }
+                        player.sendMessage("§7Hold SHIFT and right-click to see full requirements.");
                     }
                 }
                 return;
@@ -623,6 +637,21 @@ public class EventListener implements Listener {
         if (attackerData == null || attackerData.getAttribute() == null) return;
 
         AbilityManager.AbilityFlags attackerFlags = plugin.getAbilityManager().getAbilityFlags(attacker.getUniqueId());
+
+        // Prevent attacking while stunned
+        if (attackerFlags.stunned) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Attribute weapons deal no damage if wielder doesn't have the matching attribute
+        ItemStack heldItem = attacker.getInventory().getItemInMainHand();
+        AttributeWeapon heldWeapon = AttributeWeapon.getFromItem(heldItem);
+        if (heldWeapon != null && heldWeapon.getRequiredAttribute() != attackerData.getAttribute()) {
+            event.setDamage(0);
+            attacker.sendMessage("§cYou cannot use this weapon! It requires the §e" + heldWeapon.getRequiredAttribute().getDisplayName() + " §cattribute.");
+            return;
+        }
 
         // Update last hit time
         attackerData.setLastHitTime(System.currentTimeMillis());
@@ -1118,21 +1147,100 @@ public class EventListener implements Listener {
     }
 
     /**
-     * Handle Ender Dragon death - spawn exit portal and egg
+     * Handle normal Warden death - drop Warden Brain + Warden's Heart
+     */
+    @EventHandler
+    public void onWardenDeath(EntityDeathEvent event) {
+        if (event.getEntity().getType() != EntityType.WARDEN) return;
+
+        // Skip Ascended Warden (has custom name) - it has its own drop handler
+        String customName = event.getEntity().getCustomName();
+        if (customName != null && customName.contains("ASCENDED WARDEN")) return;
+
+        Location loc = event.getEntity().getLocation();
+
+        // Warden Brain - gives Warden attribute
+        ItemStack wardenBrain = new ItemStack(Material.SCULK_CATALYST);
+        ItemMeta meta = wardenBrain.getItemMeta();
+        meta.setDisplayName("§3§lWarden Brain");
+        java.util.List<String> lore = new java.util.ArrayList<>();
+        lore.add("§7A brain pulsing with sculk energy");
+        lore.add("§7Grants the §3Warden §7attribute");
+        lore.add("");
+        lore.add("§c§lCANNOT BE DROPPED OR STORED");
+        meta.setLore(lore);
+        wardenBrain.setItemMeta(meta);
+        loc.getWorld().dropItemNaturally(loc, wardenBrain);
+
+        // Warden's Heart - for crafting
+        loc.getWorld().dropItemNaturally(loc, WeaponAltar.createWardensHeart());
+
+        Bukkit.broadcastMessage("");
+        Bukkit.broadcastMessage("§3§lThe Warden has been slain!");
+        Bukkit.broadcastMessage("§7A §3§lWarden Brain §7and §2§lWarden's Heart §7have dropped!");
+        Bukkit.broadcastMessage("");
+    }
+
+    /**
+     * Handle normal Wither death - drop Wither Bone
+     */
+    @EventHandler
+    public void onWitherDeath(EntityDeathEvent event) {
+        if (event.getEntity().getType() != EntityType.WITHER) return;
+
+        // Skip Ascended Wither (has custom name) - it has its own drop handler
+        String customName = event.getEntity().getCustomName();
+        if (customName != null && customName.contains("ASCENDED WITHER")) return;
+
+        Location loc = event.getEntity().getLocation();
+
+        // Wither Bone - gives Wither attribute
+        ItemStack witherBone = new ItemStack(Material.BONE);
+        ItemMeta meta = witherBone.getItemMeta();
+        meta.setDisplayName("§5§lWither Bone");
+        java.util.List<String> lore = new java.util.ArrayList<>();
+        lore.add("§7A bone infused with wither essence");
+        lore.add("§7Grants the §5Wither §7attribute");
+        lore.add("");
+        lore.add("§c§lCANNOT BE DROPPED OR STORED");
+        meta.setLore(lore);
+        witherBone.setItemMeta(meta);
+        loc.getWorld().dropItemNaturally(loc, witherBone);
+
+        Bukkit.broadcastMessage("");
+        Bukkit.broadcastMessage("§5§lThe Wither has been slain!");
+        Bukkit.broadcastMessage("§7A §5§lWither Bone §7has dropped!");
+        Bukkit.broadcastMessage("");
+    }
+
+    /**
+     * Handle Ender Dragon death - spawn exit portal and drop Dragon Egg item
      */
     @EventHandler
     public void onDragonDeath(EntityDeathEvent event) {
         if (!(event.getEntity() instanceof EnderDragon)) return;
 
+        // Skip Ascended Ender Dragon (has custom name) - it has its own drop handler
+        String customName = event.getEntity().getCustomName();
+        if (customName != null && customName.contains("ASCENDED ENDER DRAGON")) return;
+
         World world = event.getEntity().getWorld();
         if (world.getEnvironment() != World.Environment.THE_END) return;
+
+        Location loc = event.getEntity().getLocation();
 
         // Generate the exit portal structure after short delay
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             generateEndExitPortal(world);
 
+            // Drop Dragon Egg (attribute) and Dragon Heart (crafting) at portal location
+            Location eggLoc = new Location(world, 0, 71, 0);
+            world.dropItemNaturally(eggLoc, new ItemStack(Material.DRAGON_EGG));
+            world.dropItemNaturally(eggLoc, WeaponAltar.createDragonHeart());
+
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
+            Bukkit.broadcastMessage("§7A §5§lDragon Heart §7has also dropped!");
             Bukkit.broadcastMessage("");
         }, 20L);
     }
@@ -1223,6 +1331,12 @@ public class EventListener implements Listener {
         if (data == null || data.getAttribute() == null) return;
 
         AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
+
+        // TEMPO MELEE: Stun - prevent all movement and looking
+        if (flags.stunned) {
+            event.setCancelled(true);
+            return;
+        }
 
         // RANGE MELEE: cannotApproach - prevent moving closer to attacker
         if (flags.cannotApproach != null && System.currentTimeMillis() < flags.cannotApproachUntil) {
@@ -1542,7 +1656,7 @@ public class EventListener implements Listener {
      * Check if item is Wither Bone
      */
     private boolean isWitherBone(ItemStack item) {
-        if (item == null || item.getType() != Material.COAL_BLOCK) return false;
+        if (item == null || item.getType() != Material.BONE) return false;
         if (!item.hasItemMeta()) return false;
         String name = item.getItemMeta().getDisplayName();
         return name != null && name.contains("Wither Bone");

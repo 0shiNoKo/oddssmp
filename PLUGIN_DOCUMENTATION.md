@@ -1,407 +1,977 @@
 # OddsSMP Plugin - Complete Documentation
 
+> **Version:** 1.0.0 | **API:** Paper 1.21 | **Soft Dependency:** DecentHolograms
+
 ## Table of Contents
-1. [Attributes](#attributes)
-2. [Weapons](#weapons)
-3. [Crafting Costs](#crafting-costs)
-4. [Commands](#commands)
-5. [Boss Items](#boss-items)
-6. [Leveling System](#leveling-system)
-7. [Upgrader & Reroller](#upgrader--reroller)
-8. [Configuration](#configuration)
-9. [Combat Logger](#combat-logger)
-10. [Additional Features](#additional-features)
+1. [All 17 Attributes](#1-all-17-attributes)
+2. [All 17 Weapons](#2-all-17-weapons)
+3. [Weapon Crafting Costs](#3-weapon-crafting-costs)
+4. [Weapon Altar System](#4-weapon-altar-system)
+5. [Boss Items & Mechanics](#5-boss-items--mechanics)
+6. [Ascended Warden Boss](#6-ascended-warden-boss)
+7. [Leveling System](#7-leveling-system)
+8. [Upgrader & Reroller](#8-upgrader--reroller)
+9. [All Commands](#9-all-commands)
+10. [All GUIs](#10-all-guis)
+11. [All Configuration](#11-all-configuration)
+12. [Combat Logger](#12-combat-logger)
+13. [Particle Effects](#13-particle-effects)
+14. [Data Persistence](#14-data-persistence)
+15. [Plugin Lifecycle](#15-plugin-lifecycle)
 
 ---
 
-## Attributes
+## 1. All 17 Attributes
+
+### Attribute Table
+| # | Type | Icon | Display Name | Boss? | Dragon Egg? |
+|---|------|------|-------------|-------|-------------|
+| 1 | MELEE | ⚔ | Melee | No | No |
+| 2 | HEALTH | ❤ | Health | No | No |
+| 3 | DEFENSE | 🛡 | Defense | No | No |
+| 4 | WEALTH | 💰 | Wealth | No | No |
+| 5 | SPEED | ⚡ | Speed | No | No |
+| 6 | CONTROL | 🕹 | Control | No | No |
+| 7 | RANGE | 🏹 | Range | No | No |
+| 8 | PRESSURE | 🩸 | Pressure | No | No |
+| 9 | TEMPO | ⏱ | Tempo | No | No |
+| 10 | DISRUPTION | 🧠 | Disruption | No | No |
+| 11 | VISION | 👁 | Vision | No | No |
+| 12 | TRANSFER | 🔁 | Transfer | No | No |
+| 13 | RISK | 🎲 | Risk | No | No |
+| 14 | WITHER | 💀 | Wither | Yes | No |
+| 15 | WARDEN | 🐋 | Warden | Yes | No |
+| 16 | BREEZE | 🌬 | Breeze | Yes | No |
+| 17 | DRAGON_EGG | 🥚 | Dragon Egg | No | Yes |
+
+**Random Assignment Pool:** 12 standard attributes (MELEE through RISK). Boss attributes and Dragon Egg are excluded.
+
+---
 
 ### Standard Attributes (13)
 
-#### 1. MELEE (Icon: ⚔)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Power Strike | Melee | Ignores 25% armor (+1%/level, max 30%) | 120s |
-| Battle Fervor | Support | +15% melee damage for 6s (+1s/level, max 11s) | 150s |
-| Bloodlust | Passive | +1.5% damage per PvP kill (max 10% +1%/level = 15% at L5). Lose all on death | - |
+#### MELEE (⚔)
+| Ability | Type | Details |
+|---------|------|---------|
+| Power Strike | Melee | Ignores 25% armor (+1%/level, max 30% at L5). **CD: 120s** |
+| Battle Fervor | Support | +15% melee damage for 6s (+1s/level, max 11s). **CD: 150s** |
+| Bloodlust | Passive | +1.5% melee damage per PvP kill. Max: 10% +1%/level (L5=15%). **Lose all stacks on death.** |
 
-#### 2. HEALTH (Icon: ❤)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Vampiric Hit | Melee | Heals 15% of damage dealt (+1%/level, max 20%) for 5s. Overheal = absorption | 120s |
-| Fortify | Support | Heal 3 hearts (+0.5/level, max 5.5 hearts) | 120s |
-| Vitality | Passive | +1 max heart per PvP kill (max = level hearts). Lose 1 heart/level on death | - |
+#### HEALTH (❤)
+| Ability | Type | Details |
+|---------|------|---------|
+| Vampiric Hit | Melee | Heals 15% of damage dealt (+1%/level, max 20%) for 5s. Overheal converts to absorption. **CD: 120s** |
+| Fortify | Support | Heal 3 hearts (+0.5/level, max 5.5 hearts). **CD: 120s** |
+| Vitality | Passive | +1 max heart per PvP kill (max = level hearts, L5=5 hearts). Lose 1 heart per level on death. |
 
-#### 3. DEFENSE (Icon: 🛡)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Iron Response | Melee | 20% damage reduction for 4s (+0.5s/level, max 6s) | 120s |
-| Shield Wall | Support | Gain 4 absorption hearts (+0.5/level, max 6.5) for 8s | 120s |
-| Hardened | Passive | Armor breaks 5% slower (+1%/level) | - |
+#### DEFENSE (🛡)
+| Ability | Type | Details |
+|---------|------|---------|
+| Iron Response | Melee | 20% damage reduction for 4s (+0.5s/level, max 6s). **CD: 120s** |
+| Shield Wall | Support | Gain 4 absorption hearts (+0.5/level, max 6.5) for 8s. **CD: 120s** |
+| Hardened | Passive | Armor breaks 5% slower (+1%/level). Random chance to negate durability damage. |
 
-#### 4. WEALTH (Icon: 💰)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Plunder Kill | Melee | Disables target's held item for 7s (+1s/level, max 12s) | 120s |
-| Economic Surge | Support | 100% villager discount + Fortune VII for 20s (+2s/level, max 30s) | 120s |
-| Industrialist | Passive | Permanent Hero of the Village XII, +10% mob drops/level, +1 Fortune/level | - |
+#### WEALTH (💰)
+| Ability | Type | Details |
+|---------|------|---------|
+| Plunder Kill | Melee | Disables target's held item for 7s (+1s/level, max 12s). **CD: 120s** |
+| Economic Surge | Support | 100% villager discount + Fortune VII for 20s (+2s/level, max 30s). **CD: 120s** |
+| Industrialist | Passive | Permanent Hero of the Village XII. Mob drops +10%/level. Mining +1 Fortune/level. |
 
-#### 5. CONTROL (Icon: 🕹)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Disrupt | Melee | Slowness III for 3s (+1s/level, max 8s) | 120s |
-| Lockdown | Support | 6-block radius: enemies can't use abilities, take +25% damage. 5s (+1s/level, max 10s) | 120s |
-| Suppression | Passive | Players you hit get +10s cooldown (+1s/level, max 15s). Once per 30s | - |
+#### SPEED (⚡)
+| Ability | Type | Details |
+|---------|------|---------|
+| Flash Step | Melee | Summons lightning on opponent. **CD: 120s** |
+| Rapid Formation | Support | Speed III for 6s. **CD: 120s** |
+| Adrenaline | Passive | Double-jump boost in look direction. Velocity: direction * 1.5, Y + 0.8. Cooldown: 20s (-1s/level). |
 
-#### 6. RANGE (Icon: 🏹)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Spacing Strike | Melee | Knockback, target can't approach you for 3s (+1s/level, max 8s) | 120s |
-| Zone Control | Support | Gain homing arrows for 5s (+1s/level) | 120s |
-| Footwork | Passive | Bows/crossbows deal +20% damage (+1%/level, max 25%) | - |
+#### CONTROL (🕹)
+| Ability | Type | Details |
+|---------|------|---------|
+| Disrupt | Melee | Slowness III for 3s (+1s/level, max 8s). **CD: 120s** |
+| Lockdown | Support | 6-block radius: enemies can't use abilities AND take **+25% damage from all sources**. 5s (+1s/level, max 10s). **CD: 120s** |
+| Suppression | Passive | Players you hit get +10s cooldown (+1s/level, max 15s). Once per 30s. |
 
-#### 7. TEMPO (Icon: ⏱)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Tempo Strike | Melee | Stun target (can't move/look) for 5s (+1s/level) | 120s |
-| Overdrive | Support | Haste V for 5s (+1s/level) | 120s |
-| Momentum | Passive | Permanent Speed I | - |
+#### RANGE (🏹)
+| Ability | Type | Details |
+|---------|------|---------|
+| Spacing Strike | Melee | Knockback target, they can't approach you for 3s (+1s/level, max 8s). **CD: 120s** |
+| Zone Control | Support | Gain homing arrows (30% steering, 20-block detection, ticks every 2 ticks for 100 ticks max) for 5s (+1s/level). **CD: 120s** |
+| Footwork | Passive | Bows/crossbows deal +20% damage (+1%/level, max 25%). |
 
-#### 8. VISION (Icon: 👁)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Target Mark | Melee | Apply Glowing for 5m (+30s/level, max 7.5m) | 120s |
-| True Sight | Support | Track enemies with Glowing for 5s (+1s/level, max 10s) | 120s |
-| Awareness | Passive | Players within 12 blocks glow (visible only to you) | - |
+#### TEMPO (⏱)
+| Ability | Type | Details |
+|---------|------|---------|
+| Tempo Strike | Melee | Stun target (Slowness 255 + Blindness + Mining Fatigue 255) for 5s (+1s/level). **CD: 120s** |
+| Overdrive | Support | Haste V for 5s (+1s/level). **CD: 120s** |
+| Momentum | Passive | Permanent Speed I. |
 
-#### 9. TRANSFER (Icon: 🔁)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Effect Swap | Melee | Sacrifice YOUR positive effect to inflict negative on target (1 minute). Speed→Slowness, Strength→Weakness, Regen→Poison, etc. | 120s |
-| Redirection | Support | Reflect durability damage to attacker for 5s (+1s/level, max 10s) | 120s |
-| Cleanse | Passive | Immune to all debuffs | - |
+#### VISION (👁)
+| Ability | Type | Details |
+|---------|------|---------|
+| Target Mark | Melee | Apply Glowing for 300s (+30s/level, max 450s = 7.5m). **CD: 120s** |
+| True Sight | Support | Glowing effect for 5s (+1s/level, max 10s). **CD: 120s** |
+| Awareness | Passive | Players within 12 blocks glow (visible only to you). |
 
-#### 10. SPEED (Icon: ⚡)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Flash Step | Melee | Summons lightning on target | 120s |
-| Rapid Formation | Support | Speed III for 6s | 120s |
-| Adrenaline | Passive | Double-jump boost in look direction. Cooldown: 20s (-1s/level) | - |
+#### TRANSFER (🔁)
+| Ability | Type | Details |
+|---------|------|---------|
+| Effect Swap | Melee | **Sacrifice one of YOUR positive effects** to inflict a corrupted negative on the target for **1 minute**. See conversion table below. **CD: 120s** |
+| Redirection | Support | Reflect durability damage to attacker for 5s (+1s/level, max 10s). **CD: 120s** |
+| Cleanse | Passive | Immune to all debuffs (Slowness, Mining Fatigue, Damage, Nausea, Blindness, Hunger, Weakness, Poison, Wither, Levitation, Unluck, Darkness). |
 
-#### 11. PRESSURE (Icon: 🩸)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Crushing Blow | Melee | +25% damage, target takes +15% damage for 4s (+1s/level, max 9s) | 120s |
-| Intimidation Field | Support | 6-block radius: enemies deal -15% damage (+5%/level, max -35%), take +10% damage (+5%/level, max +30%) for 6s | 120s |
-| Oppression | Passive | Enemies below 50% HP near you take +10% damage (+3%/level, max 25%) | - |
+**Effect Swap Conversion Table:**
+| Your Effect | Enemy Gets |
+|------------|------------|
+| Speed | Slowness |
+| Haste | Mining Fatigue |
+| Strength | Weakness |
+| Regeneration | Poison |
+| Resistance | Wither |
+| Jump Boost | Slowness |
+| Fire Resistance | Poison |
+| Night Vision | Blindness |
+| Invisibility | Glowing |
+| Health Boost | Wither |
+| Absorption | Weakness |
+| Saturation | Hunger |
+| Slow Falling | Levitation |
+| Luck | Unluck |
+| Dolphins Grace | Slowness |
+| Conduit Power | Mining Fatigue |
+| (any other) | Poison |
 
-#### 12. DISRUPTION (Icon: 🧠)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Fracture | Melee | +20s to all cooldowns, Weakness II + Blindness + Nausea for 4s (+1s/level, max 9s) | 120s |
-| System Jam | Support | 6-block radius: lock abilities for 25s (+1s/level, max 30s). Deals 20% of enemy's total cooldowns as damage | 150s |
-| Desync | Passive | First hit per fight: +15s to both enemy cooldowns (+2s/level, max 20s). Resets every 30s | - |
+#### PRESSURE (🩸)
+| Ability | Type | Details |
+|---------|------|---------|
+| Crushing Blow | Melee | +25% bonus damage, target takes +15% damage for 4s (+1s/level, max 9s). **CD: 120s** |
+| Intimidation Field | Support | 6-block radius: enemies deal -15% damage (+5%/level, max -35%), take +10% damage (+5%/level, max +30%) for 6s. **CD: 120s** |
+| Oppression | Passive | Enemies below 50% HP near you take +10% damage (+3%/level, max 25%). |
 
-#### 13. RISK (Icon: 🎲)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| All In | Melee | +50% damage (+10%/level), you take +25% damage (-2%/level) for 5s | 120s |
-| Double Or Nothing | Support | +30% damage (+5%/level, max 55%), take +20% damage for 6s | 150s |
-| Gambler's Edge | Passive | Below 40% HP: +10% damage (+1%/level, max 15%) | - |
+#### DISRUPTION (🧠)
+| Ability | Type | Details |
+|---------|------|---------|
+| Fracture | Melee | +20s to all cooldowns, Weakness II + Blindness + Nausea for 4s (+1s/level, max 9s). **CD: 120s** |
+| System Jam | Support | 6-block radius: lock abilities for 25s (+1s/level, max 30s). **Deals damage = 20% of enemy's total remaining cooldown time** (e.g. 100s remaining = 20 damage). **CD: 150s** |
+| Desync | Passive | First hit per fight: +10s to both enemy cooldowns (+2s/level, max 20s). Resets every 30s. |
+
+#### RISK (🎲)
+| Ability | Type | Details |
+|---------|------|---------|
+| All In | Melee | +50% damage (+10%/level), you take +25% damage (-2%/level) for 5s. **CD: 120s** |
+| Double Or Nothing | Support | +30% damage (+5%/level, max 55%), take +20% damage for 6s. **CD: 150s** |
+| Gambler's Edge | Passive | Below 40% HP: +10% damage (+1%/level, max 15%). Disabled above 40% HP. |
 
 ---
 
 ### Boss Attributes (4)
 
-#### 14. WITHER (Icon: 💀)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Desperation Cleave | Melee | 12 damage (+1.2/level), damage scales with missing HP (2x at <20%), 20% armor pen (+5%/level), Wither II for 4s (+0.5s/level), enemy healing -40% (+5%/level) | 240s |
-| Shadow Pulse | Support | 6-block AoE: 10 damage + Slowness II for 3s | 240s |
-| Curse of Despair | Passive | Healing received -25% (+1%/level), melee cooldown +10s (-1s/level) | - |
+#### WITHER (💀)
+| Ability | Type | Details |
+|---------|------|---------|
+| Desperation Cleave | Melee | 12 damage (+1.2/level). Damage multiplied by HP: 2.0x at <20% HP, 1.6x at <40%, 1.3x at <60%, 1.2x at <80%, 1.0x at 80%+. 20% armor pen (+5%/level). Wither II for 4s (+0.5s/level). Enemy healing -40% (+5%/level). **CD: 240s** |
+| Shadow Pulse | Support | 6-block AoE: 10 damage (5 hearts) + Slowness II for 3s. **CD: 240s** |
+| Curse of Despair | Passive | Healing received -25% (+1%/level). Melee cooldown +10s (-1s/level). |
 
-#### 15. WARDEN (Icon: 🐋)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Sonic Slam | Melee | 14 damage, 5-block AoE, Slowness II + Mining Fatigue II for 3s | 240s |
-| Deep Dark Zone | Support | 12-16 block radius (+0.8/level), 8-12s duration (+1s/level). Enemies: no sprint, -50% jump, -30% attack speed, -50% healing. You: +15% melee damage | 180s |
-| Curse of Silence | Passive | -15% attack speed when idle | - |
+#### WARDEN (🐋)
+| Ability | Type | Details |
+|---------|------|---------|
+| Sonic Slam | Melee | 14 damage (7 hearts), 5-block AoE, Slowness II + Mining Fatigue II for 3s. **CD: 240s** |
+| Deep Dark Zone | Support | Radius: 12 blocks (+0.8/level, max 16). Duration: 8s (+1s/level, max 12). Enemies: no sprint, -50% jump, -30% attack speed, -50% healing. You: +15% melee damage. **CD: 180s** |
+| Curse of Silence | Passive | -15% attack speed when idle. |
 
-#### 16. BREEZE (Icon: 🌬)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Judging Strike | Melee | Target takes +12% damage (+2%/level) for 10s. If they miss: +6 true damage (+1/level) | 240s |
-| Trial Order | Support | -20% cooldowns, +10% damage reduction for 6s (+1s/level) | 240s |
-| Curse of Judgment | Passive | Cooldowns increase out of combat, healing -25%, move speed -5% when idle | - |
+#### BREEZE (🌬)
+| Ability | Type | Details |
+|---------|------|---------|
+| Judging Strike | Melee | Target takes +12% damage (+2%/level) for 10s. If target misses: +6 true damage (+1/level). **CD: 240s** |
+| Trial Order | Support | -20% cooldowns, +10% damage reduction for 6s (+1s/level). **CD: 240s** |
+| Curse of Judgment | Passive | Cooldowns increase out of combat (+1s/10 ticks idle). Healing -25%. Move speed -5% when idle (Slowness I applied after 3s without attacking). |
 
-#### 17. DRAGON EGG (Icon: 🥚)
-| Ability | Type | Effect | Cooldown |
-|---------|------|--------|----------|
-| Rampaging Strike | Melee | 10 damage (+2/level, max 18), 1.5x below 30% HP, 20% lifesteal (+5%/level, max 40%), Slowness III + Weakness II for 3s (+0.5s/level) | 300s |
-| Dominion | Support | **REQUIRES 5 CONSECUTIVE HITS TO CHARGE (3s between hits)**. +25% damage (+1%/level, max 30%), +50% cooldown reduction (+1%/level, max 55%) for 8s | 300s |
-| Draconic Curse | Passive | Nearby enemies (8 blocks) take +15% damage (-1%/level, min 10%) | - |
+#### DRAGON EGG (🥚)
+| Ability | Type | Details |
+|---------|------|---------|
+| Rampaging Strike | Melee | 10 damage (+2/level, max 18). 1.5x below 30% HP. 20% lifesteal (+5%/level, max 40%). Slowness III + Weakness II for 3s (+0.5s/level). **CD: 300s** |
+| Dominion | Support | **REQUIRES 5 CONSECUTIVE HITS TO CHARGE** (within 3s of each other, resets if gap > 3s). +25% damage (+1%/level, max 30%). +50% cooldown reduction (+1%/level, max 55%). Duration: 8s. If not charged, cooldown is refunded. **CD: 300s** |
+| Draconic Curse | Passive | Nearby enemies (8 blocks) take +15% damage (-1%/level, min 10%). Always active. |
+
+**Dragon Egg Special Effects:**
+- Permanent Glowing potion effect
+- Dark Purple team color on scoreboard
+- Server-wide broadcast on acquisition
+- Cannot be dropped or stored in containers
 
 ---
 
-## Weapons
+## 2. All 17 Weapons
 
 ### Standard Weapons (13)
-All: **15 damage, 1.6 attack speed, 300 durability**
+**All: 15 damage, 1.6 attack speed, 300 durability, Unenchantable, Unrepairable**
 
-| Weapon | Attribute | Material | On-Hit Effect | Passive |
-|--------|-----------|----------|---------------|---------|
-| Breaker Blade | Melee | Netherite Sword | -40% armor for ability | +6% final melee damage |
-| Crimson Fang | Health | Netherite Sword | 10% lifesteal | +2 max HP while held |
-| Bulwark Mace | Defense | Mace | 10% dmg reduction 3s | -10% knockback taken |
-| Gilded Cleaver | Wealth | Netherite Axe | Mob kill: +50% drops | Looting +2 |
-| Lockspike | Control | Iron Sword | Slowness I 2s | +10% ability duration |
-| Windcaller Pike | Range | Trident | Reach: +1.5 blocks | +25% knockback |
-| Chrono Saber | Tempo | Golden Sword | +5s cooldown to target | -5% own cooldowns |
-| Watcher's Blade | Vision | Netherite Sword | Mark target 5s | Glow enemies 6 blocks |
-| Mirror Edge | Transfer | Diamond Sword | Steal effects 4s | -10% debuff duration |
-| Flashsteel Dagger | Speed | Iron Sword | +5% move speed 3s | +10% sprint speed |
-| Bonecrusher | Pressure | Mace | +10% damage taken 4s | +10% vs low HP |
-| Fracture Rod | Disruption | Blaze Rod | +10s all cooldowns | +10% debuff duration |
-| High Roller Blade | Risk | Golden Sword | +30% dealt/+15% taken | +10% crit below 40% |
+| # | Weapon | Attribute | Material | On-Hit Effect | Passive Bonus |
+|---|--------|-----------|----------|---------------|---------------|
+| 1 | Breaker Blade | Melee | Netherite Sword | -40% armor for ability hit | +6% final melee damage |
+| 2 | Crimson Fang | Health | Netherite Sword | 10% lifesteal | +2 max HP while held |
+| 3 | Bulwark Mace | Defense | Mace | 10% dmg reduction 3s | -10% knockback taken |
+| 4 | Gilded Cleaver | Wealth | Netherite Axe | Mob kill: +50% drops | Looting +2 |
+| 5 | Lockspike | Control | Iron Sword | Slowness I 2s | +10% ability duration |
+| 6 | Windcaller Pike | Range | Trident | Reach: +1.5 blocks | +25% knockback |
+| 7 | Chrono Saber | Tempo | Golden Sword | +5s cooldown to target | -5% own cooldowns |
+| 8 | Watcher's Blade | Vision | Netherite Sword | Mark target 5s | Glow enemies 6 blocks |
+| 9 | Mirror Edge | Transfer | Diamond Sword | Steal positive effects 4s | -10% debuff duration |
+| 10 | Flashsteel Dagger | Speed | Iron Sword | +5% move speed 3s | +10% sprint speed |
+| 11 | Bonecrusher | Pressure | Mace | +10% damage taken 4s | +10% damage vs low HP |
+| 12 | Fracture Rod | Disruption | Blaze Rod | +10s all cooldowns | +10% debuff duration |
+| 13 | High Roller Blade | Risk | Golden Sword | +30% dealt, +15% taken | +10% crit below 40% HP |
 
 ### Boss Weapons (4)
-All: **16 damage, 1.6 attack speed, 300 durability**
+**All: 16 damage, 1.6 attack speed, 300 durability, Unenchantable, Unrepairable**
 
-| Weapon | Attribute | Material | On-Hit | Passive |
-|--------|-----------|----------|--------|---------|
-| Despair Reaver | Wither | Netherite Hoe | +1% damage per 1% missing HP | Healing -20% |
-| Deepcore Maul | Warden | Mace | +20% damage in zones | -20% knockback taken |
-| Verdict Lance | Breeze | Trident | 3 true damage | +10% vs cooldown users |
-| Dominion Blade | Dragon Egg | Netherite Sword | Allies +10% damage | Lifesteal 10% |
+| # | Weapon | Attribute | Material | On-Hit Effect | Passive Bonus |
+|---|--------|-----------|----------|---------------|---------------|
+| 14 | Despair Reaver | Wither | Netherite Hoe | +1% dmg per 1% missing HP | Healing -20% |
+| 15 | Deepcore Maul | Warden | Mace | +20% damage in zones | -20% knockback taken |
+| 16 | Verdict Lance | Breeze | Trident | 3 true damage | +10% vs cooldown users |
+| 17 | Dominion Blade | Dragon Egg | Netherite Sword | Allies +10% damage | Lifesteal 10% |
+
+**Weapon Item Lore Format:**
+```
+[Color]§l[WeaponName]
+§7Attribute Weapon: [Color][AttributeName]
+
+§7Base Damage: §c[damage]
+§7Attack Speed: §e[speed]
+§7Durability: §a[durability]
+
+§6§lOn Hit:
+§7[onHitEffect]
+
+§d§lPassive:
+§7[passiveBonus]
+
+§c§lRequires: [Color][AttributeName] §c§lattribute
+
+§8§oUnenchantable • Unrepairable
+```
 
 ---
 
-## Crafting Costs
+## 3. Weapon Crafting Costs
 
 ### Standard Weapons
-| Material | Amount |
-|----------|--------|
-| Netherite Ingot | 4 |
-| Diamond Block | 8 |
-| Iron Block | 32 |
-| Weapon Handle | 1 |
 
-### Boss Weapons (Example: Deepcore Maul)
-| Material | Amount |
-|----------|--------|
-| Bone Block | 64 |
-| Iron Block | 64 |
-| Copper Block | 64 |
-| Skeleton Skull | 6 |
-| Wither Skeleton Skull | 6 |
-| Player Head | 3 |
-| Weapon Handle | 1 |
-| Warden's Heart | 1 |
+**Breaker Blade (Melee)**
+- 4x Netherite Ingot, 8x Diamond Block, 32x Iron Block, 1x Weapon Handle
 
----
+**Crimson Fang (Health)**
+- 4x Netherite Ingot, 8x Diamond Block, 16x Golden Apple, 32x Redstone Block, 1x Weapon Handle
 
-## Commands
+**Bulwark Mace (Defense)**
+- 6x Netherite Ingot, 12x Diamond Block, 64x Iron Block, 32x Obsidian, 1x Weapon Handle
 
-### Player Commands (`/smp`)
-| Command | Description |
-|---------|-------------|
-| `/smp support` | Activate support ability |
-| `/smp melee` | Activate melee ability |
-| `/smp info` | Open attribute info GUI |
-| `/smp info <attribute>` | View specific attribute details |
-| `/smp info <player>` | View another player's attribute |
+**Gilded Cleaver (Wealth)**
+- 4x Netherite Ingot, 64x Gold Block, 32x Emerald Block, 8x Diamond Block, 1x Weapon Handle
 
-### Admin Commands (`/smp` - requires oddssmp.admin)
-| Command | Description |
-|---------|-------------|
-| `/smp assign <player> [attribute]` | Assign attribute (random if not specified) |
-| `/smp reroll <player>` | Get new random attribute (resets to L1) |
-| `/smp upgrade <player> [amount]` | Level up player |
-| `/smp remove <player>` | Remove attribute |
-| `/smp reset <player>` | Reset to level 1, clear cooldowns |
-| `/smp cooldown <player> <support\|melee> <seconds>` | Set cooldown |
+**Lockspike (Control)**
+- 32x Iron Block, 4x Diamond Block, 64x Chain, 32x Cobweb, 1x Weapon Handle
 
-### Admin Commands (`/admin` - requires oddssmp.admin)
-| Command | Description |
-|---------|-------------|
-| `/admin gui` | Open admin control panel |
-| `/admin boss <type>` | Spawn boss (wither/warden/breeze/enderdragon/stop/stopall) |
-| `/admin weapon` | Open weapon GUI |
-| `/admin customitems` | Open custom items GUI |
-| `/admin spwe <weapon>` | Spawn weapon altar at location |
-| `/admin givehandle` | Give Weapon Handle |
-| `/admin giveupgrader [amount]` | Give upgrader(s) |
-| `/admin givereroller [amount]` | Give reroller(s) |
-| `/admin autoassign <on\|off> [delay]` | Toggle auto-assign |
-| `/admin assignall` | Assign attributes to all players without one |
-| `/admin test <player> <support\|melee\|passive>` | Test particles |
+**Windcaller Pike (Range)**
+- 4x Netherite Ingot, 8x Diamond Block, 64x Prismarine Shard, 64x Feather, 1x Weapon Handle
+
+**Chrono Saber (Tempo)**
+- 4x Netherite Ingot, 32x Gold Block, 16x Clock, 8x Diamond Block, 1x Weapon Handle
+
+**Watcher's Blade (Vision)**
+- 4x Netherite Ingot, 8x Diamond Block, 16x Ender Eye, 32x Glowstone, 1x Weapon Handle
+
+**Mirror Edge (Transfer)**
+- 16x Diamond Block, 32x Amethyst Block, 64x Glass, 32x Prismarine Crystals, 1x Weapon Handle
+
+**Flashsteel Dagger (Speed)**
+- 32x Iron Block, 4x Diamond Block, 64x Sugar, 32x Feather, 1x Weapon Handle
+
+**Bonecrusher (Pressure)**
+- 6x Netherite Ingot, 12x Diamond Block, 64x Bone Block, 6x Skeleton Skull, 1x Weapon Handle
+
+**Fracture Rod (Disruption)**
+- 4x Netherite Ingot, 8x Diamond Block, 32x Blaze Rod, 4x End Crystal, 1x Weapon Handle
+
+**High Roller Blade (Risk)**
+- 64x Gold Block, 8x Diamond Block, 16x Emerald Block, 32x Lapis Block, 1x Weapon Handle
+
+### Boss Weapons
+
+**Despair Reaver (Wither)**
+- 4x Netherite Block, 32x Diamond Block, 6x Wither Skeleton Skull, 64x Soul Sand, 1x Nether Star, 1x Weapon Handle, 1x Wither Bone
+
+**Deepcore Maul (Warden)**
+- 64x Bone Block, 64x Iron Block, 64x Copper Block, 6x Skeleton Skull, 6x Wither Skeleton Skull, 3x Player Head, 1x Weapon Handle, 1x Warden's Heart
+
+**Verdict Lance (Breeze)**
+- 2x Netherite Block, 24x Diamond Block, 64x Prismarine Shard, 64x Feather, 32x Phantom Membrane, 1x Weapon Handle, 1x Breeze Heart
+
+**Dominion Blade (Dragon Egg)**
+- 8x Netherite Block, 64x Diamond Block, 8x End Crystal, 32x Ender Eye, 64x Dragon Breath, 1x Weapon Handle, 1x Dragon Heart
 
 ---
 
-## Boss Items
+## 4. Weapon Altar System
 
+### Spawning
+- Command: `/admin spwe <weapon_name>` (spawns at player location)
+- Stored in `activeAltars` list, cleaned up on plugin disable
+
+### Pedestal Structure
+```
+Layer Y-1: ANCIENT_DEBRIS (center support)
+Layer Y+0: 3x3 POLISHED_DEEPSLATE base
+Layer Y+1: DEEPSLATE_BRICKS (center) + 4x CHAIN (corners)
+Layer Y+2: CHISELED_DEEPSLATE (center) + 4x CHAIN (corners)
+```
+
+### Hologram Display
+- **Weapon Name:** `[Color]§l[Name]` at Y+2.4
+- **Material List:** Each line 0.3 blocks apart, format: `§f[qty]x §7[Material Name]`
+- **Custom Items:** Pre-colored (red for Handle, green for Warden's Heart, etc.)
+- **Text:** CENTER aligned, CENTER billboard, transparent background, shadow enabled
+
+### Item Display
+- Floating weapon item at Y+0.5
+- Scale: 1.75x on all axes
+- Smooth Y-axis rotation: +0.05 radians/tick (~6.25s per full rotation)
+
+### Ambient Effects
+- ENCHANT particles every 1 second (20 ticks)
+- 10 particles per burst, spread (0.3, 0.5, 0.3), speed 0.05
+
+### Block Protection
+- All pedestal blocks tracked in `protectedBlocks` HashSet
+- BlockBreakEvent cancelled if location matches
+- Message: `§cThis block is part of a weapon altar and cannot be broken!`
+
+### Crafting Process
+1. Player right-clicks near altar (within 3 blocks)
+2. `hasRequiredMaterials()` checks inventory
+3. Materials consumed from inventory
+4. `weapon.createItem()` generates ItemStack with stats + lore
+5. Sound: BLOCK_BEACON_ACTIVATE (pitch 1.5) + ENTITY_PLAYER_LEVELUP (pitch 0.8)
+6. Particles: 100x TOTEM_OF_UNDYING + 200x ENCHANT
+7. Broadcast: `§6§l✦ §e[Player] §6has forged the [Color]§l[Weapon]§6! §l✦`
+8. Player message: `§a§lWeapon forged! §7You received [Color]§l[Weapon]§7!`
+
+### Sneaking Interaction
+- Shift+right-click shows requirements list
+- Regular right-click attempts to craft
+
+---
+
+## 5. Boss Items & Mechanics
+
+### Boss Drop Items
 | Item | Material | Display Name | Grants Attribute |
-|------|----------|--------------|------------------|
-| Dragon Egg | Dragon Egg | - | DRAGON_EGG |
-| Wither Bone | Coal Block | §5§lWither Bone | WITHER |
-| Warden Brain | Sculk Catalyst | §3§lWarden Brain | WARDEN |
-| Breeze Heart | Wind Charge | §b§lBreeze Heart | BREEZE |
-| Weapon Handle | Blaze Rod | §c§lWeapon Handle | - (crafting material) |
+|------|----------|-------------|------------------|
+| Dragon Egg | DRAGON_EGG | (vanilla) | DRAGON_EGG |
+| Wither Bone | COAL_BLOCK | §5§lWither Bone | WITHER |
+| Warden Brain | SCULK_CATALYST | §3§lWarden Brain | WARDEN |
+| Breeze Heart | WIND_CHARGE | §b§lBreeze Heart | BREEZE |
 
-**Mechanics:**
-- Cannot be dropped or stored in containers
-- Auto-grant attribute on pickup or login
-- Server broadcast on acquisition
-- Dropped on death (loses attribute)
+### Crafting-Only Items
+| Item | Material | Display Name | Purpose |
+|------|----------|-------------|---------|
+| Weapon Handle | BLAZE_ROD | §c§lWeapon Handle | Required for all weapon crafting |
+| Warden's Heart | ECHO_SHARD | §2§lWarden's Heart | Deepcore Maul crafting |
+| Dragon Heart | DRAGON_EGG | §5§lDragon Heart | Dominion Blade crafting |
+
+### Boss Item Rules
+- **Cannot be dropped** (PlayerDropItemEvent cancelled)
+- **Cannot be stored in containers** (InventoryClickEvent cancelled for non-player inventories)
+- **Auto-grant on pickup** (EntityPickupItemEvent)
+- **Auto-grant on login** (PlayerJoinEvent checks inventory)
+- **Dropped on death** (boss items appear in death drops, attribute removed)
+
+### Death Broadcast Format
+```
+§c§l⚠ §6§lDRAGON EGG DROPPED §c§l⚠
+§e[PlayerName] §7has lost the Dragon Egg!
+```
 
 ---
 
-## Leveling System
+## 6. Ascended Warden Boss
+
+### Base Stats
+| Stat | Value |
+|------|-------|
+| Max Health | 1600 (800 hearts) |
+| Armor Reduction | 55% |
+| Knockback Resistance | 100% |
+
+### Attacks
+
+**Deep Dark Zone (passive, every 1s)**
+- Radius: 16 blocks (24 when enraged)
+- Damage: 2.5/s (scales 1.0-1.5x closer to center)
+- Visual: SCULK_CHARGE_POP particles (32 points)
+- Effect: DARKNESS (60 ticks)
+
+**Sonic Slam (melee, 5-block radius)**
+- Damage: 13 (+6 if target airborne)
+- Cooldown: 5s (3.5s enraged)
+- Knockback: 1.5x + 0.5y
+- Trigger: Target within 10 blocks
+- Sound: ENTITY_WARDEN_SONIC_BOOM (pitch 0.7)
+
+**Sonic Boom (ranged, every 4s)**
+- Range: 30 blocks
+- Damage by HP: >80%=12, >60%=15, >40%=18, >20%=22, ≤20%=26
+- Effect: Slowness II (40 ticks)
+- Visual: SONIC_BOOM particle line every 0.5 blocks
+
+### Enrage (≤30% HP / 480 HP remaining)
+- Zone radius: 1.5x (24 blocks)
+- Slam cooldown: 0.7x (70 ticks)
+- Boss bar turns RED with "[ENRAGED]"
+- Sound: ENTITY_WARDEN_ROAR (pitch 0.5)
+- Particles: 5 bursts of 50 SCULK_SOUL + SONIC_BOOM
+
+### Anti-Zerg Protection
+- Tracks attackers in 5-second window
+- -5% damage per attacker after 5 attackers
+- Max reduction: 40%
+
+### Boss Bar
+- Style: SEGMENTED_10
+- Color: BLUE (RED when enraged)
+- Render distance: 100 blocks
+- Title: `§3§lASCENDED WARDEN`
+
+### Rewards on Death
+- 1x Warden Brain (SCULK_CATALYST, grants WARDEN attribute)
+- 1x Warden's Heart (crafting material)
+- 8x Echo Shard
+- 4x Sculk Shrieker
+
+---
+
+## 7. Leveling System
 
 ### Level Mechanics
-| Setting | Value |
-|---------|-------|
+| Setting | Default |
+|---------|---------|
 | Max Level | 5 |
 | Starting Level | 1 |
-| Level Scaling | +10% per level |
+| Scaling per Level | +10% |
+| Levels Lost on Death | 1 |
+| Levels Gained on Kill | 1 |
 
-### Level Changes
-| Event | Effect |
-|-------|--------|
-| Kill Player | +1 level (if enabled) |
-| Death | -1 level (if enabled) |
+### Level Scaling Formula
+```
+levelMultiplier = 1.0 + ((level - 1) * 0.10)
+L1 = 1.00x | L2 = 1.10x | L3 = 1.20x | L4 = 1.30x | L5 = 1.40x
+```
+
+### Kill/Death Effects
+**On PvP Kill (killer):**
+- +1 level (if `levelGainOnKill` enabled)
+- +1 kill stat
+- MELEE: +1.5% Bloodlust stacks (max 10%+1%/level)
+- HEALTH: +1 heart Vitality (max = level hearts)
+
+**On Death (victim):**
+- -1 level (if `levelLossOnDeath` enabled, min 1)
+- +1 death stat
+- HEALTH: Lose 1 heart per level
+- MELEE: Lose all Bloodlust stacks
+- Boss items: Dropped, attribute removed, server broadcast
 
 ### Tab Display
-Format: `[ICON] PlayerName ★★★★★` (stars = level)
+```
+§e[ICON] PlayerName ★★★★★
+```
+Stars (★) = current level. Updated on join, assign, and level change.
+
+### Action Bar (every 1s)
+```
+§e[ICON] AttributeName Lv.X | Support: §a✓ §7| Melee: §cXs
+```
+Shows cooldown as green checkmark (ready) or red countdown (on cooldown).
 
 ---
 
-## Upgrader & Reroller
+## 8. Upgrader & Reroller
 
 ### Attribute Upgrader
 | Property | Value |
 |----------|-------|
-| Item | Nether Star |
+| Item | NETHER_STAR |
 | Display Name | §6§lAttribute Upgrader |
-| Effect | +1 level (max 5) |
-| Usage | Right-click |
+| Lore | "Right-click to upgrade your attribute by one level! Max level: 5" |
+| Effect | +1 level (cap at 5) |
+
+**Crafting Recipe (3x3):**
+```
+[Netherite Ingot] [Diamond Block]  [Netherite Ingot]
+[Diamond Block]   [Wither Skull]   [Diamond Block]
+[Netherite Ingot] [Diamond Block]  [Netherite Ingot]
+```
 
 ### Attribute Reroller
 | Property | Value |
 |----------|-------|
-| Item | End Crystal |
+| Item | END_CRYSTAL |
 | Display Name | §d§lAttribute Reroller |
-| Effect | Random new attribute, reset to L1 |
-| Usage | Right-click |
+| Lore | "Right-click to reroll your attribute to a new random one! Warning: Resets level to 1" |
+| Effect | Random new attribute, reset to L1, clears cooldowns |
+
+**Crafting Recipe (3x3):**
+```
+[Netherite Ingot] [Diamond Block]  [Netherite Ingot]
+[Diamond Block]   [Nether Star]    [Diamond Block]
+[Netherite Ingot] [Diamond Block]  [Netherite Ingot]
+```
+
+### Reroller Animation
+- 60-tick slot machine animation
+- Shows random attributes cycling through
+- Slows down: 2 ticks (fast) → 4 → 6 → 10 (very slow)
+- Sound: BLOCK_NOTE_BLOCK_HAT with increasing pitch
+- Final: UI_TOAST_CHALLENGE_COMPLETE + ENTITY_PLAYER_LEVELUP
+- Cannot reroll boss attributes
+- Broadcasts to nearby players (50 blocks)
 
 ---
 
-## Configuration
+## 9. All Commands
+
+### `/smp` (Player Command)
+| Subcommand | Args | Permission | Description |
+|------------|------|-----------|-------------|
+| `support` | - | None | Activate support ability |
+| `melee` | - | None | Activate melee ability |
+| `info` | `[attribute\|player]` | None | Open attribute info GUI |
+| `assign` | `<player> [attribute]` | oddssmp.admin | Assign attribute (random if none specified) |
+| `reroll` | `<player>` | oddssmp.admin | Reroll attribute, reset to L1 |
+| `upgrade` | `<player> [amount]` | oddssmp.admin | Increase level (default +1) |
+| `remove` | `<player>` | oddssmp.admin | Remove attribute entirely |
+| `reset` | `<player>` | oddssmp.admin | Reset to L1, clear cooldowns |
+| `cooldown` | `<player> <support\|melee> <seconds>` | oddssmp.admin | Set ability cooldown |
+
+### `/admin` (Admin Command - all require oddssmp.admin)
+| Subcommand | Args | Player Only? | Description |
+|------------|------|-------------|-------------|
+| `gui` | - | Yes | Open admin control panel |
+| `test` | `<player> <support\|melee\|passive>` | Yes | Test particle effects |
+| `boss` | `<wither\|warden\|breeze\|enderdragon\|stop\|stopall>` | No (for stop) | Spawn or stop bosses |
+| `weapon` | - | Yes | Open weapon GUI |
+| `customitems` | - | Yes | Open custom items GUI |
+| `spwe` / `spawnweapon` | `<weapon_name>` | Yes | Spawn weapon altar |
+| `givehandle` | - | Yes | Give 1 Weapon Handle |
+| `giveupgrader` | `[amount]` | Yes | Give upgrader(s) |
+| `givereroller` | `[amount]` | Yes | Give reroller(s) |
+| `autoassign` | `<on\|off> [delay_seconds]` | No | Toggle auto-assign on join |
+| `assignall` | - | No | Assign to all players without attributes |
+| `debugdragon` | - | Yes | Apply Dragon Egg effects for testing |
+
+### Tab Completion
+- `/smp` first arg: `info`, `support`, `melee` (+ admin commands if op)
+- `/smp info`: all attribute names (lowercase) + online player names
+- `/smp assign [player]`: all attribute names
+- `/admin boss`: `wither`, `warden`, `breeze`, `enderdragon`, `stop`, `stopall`
+- `/admin spwe`: all weapon enum names
+- `/admin autoassign`: `on`, `off`, then suggested delays: `5`, `10`, `15`, `30`, `60`
+
+---
+
+## 10. All GUIs
+
+### Admin Panel (`/admin gui`)
+**Title:** `§6§lOddsSMP Admin Panel` | **Size:** 27 slots
+
+| Slot | Material | Name | Action |
+|------|----------|------|--------|
+| 10 | PLAYER_HEAD | Player Management | Opens player list |
+| 12 | ENCHANTED_BOOK | Attribute Browser | Opens attribute encyclopedia |
+| 14 | BOOK | Server Statistics | Opens stats page |
+| 16 | COMMAND_BLOCK | Batch Operations | Opens bulk actions |
+| 20 | ANVIL | Attribute Editor | Opens per-attribute tuning |
+| 22 | COMPARATOR | Plugin Settings | Opens settings menu |
+
+### Player Management
+**Title:** `§e§lPlayer Management` | **Size:** 54 slots
+- Slots 0-44: Player heads (up to 45 players) showing name, attribute, level, K/D
+- Click opens individual player options
+
+### Player Options
+**Title:** `§e§l[Player] Management` | **Size:** 45 slots
+
+| Slot | Action |
+|------|--------|
+| 10 | Assign Random Attribute |
+| 12 | Reroll Attribute |
+| 14 | Upgrade Level (+1) |
+| 16 | Downgrade Level (-1) |
+| 19 | Choose Specific Attribute (opens selector) |
+| 23 | Reset Player (L1, clear cooldowns) |
+| 25 | Remove Attribute |
+| 28 | Manage Cooldowns |
+| 30 | Grant Dragon Egg |
+| 32 | View Ability Details |
+| 34 | Test Abilities |
+
+### Attribute Editor
+**Title:** `§6§lAttribute Editor` | **Size:** 54 slots
+- Slots 0-16: All 17 attributes with GUI materials
+- Bottom row: Global Cooldown Multiplier (slot 45), Global Damage Multiplier (46), Level Scaling (47)
+- Left/Right click: adjust values, Shift+Click: reset
+
+### Per-Attribute Editor
+**Title:** `§6§lEdit: [Attribute]` | **Size:** 54 slots
+- Support settings: Cooldown Modifier (10), Duration (11), Range (12)
+- Melee settings: Cooldown Modifier (19), Damage Multiplier (20), Duration (21)
+- Passive settings: Strength (28), Tick Rate (29)
+- Presets: Balanced (45), High Power (46), Low Power (47), Chaos (48)
+- Actions: Save (50), Reset Defaults (51), Back (53)
+
+### Plugin Settings Menu
+**Title:** `§b§lPlugin Settings` | **Size:** 54 slots
+
+| Slot | Submenu |
+|------|---------|
+| 10 | Gameplay Settings |
+| 12 | Combat Settings |
+| 14 | Boss Settings |
+| 16 | Broadcast Settings |
+| 30 | Multiplier Settings |
+| 32 | Quick Presets |
+| 34 | Death Settings |
+| 37 | Particle Settings |
+| 39 | Combat Log Settings |
 
 ### Gameplay Settings
-| Setting | Default | Description |
-|---------|---------|-------------|
-| autoAssignEnabled | false | Auto-assign on join |
-| autoAssignDelaySeconds | 10 | Delay before auto-assign |
-| levelLossOnDeath | true | Lose level on death |
-| levelGainOnKill | true | Gain level on kill |
-| maxLevel | 5 | Maximum level (1-10) |
-| levelsLostOnDeath | 1 | Levels lost per death |
-| levelsGainedOnKill | 1 | Levels gained per kill |
+- Level Loss on Death toggle, Level Gain on Kill toggle
+- Auto-Assign toggle (+delay adjustment)
+- PvP Only Abilities toggle, Friendly Fire toggle
+- Max Level, Levels Lost/Gained adjustments
+- Passive Tick Rate, Passive Effect Strength
 
 ### Combat Settings
-| Setting | Default | Description |
-|---------|---------|-------------|
-| pvpDamageMultiplier | 1.0 | PvP damage multiplier |
-| abilityDamageMultiplier | 1.0 | Ability damage multiplier |
-| combatTagEnabled | true | Enable combat tagging |
-| combatTagDuration | 15 | Combat tag duration (seconds) |
-| friendlyFire | true | Allow friendly fire |
+- PvP Damage Multiplier, Ability Damage Multiplier
+- Global Damage Multiplier, Global Cooldown Multiplier
+- Combat Tag toggle + duration
 
-### Boss Settings
-| Setting | Default | Description |
-|---------|---------|-------------|
-| bossHealthMultiplier | 1.0 | Boss HP multiplier |
-| bossDamageMultiplier | 1.0 | Boss damage multiplier |
-| bossDropRateMultiplier | 1.0 | Boss drop rate multiplier |
+### Particle Settings
+**Title:** `§d§lParticle Settings` | **Size:** 54 slots
+- Master Toggle (slot 4)
+- **Ability Particles:** Support (10), Melee (11), Passive (12)
+- **Combat Particles:** Damage (15), Critical (16), Blocking (17), Healing (18), Kill (19), Death (20)
+- **Player Events:** Level Up (23), Attribute Assign (24), Attribute Remove (25)
+- **Boss Particles:** Ambient (28), Ability (29), Spawn (30), Death (31)
+- **World Particles:** Altar Ambient (33), Altar Activation (34), Item Pickup (35)
+- **Effect Particles:** Status (36), Buff (37), Debuff (38), Teleport (39), Respawn (40), Combo (41), Kill Streak (42)
+- Intensity (45), Render Distance (46), Enable All (50), Disable All (51)
 
-### Broadcast Settings
-| Setting | Default | Description |
-|---------|---------|-------------|
-| broadcastAttributeAssign | true | Announce attribute assignment |
-| broadcastLevelUp | false | Announce level ups |
-| broadcastDragonEgg | true | Announce Dragon Egg events |
-| broadcastBossSpawn | true | Announce boss spawns |
-| broadcastBossDefeat | true | Announce boss defeats |
+### Attribute Encyclopedia (`/smp info`)
+**Title:** `§d§lAttribute Encyclopedia` | **Size:** 54 slots
+- All 17 attributes shown with materials
+- Click opens detailed view with Support/Melee/Passive descriptions
+- Level system info at slot 49
 
----
+### Custom Items GUI (`/admin customitems`)
+**Title:** `§6§lCustom Items` | **Size:** 54 slots
+- Row 1: Weapon Handle, Warden's Heart, Wither Bone, Breeze Heart, Dragon Heart, Upgrader, Reroller
+- Rows 2-5: All 17 attribute weapons
+- Click to receive any item
 
-## Combat Logger
-
-### Event Types Logged
-- Damage dealt/taken
-- Ability usage
-- Kills/deaths
-- Healing
-- Combat tag entry/exit
-- Critical hits
-- Blocked damage
-
-### Log Settings
-| Setting | Default | Description |
-|---------|---------|-------------|
-| enabled | true | Enable combat logging |
-| logToFile | true | Log to file |
-| logToConsole | false | Log to console |
-| showToPlayers | true | Show to players |
-| showDamageNumbers | true | Show damage numbers |
-| showHealthBars | true | Show health bars |
-
----
-
-## Additional Features
-
-### Weapon Altar System
-- Spawned via `/admin spwe <weapon>`
-- Hovering text + rotating item display
-- 5x5 protected area
-- Ambient enchantment particles
-- Server broadcast on weapon craft
-
-### Auto-Assign Animation
-- Slot machine style animation
-- 60 tick duration
-- Random attribute selection
-- Excludes boss attributes
-
-### Passive Ability Ticker
-- Runs every 1 second (20 ticks)
-- Applies continuous effects to all players
-- VISION: nearby player glow
-- TRANSFER: debuff immunity
-- WEALTH: Hero of the Village
-- TEMPO: Speed I
-
-### Data Persistence
-- File: `plugins/OddsSMP/playerdata.yml`
-- Stores: attribute, level, kills, deaths
-- Auto-save on modification
-- Auto-load on join
+### GUI Material Icons per Attribute
+| Attribute | Material |
+|-----------|----------|
+| Melee | IRON_SWORD |
+| Health | RED_DYE |
+| Defense | SHIELD |
+| Wealth | GOLD_INGOT |
+| Speed | FEATHER |
+| Control | ENDER_EYE |
+| Range | BOW |
+| Pressure | LIGHTNING_ROD |
+| Tempo | CLOCK |
+| Disruption | TNT |
+| Vision | SPYGLASS |
+| Transfer | ENDER_PEARL |
+| Risk | COMPARATOR |
+| Wither | WITHER_SKELETON_SKULL |
+| Warden | SCULK_CATALYST |
+| Breeze | WIND_CHARGE |
+| Dragon Egg | DRAGON_EGG |
 
 ---
 
-## Summary Statistics
+## 11. All Configuration
+
+### Gameplay
+| Setting | Default | Range |
+|---------|---------|-------|
+| autoAssignEnabled | false | boolean |
+| autoAssignDelaySeconds | 10 | 0+ |
+| levelLossOnDeath | true | boolean |
+| levelGainOnKill | true | boolean |
+| pvpOnlyAbilities | false | boolean |
+| friendlyFire | true | boolean |
+| maxLevel | 5 | 1-10 |
+| levelsLostOnDeath | 1 | 0-5 |
+| levelsGainedOnKill | 1 | 0-5 |
+| killStreakBonuses | false | boolean |
+| killStreakThreshold | 3 | 1+ |
+
+### Combat
+| Setting | Default | Range |
+|---------|---------|-------|
+| pvpDamageMultiplier | 1.0 | 0.1-5.0 |
+| abilityDamageMultiplier | 1.0 | 0.1-5.0 |
+| combatTagEnabled | true | boolean |
+| combatTagDuration | 15 | 5-60 seconds |
+
+### Death
+| Setting | Default |
+|---------|---------|
+| keepInventoryOnDeath | false |
+| dropAttributeItemsOnDeath | true |
+
+### Boss
+| Setting | Default | Range |
+|---------|---------|-------|
+| bossHealthMultiplier | 1.0 | 0.1-10.0 |
+| bossDamageMultiplier | 1.0 | 0.1-10.0 |
+| bossDropRateMultiplier | 1.0 | 0.1-10.0 |
+
+### Passive
+| Setting | Default | Range |
+|---------|---------|-------|
+| passiveTickRate | 1.0s | 0.5-5.0 |
+| passiveEffectStrength | 1.0 | 0.1-5.0 |
+
+### Broadcast
+| Setting | Default |
+|---------|---------|
+| broadcastAttributeAssign | true |
+| broadcastLevelUp | false |
+| broadcastDragonEgg | true |
+| broadcastBossSpawn | true |
+| broadcastBossDefeat | true |
+
+### Particles (28 toggles)
+| Category | Settings (all default: true) |
+|----------|------------------------------|
+| Ability | particleSupportAbility, particleMeleeAbility, particlePassiveAbility |
+| Combat | particleDamageHit, particleCriticalHit, particleBlocking, particleHealing, particleKill, particleDeath |
+| Events | particleLevelUp, particleAttributeAssign, particleAttributeRemove |
+| Boss | particleBossAmbient, particleBossAbility, particleBossSpawn, particleBossDeath |
+| World | particleAltarAmbient, particleAltarActivation, particleItemPickup, particleItemDrop |
+| Effects | particleStatusEffect, particleBuffApplied, particleDebuffApplied, particlePotionEffect |
+| Special | particleTeleport, particleRespawn, particleCombo, particleKillStreak |
+
+| Numeric | Default | Range |
+|---------|---------|-------|
+| particleMasterEnabled | true | boolean |
+| particleIntensity | 1.0 | 0.25-2.0 |
+| particleRenderDistance | 32 | 8-64 blocks |
+
+### Attribute Settings (per attribute, all default to Balanced)
+| Per-Attribute Setting | Default |
+|----------------------|---------|
+| supportCooldownModifier | 1.0 |
+| meleeCooldownModifier | 1.0 |
+| supportDuration | 10s |
+| supportRange | 10.0 blocks |
+| meleeDamageMultiplier | 1.0 |
+| meleeDuration | 5s |
+| passiveStrength | 1.0 |
+| passiveTickRate | 1.0 |
+
+### Global Attribute Settings
+| Setting | Default | Range |
+|---------|---------|-------|
+| globalCooldownMultiplier | 1.0 | 0.1-5.0 |
+| globalDamageMultiplier | 1.0 | 0.1-5.0 |
+| levelScalingPercent | 10% | 0-50% |
+| baseCooldown | 120s | 10-300s |
+
+### Presets
+| Preset | Effects | Cooldowns |
+|--------|---------|-----------|
+| Balanced | 1.0x | 1.0x |
+| High Power | 1.5x | 0.7x |
+| Low Power | 0.7x | 1.5x |
+| Chaos | Random 0.3-2.5x | Random 0.3-2.0x |
+| OP | 2.0x | 0.5x |
+
+---
+
+## 12. Combat Logger
+
+### Event Types
+| Type | Icon | Example Format |
+|------|------|----------------|
+| DAMAGE | §c⚔ | "[attacker] dealt [X] dmg to [victim]" |
+| ABILITY | §d✦ | "[player] used [ability] ([type]) on [target]" |
+| KILL | §4☠ | "[killer] killed [victim] with [weapon]" |
+| DEATH | §4☠ | "[victim] died ([cause])" |
+| HEALING | §a❤ | "[player] healed +[X]❤ from [healer]" |
+| COMBAT_TAG | §e⚔ | "[player] entered/left combat with [enemy]" |
+| BLOCKED | §b🛡 | "[player] blocked [X] damage" |
+| CRITICAL | §6⚡ | "[attacker] landed CRITICAL HIT on [victim]" |
+| ENVIRONMENTAL | §7☢ | "[victim] took [X] from [source]" |
+| MOB_DAMAGE | §c🐾 | "[mob] dealt [X] to [victim]" |
+
+### Settings
+| Setting | Default | Range |
+|---------|---------|-------|
+| enabled | true | boolean |
+| logToFile | true | boolean |
+| logToConsole | false | boolean |
+| showToPlayers | true | boolean |
+| compactMode | false | boolean |
+| showDamageNumbers | true | boolean |
+| showHealthBars | true | boolean |
+| logDamageEvents | true | boolean |
+| logAbilityEvents | true | boolean |
+| logKillEvents | true | boolean |
+| logHealingEvents | true | boolean |
+| logCombatTagEvents | true | boolean |
+| logCriticalHits | true | boolean |
+| logBlockedDamage | true | boolean |
+| logEnvironmentalDamage | false | boolean |
+| logMobDamage | false | boolean |
+| minimumDamageThreshold | 0.0 | 0.0-20.0 |
+| maxLogHistory | 100 | 10-1000 |
+| maxPlayerLogHistory | 50 | 10-500 |
+
+### File Output
+- Path: `plugins/OddsSMP/combat-logs/combat-[yyyy-MM-dd].log`
+- Format per line: `[HH:mm:ss] [message without color codes]`
+
+---
+
+## 13. Particle Effects
+
+### Support Particles (per attribute)
+| Attribute | Particles | Count |
+|-----------|-----------|-------|
+| MELEE | HAPPY_VILLAGER + CRIT + SWEEP_ATTACK | 50 |
+| HEALTH | HEART + GLOW | 50 |
+| DEFENSE | Blue dust + Shield sphere | 50 |
+| WEALTH | GLOW + END_ROD + ENCHANT | 100 |
+| SPEED | Yellow/White dust + CLOUD | 60 |
+| CONTROL | Purple dust + WITCH spiral | 50 |
+| RANGE | Orange dust + SWEEP_ATTACK | 50 |
+| TEMPO | ENCHANT + PORTAL | 50 |
+| VISION | GLOW + END_ROD | 50 |
+| TRANSFER | Aqua dust + DOLPHIN | 60 |
+| PRESSURE | ELECTRIC_SPARK + Red dust | 50 |
+| DISRUPTION | Red dust + LAVA | 50 |
+| RISK | FIREWORK + GLOW + Red/Yellow dust | 50 |
+| WITHER | Purple dust + SMOKE (2x count) | 150 |
+| WARDEN | Teal dust + SCULK_SOUL + SCULK_CHARGE | 100 |
+| BREEZE | Yellow/White dust + GUST | 80 |
+| DRAGON_EGG | DRAGON + FLAME spiral + LAVA + SOUL_FIRE_FLAME + EXPLOSION dome | 200+ |
+
+### Special Effect Methods
+- Crescent Arc, Impact Sparks, Blood Burst, Vampiric Tether
+- Heal Flash, Metallic Flash, Stone Crack, Gold Spiral
+- Disrupt Static, Lockdown Ring, Air Slice, Clock Particles
+- Speed Streak, Afterimage, Ground Crack, Red Fog
+- Fracture, EMP Burst, Dice, Dark Slash, Shadow Pull
+- Blue Shockwave, Sculk Spread, Wind Slash, Wind Circles
+- Dragon Slash, Aura Dome, Draconic Haze
+
+---
+
+## 14. Data Persistence
+
+### Storage File
+- Location: `plugins/OddsSMP/playerdata.yml`
+- Format: YAML (Bukkit YamlConfiguration)
+
+### Data Structure
+```yaml
+<UUID>:
+  attribute: <ENUM_NAME>    # e.g. "MELEE", "DRAGON_EGG"
+  level: <int>              # 1-5
+  kills: <int>              # 0+
+  deaths: <int>             # 0+
+```
+
+### Save Triggers
+- Plugin disable
+- Any data modification
+- Player quit
+
+### Load Triggers
+- Plugin enable (all data)
+- Player join (per player)
+
+### Validation
+- Invalid UUIDs: warned and skipped
+- Invalid attribute names: warned, player gets empty data
+- Missing fields: default to level=1, kills=0, deaths=0
+
+---
+
+## 15. Plugin Lifecycle
+
+### onEnable() Sequence
+1. Log: `"OddsSMP Plugin Enabled!"`
+2. Setup data file (create if not exists)
+3. Load all saved player data from playerdata.yml
+4. Initialize managers (in order):
+   - AttributeSettings, CombatLogger, ParticleManager
+   - AbilityManager, CommandHandler, EventListener
+   - AdminGUI, WeaponGUI, GUIListener
+5. Register `/smp` and `/admin` command handlers
+6. Register EventListener and GUIListener
+7. Register crafting recipes (Upgrader key: `upgrader`, Reroller key: `reroller`)
+8. Start passive ticker (BukkitRunnable, 20-tick period)
+9. Sync online players (create data, update tab display)
+10. Log: `"OddsSMP loaded with X attributes!"`
+
+### onDisable() Sequence
+1. Log: `"OddsSMP Plugin Disabled!"`
+2. Save all player data to playerdata.yml
+3. Save attribute settings config
+4. Shutdown combat logger
+5. Remove all active weapon altars (despawn entities, clear blocks)
+
+### Passive Ticker (every 20 ticks / 1 second)
+For each online player:
+1. `handlePassiveEffects(player)` - Apply attribute passives
+2. `updateActionBar(player)` - Show cooldown status
+
+### plugin.yml
+```yaml
+name: OddSMP
+version: 1.0.0
+main: com.oddssmp.OddsSMP
+api-version: '1.21'
+softdepend: [DecentHolograms]
+
+commands:
+  smp:
+    permission: oddsmp.player
+    default: true
+  admin:
+    permission: oddsmp.admin
+    default: op
+```
+
+---
+
+## Summary
 
 | Category | Count |
 |----------|-------|
-| Total Attributes | 17 |
-| Standard Attributes | 13 |
-| Boss Attributes | 4 |
-| Total Weapons | 17 |
-| Standard Weapons | 13 |
-| Boss Weapons | 4 |
-| Max Level | 5 |
-| Base Cooldowns | 120s - 300s |
-| Admin Commands | 15+ |
-| Player Commands | 8+ |
-| Config Options | 50+ |
+| Attributes | 17 (13 standard + 4 boss) |
+| Weapons | 17 (13 standard + 4 boss) |
+| Abilities | 51 (17 melee + 17 support + 17 passive) |
+| GUI Menus | 20+ (admin panel, settings, editor, per-attribute, etc.) |
+| Commands | 20+ subcommands across /smp and /admin |
+| Config Options | 70+ individual settings |
+| Particle Effects | 28 toggleable categories, 30+ special effect methods |
+| Combat Log Events | 10 types |
