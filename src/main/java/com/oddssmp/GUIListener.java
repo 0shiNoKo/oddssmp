@@ -34,7 +34,7 @@ public class GUIListener implements Listener {
                 !title.contains("Encyclopedia") && !title.contains("Editor") &&
                 !title.contains("Edit:") && !title.contains("Weapons") &&
                 !title.contains("Custom Items") && !title.contains("Combat Log") &&
-                !title.contains("Particle") &&
+                !title.contains("Particle") && !title.contains("Track") &&
                 !isAttributeDetailsGUI(title)) {
             return;
         }
@@ -116,6 +116,27 @@ public class GUIListener implements Listener {
         else if (title.equals("§6§lCustom Items")) {
             handleCustomItemsMenu(player, clicked, itemName);
         }
+        // Vision Player Tracking GUI
+        else if (title.equals("§3§lSelect Player to Track")) {
+            handleTrackingSelection(player, clicked);
+        }
+    }
+
+    private void handleTrackingSelection(Player player, ItemStack clicked) {
+        if (clicked.getType() != org.bukkit.Material.PLAYER_HEAD) return;
+
+        org.bukkit.inventory.meta.SkullMeta meta = (org.bukkit.inventory.meta.SkullMeta) clicked.getItemMeta();
+        if (meta == null || meta.getOwningPlayer() == null) return;
+
+        Player target = meta.getOwningPlayer().getPlayer();
+        if (target == null || !target.isOnline()) {
+            player.sendMessage("§cThat player is no longer online!");
+            player.closeInventory();
+            return;
+        }
+
+        player.closeInventory();
+        plugin.getAbilityManager().startTracking(player, target);
     }
 
     private void handleMainMenu(Player player, String itemName) {
