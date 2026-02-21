@@ -424,11 +424,8 @@ public class AbilityManager {
             }
 
             case VISION: {
-                // True Sight: Apply glowing to self, 5s +1s per level, max 10s
-                int visionDuration = Math.min(10, 5 + level);
-                casterFlags.trueSight = true;
-                caster.sendMessage("§aTrue Sight for " + visionDuration + "s!");
-                scheduleRemoveFlag(caster.getUniqueId(), () -> casterFlags.trueSight = false, visionDuration);
+                // True Sight: Open player tracking GUI
+                openTrackingGUI(caster, level);
                 break;
             }
 
@@ -1227,6 +1224,140 @@ public class AbilityManager {
     }
 
     /**
+     * Open the player tracking GUI for Vision support
+     */
+    private void openTrackingGUI(Player caster, int level) {
+        int trackingDuration = Math.min(10, 5 + level);
+        AbilityFlags flags = getAbilityFlags(caster.getUniqueId());
+        flags.trackingDuration = trackingDuration;
+
+        // Get all online players except the caster
+        List<Player> targets = new ArrayList<>();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!p.equals(caster)) {
+                targets.add(p);
+            }
+        }
+
+        if (targets.isEmpty()) {
+            caster.sendMessage("§cNo players to track!");
+            // Refund cooldown
+            PlayerData data = plugin.getPlayerData(caster.getUniqueId());
+            if (data != null) {
+                data.setCooldown("support", 0);
+            }
+            return;
+        }
+
+        // Create GUI
+        int size = Math.min(54, ((targets.size() / 9) + 1) * 9);
+        org.bukkit.inventory.Inventory gui = Bukkit.createInventory(null, size, "§3§lSelect Player to Track");
+
+        for (int i = 0; i < targets.size() && i < size; i++) {
+            Player target = targets.get(i);
+            org.bukkit.inventory.ItemStack skull = new org.bukkit.inventory.ItemStack(org.bukkit.Material.PLAYER_HEAD);
+            org.bukkit.inventory.meta.SkullMeta meta = (org.bukkit.inventory.meta.SkullMeta) skull.getItemMeta();
+            meta.setOwningPlayer(target);
+            meta.setDisplayName("§e" + target.getName());
+            List<String> lore = new ArrayList<>();
+            lore.add("§7Click to track for §e" + trackingDuration + "s");
+            lore.add("");
+            lore.add("§7World: §f" + target.getWorld().getName());
+            double distance = caster.getWorld().equals(target.getWorld()) ?
+                    caster.getLocation().distance(target.getLocation()) : -1;
+            if (distance >= 0) {
+                lore.add("§7Distance: §f" + String.format("%.1f", distance) + " blocks");
+            } else {
+                lore.add("§7Distance: §cDifferent world");
+            }
+            meta.setLore(lore);
+            skull.setItemMeta(meta);
+            gui.setItem(i, skull);
+        }
+
+        caster.openInventory(gui);
+    }
+
+    /**
+     * Start tracking a player
+     */
+    public void startTracking(Player tracker, Player target) {
+        AbilityFlags flags = getAbilityFlags(tracker.getUniqueId());
+        int duration = flags.trackingDuration;
+        if (duration <= 0) duration = 5;
+
+        flags.trackingTarget = target.getUniqueId();
+        tracker.sendMessage("§aNow tracking §e" + target.getName() + " §afor §e" + duration + "s§a!");
+
+        // Apply glowing to target (only visible to tracker)
+        // Since Bukkit doesn't support per-player glowing easily, we'll use action bar updates
+        new BukkitRunnable() {
+            int ticks = duration * 20;
+
+            @Override
+            public void run() {
+                if (ticks <= 0 || !tracker.isOnline()) {
+                    flags.trackingTarget = null;
+                    if (tracker.isOnline()) {
+                        tracker.sendMessage("§7Tracking ended.");
+                    }
+                    this.cancel();
+                    return;
+                }
+
+                Player trackedPlayer = Bukkit.getPlayer(flags.trackingTarget);
+                if (trackedPlayer == null || !trackedPlayer.isOnline()) {
+                    flags.trackingTarget = null;
+                    tracker.sendMessage("§cTarget went offline. Tracking ended.");
+                    this.cancel();
+                    return;
+                }
+
+                // Send tracking info via action bar
+                if (tracker.getWorld().equals(trackedPlayer.getWorld())) {
+                    double distance = tracker.getLocation().distance(trackedPlayer.getLocation());
+                    String direction = getDirectionTo(tracker, trackedPlayer);
+                    tracker.sendActionBar(net.kyori.adventure.text.Component.text(
+                            "§3§lTRACKING §e" + trackedPlayer.getName() + " §7| §f" +
+                            String.format("%.1f", distance) + " blocks §7" + direction));
+
+                    // Apply glowing effect to target
+                    trackedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 25, 0, false, false));
+                } else {
+                    tracker.sendActionBar(net.kyori.adventure.text.Component.text(
+                            "§3§lTRACKING §e" + trackedPlayer.getName() + " §7| §cDifferent world"));
+                }
+
+                ticks -= 20;
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
+    }
+
+    /**
+     * Get compass direction from one player to another
+     */
+    private String getDirectionTo(Player from, Player to) {
+        org.bukkit.Location fromLoc = from.getLocation();
+        org.bukkit.Location toLoc = to.getLocation();
+
+        double dx = toLoc.getX() - fromLoc.getX();
+        double dz = toLoc.getZ() - fromLoc.getZ();
+
+        double angle = Math.toDegrees(Math.atan2(-dx, dz));
+        if (angle < 0) angle += 360;
+
+        if (angle >= 337.5 || angle < 22.5) return "§f⬆ N";
+        if (angle >= 22.5 && angle < 67.5) return "§f⬈ NE";
+        if (angle >= 67.5 && angle < 112.5) return "§f➡ E";
+        if (angle >= 112.5 && angle < 157.5) return "§f⬊ SE";
+        if (angle >= 157.5 && angle < 202.5) return "§f⬇ S";
+        if (angle >= 202.5 && angle < 247.5) return "§f⬋ SW";
+        if (angle >= 247.5 && angle < 292.5) return "§f⬅ W";
+        if (angle >= 292.5 && angle < 337.5) return "§f⬉ NW";
+        return "";
+    }
+
+    /**
      * Flags to track ability states
      */
     public static class AbilityFlags {
@@ -1265,6 +1396,8 @@ public class AbilityManager {
 
         // Vision
         public boolean trueSight = false;
+        public UUID trackingTarget = null;
+        public int trackingDuration = 0;
 
         // Transfer
         public boolean redirectionActive = false;
