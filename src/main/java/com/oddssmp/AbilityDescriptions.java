@@ -159,7 +159,7 @@ public class AbilityDescriptions {
                 return new String[]{
                         "§a§lSupport: §7Overdrive",
                         "§7Gain §eHaste V",
-                        "§7Duration: §e5s §7+1s/level",
+                        "§7Duration: §e15s",
                         "§7Cooldown: §e120s"
                 };
             case "TEMPO_PASSIVE":

@@ -624,6 +624,21 @@ public class EventListener implements Listener {
 
         AbilityManager.AbilityFlags attackerFlags = plugin.getAbilityManager().getAbilityFlags(attacker.getUniqueId());
 
+        // Prevent attacking while stunned
+        if (attackerFlags.stunned) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Attribute weapons deal no damage if wielder doesn't have the matching attribute
+        ItemStack heldItem = attacker.getInventory().getItemInMainHand();
+        AttributeWeapon heldWeapon = AttributeWeapon.getFromItem(heldItem);
+        if (heldWeapon != null && heldWeapon.getRequiredAttribute() != attackerData.getAttribute()) {
+            event.setDamage(0);
+            attacker.sendMessage("§cYou cannot use this weapon! It requires the §e" + heldWeapon.getRequiredAttribute().getDisplayName() + " §cattribute.");
+            return;
+        }
+
         // Update last hit time
         attackerData.setLastHitTime(System.currentTimeMillis());
 
@@ -1223,6 +1238,12 @@ public class EventListener implements Listener {
         if (data == null || data.getAttribute() == null) return;
 
         AbilityManager.AbilityFlags flags = plugin.getAbilityManager().getAbilityFlags(player.getUniqueId());
+
+        // TEMPO MELEE: Stun - prevent all movement and looking
+        if (flags.stunned) {
+            event.setCancelled(true);
+            return;
+        }
 
         // RANGE MELEE: cannotApproach - prevent moving closer to attacker
         if (flags.cannotApproach != null && System.currentTimeMillis() < flags.cannotApproachUntil) {
