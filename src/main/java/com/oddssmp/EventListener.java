@@ -40,6 +40,7 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
 public class EventListener implements Listener {
@@ -1134,7 +1135,7 @@ public class EventListener implements Listener {
     }
 
     /**
-     * Handle normal Warden death - drop Warden's Heart
+     * Handle normal Warden death - drop Warden Brain + Warden's Heart
      */
     @EventHandler
     public void onWardenDeath(EntityDeathEvent event) {
@@ -1144,29 +1145,85 @@ public class EventListener implements Listener {
         String customName = event.getEntity().getCustomName();
         if (customName != null && customName.contains("ASCENDED WARDEN")) return;
 
-        // Normal Warden drops a Warden's Heart
         Location loc = event.getEntity().getLocation();
+
+        // Warden Brain - gives Warden attribute
+        ItemStack wardenBrain = new ItemStack(Material.SCULK_CATALYST);
+        ItemMeta meta = wardenBrain.getItemMeta();
+        meta.setDisplayName("§3§lWarden Brain");
+        java.util.List<String> lore = new java.util.ArrayList<>();
+        lore.add("§7A brain pulsing with sculk energy");
+        lore.add("§7Grants the §3Warden §7attribute");
+        lore.add("");
+        lore.add("§c§lCANNOT BE DROPPED OR STORED");
+        meta.setLore(lore);
+        wardenBrain.setItemMeta(meta);
+        loc.getWorld().dropItemNaturally(loc, wardenBrain);
+
+        // Warden's Heart - for crafting
         loc.getWorld().dropItemNaturally(loc, WeaponAltar.createWardensHeart());
 
         Bukkit.broadcastMessage("");
         Bukkit.broadcastMessage("§3§lThe Warden has been slain!");
-        Bukkit.broadcastMessage("§7A §2§lWarden's Heart §7has dropped!");
+        Bukkit.broadcastMessage("§7A §3§lWarden Brain §7and §2§lWarden's Heart §7have dropped!");
         Bukkit.broadcastMessage("");
     }
 
     /**
-     * Handle Ender Dragon death - spawn exit portal and egg
+     * Handle normal Wither death - drop Wither Bone
+     */
+    @EventHandler
+    public void onWitherDeath(EntityDeathEvent event) {
+        if (event.getEntity().getType() != EntityType.WITHER) return;
+
+        // Skip Ascended Wither (has custom name) - it has its own drop handler
+        String customName = event.getEntity().getCustomName();
+        if (customName != null && customName.contains("ASCENDED WITHER")) return;
+
+        Location loc = event.getEntity().getLocation();
+
+        // Wither Bone - gives Wither attribute
+        ItemStack witherBone = new ItemStack(Material.BONE);
+        ItemMeta meta = witherBone.getItemMeta();
+        meta.setDisplayName("§5§lWither Bone");
+        java.util.List<String> lore = new java.util.ArrayList<>();
+        lore.add("§7A bone infused with wither essence");
+        lore.add("§7Grants the §5Wither §7attribute");
+        lore.add("");
+        lore.add("§c§lCANNOT BE DROPPED OR STORED");
+        meta.setLore(lore);
+        witherBone.setItemMeta(meta);
+        loc.getWorld().dropItemNaturally(loc, witherBone);
+
+        Bukkit.broadcastMessage("");
+        Bukkit.broadcastMessage("§5§lThe Wither has been slain!");
+        Bukkit.broadcastMessage("§7A §5§lWither Bone §7has dropped!");
+        Bukkit.broadcastMessage("");
+    }
+
+    /**
+     * Handle Ender Dragon death - spawn exit portal and drop Dragon Egg item
      */
     @EventHandler
     public void onDragonDeath(EntityDeathEvent event) {
         if (!(event.getEntity() instanceof EnderDragon)) return;
 
+        // Skip Ascended Ender Dragon (has custom name) - it has its own drop handler
+        String customName = event.getEntity().getCustomName();
+        if (customName != null && customName.contains("ASCENDED ENDER DRAGON")) return;
+
         World world = event.getEntity().getWorld();
         if (world.getEnvironment() != World.Environment.THE_END) return;
+
+        Location loc = event.getEntity().getLocation();
 
         // Generate the exit portal structure after short delay
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             generateEndExitPortal(world);
+
+            // Drop Dragon Egg as an item at portal location
+            Location eggLoc = new Location(world, 0, 71, 0);
+            world.dropItemNaturally(eggLoc, new ItemStack(Material.DRAGON_EGG));
 
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
