@@ -1942,4 +1942,233 @@ public class AdminGUI {
         skull.setItemMeta(meta);
         return skull;
     }
+
+    // ========== ALTAR SETTINGS GUI ==========
+
+    /**
+     * Open the main altar settings GUI
+     */
+    public void openAltarSettingsGUI(Player admin, WeaponAltar currentAltar) {
+        Inventory gui = Bukkit.createInventory(null, 54, "§3§lAltar Settings");
+
+        // Row 1: Current altar info (slots 0-8)
+        if (currentAltar != null) {
+            ItemStack currentInfo = createItem(Material.BEACON, "§e§lCurrent Altar",
+                    "§7" + currentAltar.getWeapon().getColor() + currentAltar.getWeapon().getName(),
+                    "§7Location: §f" + currentAltar.getLocation().getBlockX() + ", " +
+                            currentAltar.getLocation().getBlockY() + ", " + currentAltar.getLocation().getBlockZ(),
+                    "",
+                    "§aClick to edit this altar's settings");
+            gui.setItem(4, currentInfo);
+        }
+
+        // Row 2: Per-altar settings (if currentAltar exists)
+        if (currentAltar != null) {
+            gui.setItem(9, createAltarSettingItem(Material.BRICKS, "§b§lBase Block",
+                    "§7Current: §f" + formatMat(currentAltar.getBaseBlock()),
+                    "§eLeft-click §7to cycle blocks",
+                    "§eRight-click §7to reset to default"));
+
+            gui.setItem(10, createAltarSettingItem(Material.ARMOR_STAND, "§b§lWeapon Size",
+                    "§7Current: §f" + currentAltar.getWeaponScale() + "x",
+                    "§eLeft-click §7to increase (+0.25)",
+                    "§eRight-click §7to decrease (-0.25)"));
+
+            gui.setItem(11, createAltarSettingItem(Material.COMPASS, "§b§lRotation Speed",
+                    "§7Current: §f" + String.format("%.2f", currentAltar.getRotationSpeed()),
+                    "§eLeft-click §7to increase (+0.01)",
+                    "§eRight-click §7to decrease (-0.01)"));
+
+            gui.setItem(12, createAltarSettingItem(Material.BLAZE_POWDER, "§b§lParticle Type",
+                    "§7Current: §f" + currentAltar.getParticleType().name(),
+                    "§eLeft-click §7to cycle particles"));
+
+            gui.setItem(13, createAltarSettingItem(Material.REDSTONE, "§b§lParticle Count",
+                    "§7Current: §f" + currentAltar.getParticleCount(),
+                    "§eLeft-click §7to increase (+5)",
+                    "§eRight-click §7to decrease (-5)"));
+
+            gui.setItem(14, createToggleItem(Material.TORCH, "§b§lParticles",
+                    currentAltar.isParticlesEnabled()));
+
+            gui.setItem(15, createToggleItem(Material.CLOCK, "§b§lRotation",
+                    currentAltar.isRotationEnabled()));
+
+            gui.setItem(17, createItem(Material.RED_CONCRETE, "§c§lDelete This Altar",
+                    "§7Click to remove this altar"));
+        } else {
+            gui.setItem(13, createItem(Material.BARRIER, "§7§lNo Altar Selected",
+                    "§7Shift+right-click an altar", "§7to edit its settings"));
+        }
+
+        // Row 3: Separator
+        ItemStack separator = createItem(Material.BLACK_STAINED_GLASS_PANE, "§r");
+        for (int i = 18; i <= 26; i++) gui.setItem(i, separator);
+
+        // Row 4: Global settings (slots 27-35)
+        gui.setItem(27, createAltarSettingItem(Material.BRICKS, "§6§lGlobal Base Block",
+                "§7Current: §f" + formatMat(WeaponAltar.getGlobalBaseBlock()),
+                "§eLeft-click §7to cycle blocks",
+                "§eRight-click §7to reset"));
+
+        gui.setItem(28, createAltarSettingItem(Material.ARMOR_STAND, "§6§lGlobal Weapon Size",
+                "§7Current: §f" + WeaponAltar.getGlobalWeaponScale() + "x",
+                "§eLeft-click §7to increase (+0.25)",
+                "§eRight-click §7to decrease (-0.25)"));
+
+        gui.setItem(29, createAltarSettingItem(Material.COMPASS, "§6§lGlobal Rotation Speed",
+                "§7Current: §f" + String.format("%.2f", WeaponAltar.getGlobalRotationSpeed()),
+                "§eLeft-click §7to increase (+0.01)",
+                "§eRight-click §7to decrease (-0.01)"));
+
+        gui.setItem(30, createAltarSettingItem(Material.BLAZE_POWDER, "§6§lGlobal Particle Type",
+                "§7Current: §f" + WeaponAltar.getGlobalParticleType().name(),
+                "§eLeft-click §7to cycle particles"));
+
+        gui.setItem(31, createAltarSettingItem(Material.REDSTONE, "§6§lGlobal Particle Count",
+                "§7Current: §f" + WeaponAltar.getGlobalParticleCount(),
+                "§eLeft-click §7to increase (+5)",
+                "§eRight-click §7to decrease (-5)"));
+
+        gui.setItem(32, createToggleItem(Material.TORCH, "§6§lGlobal Particles",
+                WeaponAltar.isGlobalParticlesEnabled()));
+
+        gui.setItem(33, createToggleItem(Material.CLOCK, "§6§lGlobal Rotation",
+                WeaponAltar.isGlobalRotationEnabled()));
+
+        gui.setItem(35, createItem(Material.LIME_CONCRETE, "§a§lApply Global to All",
+                "§7Apply global settings to", "§7all active altars and respawn"));
+
+        // Row 5: Separator
+        for (int i = 36; i <= 44; i++) gui.setItem(i, separator);
+
+        // Row 6: Altar list + global actions (slots 45-53)
+        gui.setItem(45, createItem(Material.BOOK, "§e§lList All Altars",
+                "§7View all " + plugin.getActiveAltars().size() + " active altar(s)",
+                "§eClick to open altar list"));
+
+        gui.setItem(47, createItem(Material.ENDER_PEARL, "§d§lTeleport to Altar",
+                "§7Teleport to the current altar",
+                currentAltar != null ? "§7→ " + currentAltar.getWeapon().getName() : "§cNo altar selected"));
+
+        gui.setItem(49, createItem(Material.EXPERIENCE_BOTTLE, "§a§lRespawn Current Altar",
+                "§7Rebuild the current altar",
+                "§7with updated settings"));
+
+        gui.setItem(51, createItem(Material.TNT, "§c§lDelete ALL Altars",
+                "§7§lWARNING: §7Removes every altar!",
+                "§eShift-click §7to confirm"));
+
+        gui.setItem(53, createItem(Material.ARROW, "§7§lClose", "§7Close this menu"));
+
+        admin.openInventory(gui);
+    }
+
+    /**
+     * Open the altar list GUI
+     */
+    public void openAltarListGUI(Player admin) {
+        List<WeaponAltar> altars = plugin.getActiveAltars();
+        int size = Math.min(54, Math.max(9, ((altars.size() / 9) + 1) * 9));
+        Inventory gui = Bukkit.createInventory(null, size, "§3§lAll Altars");
+
+        for (int i = 0; i < altars.size() && i < size - 1; i++) {
+            WeaponAltar altar = altars.get(i);
+            org.bukkit.Location loc = altar.getLocation();
+            ItemStack item = new ItemStack(altar.getWeapon().getMaterial());
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(altar.getWeapon().getColor() + "§l" + altar.getWeapon().getName());
+            List<String> lore = new ArrayList<>();
+            lore.add("§7Location: §f" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
+            lore.add("§7World: §f" + loc.getWorld().getName());
+            lore.add("§7Base: §f" + formatMat(altar.getBaseBlock()));
+            lore.add("§7Scale: §f" + altar.getWeaponScale() + "x");
+            lore.add("§7Particles: " + (altar.isParticlesEnabled() ? "§aON" : "§cOFF"));
+            lore.add("§7Rotation: " + (altar.isRotationEnabled() ? "§aON" : "§cOFF"));
+            lore.add("");
+            lore.add("§eLeft-click §7to edit settings");
+            lore.add("§eRight-click §7to teleport");
+            lore.add("§eShift-click §7to delete");
+            meta.setLore(lore);
+            item.setItemMeta(meta);
+            gui.setItem(i, item);
+        }
+
+        // Back button in last slot
+        gui.setItem(size - 1, createItem(Material.ARROW, "§7§lBack", "§7Return to altar settings"));
+
+        admin.openInventory(gui);
+    }
+
+    // Altar GUI helper methods
+
+    private static final Material[] BASE_BLOCKS = {
+            Material.ANCIENT_DEBRIS, Material.OBSIDIAN, Material.CRYING_OBSIDIAN,
+            Material.DEEPSLATE_BRICKS, Material.POLISHED_DEEPSLATE, Material.CHISELED_DEEPSLATE,
+            Material.BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS, Material.GILDED_BLACKSTONE,
+            Material.END_STONE_BRICKS, Material.PURPUR_BLOCK, Material.PRISMARINE_BRICKS,
+            Material.DIAMOND_BLOCK, Material.EMERALD_BLOCK, Material.GOLD_BLOCK,
+            Material.NETHERITE_BLOCK, Material.AMETHYST_BLOCK, Material.COPPER_BLOCK,
+            Material.SCULK, Material.REINFORCED_DEEPSLATE
+    };
+
+    private static final org.bukkit.Particle[] PARTICLE_TYPES = {
+            org.bukkit.Particle.ENCHANT, org.bukkit.Particle.FLAME,
+            org.bukkit.Particle.SOUL_FIRE_FLAME, org.bukkit.Particle.END_ROD,
+            org.bukkit.Particle.PORTAL, org.bukkit.Particle.WITCH,
+            org.bukkit.Particle.TOTEM_OF_UNDYING, org.bukkit.Particle.HEART,
+            org.bukkit.Particle.CHERRY_LEAVES, org.bukkit.Particle.WAX_ON,
+            org.bukkit.Particle.COMPOSTER, org.bukkit.Particle.GLOW
+    };
+
+    public static Material cycleBaseBlock(Material current) {
+        for (int i = 0; i < BASE_BLOCKS.length; i++) {
+            if (BASE_BLOCKS[i] == current) {
+                return BASE_BLOCKS[(i + 1) % BASE_BLOCKS.length];
+            }
+        }
+        return BASE_BLOCKS[0];
+    }
+
+    public static org.bukkit.Particle cycleParticle(org.bukkit.Particle current) {
+        for (int i = 0; i < PARTICLE_TYPES.length; i++) {
+            if (PARTICLE_TYPES[i] == current) {
+                return PARTICLE_TYPES[(i + 1) % PARTICLE_TYPES.length];
+            }
+        }
+        return PARTICLE_TYPES[0];
+    }
+
+    private ItemStack createAltarSettingItem(Material material, String name, String... lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(name);
+        List<String> loreList = new ArrayList<>(Arrays.asList(lore));
+        meta.setLore(loreList);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack createToggleItem(Material material, String name, boolean enabled) {
+        ItemStack item = new ItemStack(enabled ? Material.LIME_DYE : Material.GRAY_DYE);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(name + (enabled ? " §a§lON" : " §c§lOFF"));
+        List<String> lore = new ArrayList<>();
+        lore.add("§eClick to toggle");
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private static String formatMat(Material material) {
+        String name = material.name().replace("_", " ");
+        StringBuilder result = new StringBuilder();
+        for (String word : name.toLowerCase().split(" ")) {
+            if (!word.isEmpty()) {
+                result.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1)).append(" ");
+            }
+        }
+        return result.toString().trim();
+    }
 }

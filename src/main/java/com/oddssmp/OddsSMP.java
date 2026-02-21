@@ -554,6 +554,10 @@ public class OddsSMP extends JavaPlugin {
         return adminGUI;
     }
 
+    public GUIListener getGUIListener() {
+        return guiListener;
+    }
+
     /**
      * Get weapon GUI
      */
