@@ -270,6 +270,49 @@ public class WeaponAltar {
     }
 
     /**
+     * Get missing materials for a player
+     */
+    public List<String> getMissingMaterials(Player player) {
+        List<String> missing = new ArrayList<>();
+        Map<Material, Integer> costs = CRAFTING_COSTS.get(weapon);
+
+        if (costs != null) {
+            for (Map.Entry<Material, Integer> entry : costs.entrySet()) {
+                int has = countMaterial(player, entry.getKey());
+                int need = entry.getValue();
+                if (has < need) {
+                    missing.add("§c" + (need - has) + "x " + formatMaterial(entry.getKey()) + " §7(have " + has + "/" + need + ")");
+                }
+            }
+        }
+
+        List<String> customItems = CUSTOM_ITEMS.get(weapon);
+        if (customItems != null) {
+            for (String customItem : customItems) {
+                if (!hasCustomItem(player, customItem)) {
+                    missing.add("§c" + ChatColor.stripColor(customItem));
+                }
+            }
+        }
+
+        return missing;
+    }
+
+    private int countMaterial(Player player, Material material) {
+        int count = 0;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == material) {
+                count += item.getAmount();
+            }
+        }
+        return count;
+    }
+
+    private String formatMaterial(Material material) {
+        return material.name().toLowerCase().replace("_", " ");
+    }
+
+    /**
      * Check if player has a custom item
      */
     private boolean hasCustomItem(Player player, String customItemName) {

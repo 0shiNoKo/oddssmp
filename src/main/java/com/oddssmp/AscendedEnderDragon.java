@@ -830,10 +830,11 @@ public class AscendedEnderDragon implements Listener {
 
         loc.getWorld().dropItemNaturally(loc, core);
 
-        // Chance for Dragon Egg attribute unlock
-        if (Math.random() < 0.10) { // 10% chance
-            loc.getWorld().dropItemNaturally(loc, new ItemStack(Material.DRAGON_EGG));
-        }
+        // Dragon Heart - for crafting Dominion Blade
+        loc.getWorld().dropItemNaturally(loc, WeaponAltar.createDragonHeart());
+
+        // Dragon Egg - grants Dragon Egg attribute
+        loc.getWorld().dropItemNaturally(loc, new ItemStack(Material.DRAGON_EGG));
     }
 
     /**

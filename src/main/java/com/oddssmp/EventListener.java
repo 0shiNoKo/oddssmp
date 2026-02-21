@@ -405,8 +405,11 @@ public class EventListener implements Listener {
                     if (altar.hasRequiredMaterials(player)) {
                         altar.craftWeapon(player);
                     } else {
-                        player.sendMessage("§cYou don't have the required materials!");
-                        player.sendMessage("§7Hold SHIFT and right-click to see requirements.");
+                        player.sendMessage("§cYou're missing materials:");
+                        for (String missing : altar.getMissingMaterials(player)) {
+                            player.sendMessage("  " + missing);
+                        }
+                        player.sendMessage("§7Hold SHIFT and right-click to see full requirements.");
                     }
                 }
                 return;
@@ -1221,12 +1224,14 @@ public class EventListener implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             generateEndExitPortal(world);
 
-            // Drop Dragon Egg as an item at portal location
+            // Drop Dragon Egg (attribute) and Dragon Heart (crafting) at portal location
             Location eggLoc = new Location(world, 0, 71, 0);
             world.dropItemNaturally(eggLoc, new ItemStack(Material.DRAGON_EGG));
+            world.dropItemNaturally(eggLoc, WeaponAltar.createDragonHeart());
 
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage("§5§l⚠ §d§lTHE DRAGON EGG HAS APPEARED §5§l⚠");
+            Bukkit.broadcastMessage("§7A §5§lDragon Heart §7has also dropped!");
             Bukkit.broadcastMessage("");
         }, 20L);
     }
