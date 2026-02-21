@@ -7,6 +7,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
@@ -1133,6 +1134,27 @@ public class EventListener implements Listener {
     }
 
     /**
+     * Handle normal Warden death - drop Warden's Heart
+     */
+    @EventHandler
+    public void onWardenDeath(EntityDeathEvent event) {
+        if (event.getEntity().getType() != EntityType.WARDEN) return;
+
+        // Skip Ascended Warden (has custom name) - it has its own drop handler
+        String customName = event.getEntity().getCustomName();
+        if (customName != null && customName.contains("ASCENDED WARDEN")) return;
+
+        // Normal Warden drops a Warden's Heart
+        Location loc = event.getEntity().getLocation();
+        loc.getWorld().dropItemNaturally(loc, WeaponAltar.createWardensHeart());
+
+        Bukkit.broadcastMessage("");
+        Bukkit.broadcastMessage("§3§lThe Warden has been slain!");
+        Bukkit.broadcastMessage("§7A §2§lWarden's Heart §7has dropped!");
+        Bukkit.broadcastMessage("");
+    }
+
+    /**
      * Handle Ender Dragon death - spawn exit portal and egg
      */
     @EventHandler
@@ -1563,7 +1585,7 @@ public class EventListener implements Listener {
      * Check if item is Wither Bone
      */
     private boolean isWitherBone(ItemStack item) {
-        if (item == null || item.getType() != Material.COAL_BLOCK) return false;
+        if (item == null || item.getType() != Material.BONE) return false;
         if (!item.hasItemMeta()) return false;
         String name = item.getItemMeta().getDisplayName();
         return name != null && name.contains("Wither Bone");
