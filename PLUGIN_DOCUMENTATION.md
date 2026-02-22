@@ -102,15 +102,15 @@
 #### TEMPO (⏱)
 | Ability | Type | Details |
 |---------|------|---------|
-| Tempo Strike | Melee | Stun target (Slowness 255 + Blindness + Mining Fatigue 255) for 5s (+1s/level). **CD: 120s** |
-| Overdrive | Support | Haste V for 5s (+1s/level). **CD: 120s** |
+| Tempo Strike | Melee | Stun target (Slowness 255 + Blindness + Mining Fatigue 255 + movement blocked + attacks blocked) for 5s (+1s/level). **CD: 120s** |
+| Overdrive | Support | Haste V for **15s** (flat, does not scale with level). **CD: 120s** |
 | Momentum | Passive | Permanent Speed I. |
 
 #### VISION (👁)
 | Ability | Type | Details |
 |---------|------|---------|
 | Target Mark | Melee | Apply Glowing for 300s (+30s/level, max 450s = 7.5m). **CD: 120s** |
-| True Sight | Support | Glowing effect for 5s (+1s/level, max 10s). **CD: 120s** |
+| True Sight | Support | Opens **Player Tracking GUI** to select a target. Tracks for 5s (+1s/level, max 10s). Shows action bar with distance, compass direction (N/NE/E/SE/S/SW/W/NW), and applies Glowing to target. **CD: 120s** |
 | Awareness | Passive | Players within 12 blocks glow (visible only to you). |
 
 #### TRANSFER (🔁)
@@ -362,6 +362,33 @@ Layer Y+2: CHISELED_DEEPSLATE (center) + 4x CHAIN (corners)
 - Shift+right-click shows requirements list
 - Regular right-click attempts to craft
 
+### Configurable Altar Settings
+
+**Per-Altar Settings:**
+| Setting | Default | Description |
+|---------|---------|-------------|
+| baseBlock | ANCIENT_DEBRIS | Material for the center support block |
+| weaponScale | 1.75 | Display entity scale on all axes |
+| rotationSpeed | 0.05 | Radians per tick for Y-axis rotation |
+| particleType | ENCHANT | Ambient particle effect type |
+| particleCount | 10 | Particles per ambient burst |
+| particlesEnabled | true | Toggle ambient particles |
+| rotationEnabled | true | Toggle weapon rotation |
+
+**Global Settings (static, shared across altars):**
+- Same settings as per-altar but applied globally
+- `applyGlobalSettings()` syncs global values to a specific altar
+
+### Creative Mode Interactions
+- **Stick + Right-click:** Removes the altar instantly
+- **Shift + Right-click:** Opens the Altar Settings GUI for that altar
+- Regular players: shift-right-click shows requirements, right-click crafts
+
+### Weapon Attribute-Locking
+- Weapons require the wielder to have the matching attribute
+- If a player holds an attribute weapon without the correct attribute, the weapon deals **0 damage**
+- Message: `§cYou cannot use this weapon! It requires the §e[Attribute] §cattribute.`
+
 ---
 
 ## 5. Boss Items & Mechanics
@@ -370,7 +397,7 @@ Layer Y+2: CHISELED_DEEPSLATE (center) + 4x CHAIN (corners)
 | Item | Material | Display Name | Grants Attribute |
 |------|----------|-------------|------------------|
 | Dragon Egg | DRAGON_EGG | (vanilla) | DRAGON_EGG |
-| Wither Bone | COAL_BLOCK | §5§lWither Bone | WITHER |
+| Wither Bone | BONE | §5§lWither Bone | WITHER |
 | Warden Brain | SCULK_CATALYST | §3§lWarden Brain | WARDEN |
 | Breeze Heart | WIND_CHARGE | §b§lBreeze Heart | BREEZE |
 
@@ -387,6 +414,26 @@ Layer Y+2: CHISELED_DEEPSLATE (center) + 4x CHAIN (corners)
 - **Auto-grant on pickup** (EntityPickupItemEvent)
 - **Auto-grant on login** (PlayerJoinEvent checks inventory)
 - **Dropped on death** (boss items appear in death drops, attribute removed)
+
+### Normal Boss Death Drops
+
+**Normal Warden:**
+- 1x Warden Brain (SCULK_CATALYST, grants WARDEN attribute)
+- 1x Warden's Heart (crafting material for Deepcore Maul)
+- Kill broadcast to all players
+- Skipped if warden has custom name (Ascended variant)
+
+**Normal Wither:**
+- 1x Wither Bone (BONE, grants WITHER attribute)
+- Kill broadcast to all players
+- Skipped if wither has custom name (Ascended variant)
+
+**Normal Ender Dragon:**
+- 1x Dragon Egg (grants DRAGON_EGG attribute)
+- 1x Dragon Heart (crafting material for Dominion Blade)
+- Generates END exit portal at (0, 0)
+- Kill broadcast to all players
+- Skipped if dragon has custom name (Ascended variant)
 
 ### Death Broadcast Format
 ```
@@ -570,6 +617,8 @@ Shows cooldown as green checkmark (ready) or red countdown (on cooldown).
 | `autoassign` | `<on\|off> [delay_seconds]` | No | Toggle auto-assign on join |
 | `assignall` | - | No | Assign to all players without attributes |
 | `debugdragon` | - | Yes | Apply Dragon Egg effects for testing |
+| `removealtars` / `clearaltars` | - | No | Remove all active weapon altars |
+| `listaltars` / `altars` | - | No | List all active altars with coordinates |
 
 ### Tab Completion
 - `/smp` first arg: `info`, `support`, `melee` (+ admin commands if op)
@@ -680,6 +729,43 @@ Shows cooldown as green checkmark (ready) or red countdown (on cooldown).
 - Row 1: Weapon Handle, Warden's Heart, Wither Bone, Breeze Heart, Dragon Heart, Upgrader, Reroller
 - Rows 2-5: All 17 attribute weapons
 - Click to receive any item
+
+### Altar Settings GUI (Creative Mode Shift+Right-click)
+**Title:** `§6§lAltar Settings: [WeaponName]` | **Size:** 54 slots
+
+| Slot | Item | Action |
+|------|------|--------|
+| 4 | Per-altar info head | Shows current altar's weapon name |
+| 10 | Base block item | Left/Right click cycles through: ANCIENT_DEBRIS, OBSIDIAN, CRYING_OBSIDIAN, DEEPSLATE, BLACKSTONE, GILDED_BLACKSTONE, NETHERITE_BLOCK |
+| 12 | SPYGLASS | Left/Right click adjusts weapon scale (0.25-5.0, step 0.25) |
+| 14 | CLOCK | Left/Right click adjusts rotation speed (0.01-0.2, step 0.01) |
+| 16 | BLAZE_POWDER | Left/Right click cycles particle type: ENCHANT, END_ROD, FLAME, SOUL_FIRE_FLAME, PORTAL, WITCH, GLOW |
+| 19 | REDSTONE | Left/Right click adjusts particle count (1-50, step 1) |
+| 21 | Particle toggle | Click toggles particles on/off |
+| 23 | Rotation toggle | Click toggles rotation on/off |
+| 28 | GOLDEN_APPLE | Apply global settings to this altar |
+| 37 | COMPASS | Teleport to this altar |
+| 39 | TOTEM_OF_UNDYING | Respawn (rebuild) this altar |
+| 41 | BARRIER | Delete this altar |
+| 45 | BOOK | Open global settings (same layout, edits static defaults) |
+| 49 | CHEST | Open List All Altars GUI |
+
+### Altar List GUI
+**Title:** `§6§lAll Weapon Altars` | **Size:** 54 slots
+- Each altar shown as its weapon's material item
+- Lore: weapon name, coordinates (X, Y, Z), world
+- **Left-click:** Open that altar's settings GUI
+- **Right-click:** Teleport to that altar
+- **Shift-click:** Delete that altar
+- Slot 49: Back button to return to previous altar's settings
+
+### Vision Player Tracking GUI
+**Title:** `§b§lTrack Player` | **Size:** 54 slots
+- Shows all online players (except caster) as player heads
+- Lore: player name, world, distance in blocks
+- Click a head to begin tracking that player
+- During tracking: action bar shows `§bTracking: §e[Name] §7| §fDistance: §a[X] blocks §7| §fDirection: §e[N/NE/E/etc]`
+- Tracking applies Glowing effect to target for the duration
 
 ### GUI Material Icons per Attribute
 | Attribute | Material |
@@ -852,35 +938,87 @@ Shows cooldown as green checkmark (ready) or red countdown (on cooldown).
 
 ## 13. Particle Effects
 
-### Support Particles (per attribute)
-| Attribute | Particles | Count |
-|-----------|-----------|-------|
-| MELEE | HAPPY_VILLAGER + CRIT + SWEEP_ATTACK | 50 |
-| HEALTH | HEART + GLOW | 50 |
-| DEFENSE | Blue dust + Shield sphere | 50 |
-| WEALTH | GLOW + END_ROD + ENCHANT | 100 |
-| SPEED | Yellow/White dust + CLOUD | 60 |
-| CONTROL | Purple dust + WITCH spiral | 50 |
-| RANGE | Orange dust + SWEEP_ATTACK | 50 |
-| TEMPO | ENCHANT + PORTAL | 50 |
-| VISION | GLOW + END_ROD | 50 |
-| TRANSFER | Aqua dust + DOLPHIN | 60 |
-| PRESSURE | ELECTRIC_SPARK + Red dust | 50 |
-| DISRUPTION | Red dust + LAVA | 50 |
-| RISK | FIREWORK + GLOW + Red/Yellow dust | 50 |
-| WITHER | Purple dust + SMOKE (2x count) | 150 |
-| WARDEN | Teal dust + SCULK_SOUL + SCULK_CHARGE | 100 |
-| BREEZE | Yellow/White dust + GUST | 80 |
-| DRAGON_EGG | DRAGON + FLAME spiral + LAVA + SOUL_FIRE_FLAME + EXPLOSION dome | 200+ |
+### New Particle System (Global Limits)
 
-### Special Effect Methods
-- Crescent Arc, Impact Sparks, Blood Burst, Vampiric Tether
-- Heal Flash, Metallic Flash, Stone Crack, Gold Spiral
-- Disrupt Static, Lockdown Ring, Air Slice, Clock Particles
-- Speed Streak, Afterimage, Ground Crack, Red Fog
-- Fracture, EMP Burst, Dice, Dark Slash, Shadow Pull
-- Blue Shockwave, Sculk Spread, Wind Slash, Wind Circles
-- Dragon Slash, Aura Dome, Draconic Haze
+| Limit | Value | Description |
+|-------|-------|-------------|
+| HARD_CAP_PER_PLAYER | 25 | Max active particles per player at any time |
+| MAX_PER_TRIGGER | 12 | Max particles spawned in a single trigger |
+| MIN_LIFETIME | 4 ticks | Minimum particle duration |
+| MAX_LIFETIME | 8 ticks | Maximum particle duration |
+| MAX_RADIUS | 0.5 blocks | Max spread radius for particle spawning |
+| RENDER_DISTANCE | 16 blocks | Max distance for players to see particles |
+| MIN_PULSE_INTERVAL | 15 ticks | Minimum time between same effect repeating |
+
+### Core Tracking
+- **Per-player active count:** `Map<UUID, Integer>` tracks how many particles each player has active
+- **Pulse timing:** `Map<UUID, Map<String, Long>>` prevents the same effect from firing too frequently
+- **Automatic cleanup:** `clearPlayer(UUID)` called on disconnect to free tracking data
+- **Render distance filtering:** Only nearby players within 16 blocks receive particle packets
+
+### Ability-Specific Effects
+
+**MELEE Effects:**
+| Method | Particle | Color | Count | Description |
+|--------|----------|-------|-------|-------------|
+| `playPowerStrike()` | DUST | Yellow (255,255,0) | 8 | Yellow sparks at target location |
+| `playBattleFervor()` | DUST | Red (200,0,0) | 6 | Red dust ring around player |
+| `playBerserk()` | DUST | Crimson (180,0,0) | 10 | Crimson burst at player location |
+
+**DEFENSE Effects:**
+| Method | Particle | Color | Count | Description |
+|--------|----------|-------|-------|-------------|
+| `playIronSkin()` | DUST | Gray (150,150,150) | 6 | Gray dust at player location |
+| `playFortifyAura()` | DUST | Gold (255,200,0) | 8 | Gold dust ring around player |
+| `playLastStand()` | DUST | Red (255,0,0) | 10 | Red glow at player location |
+
+**RANGED Effects:**
+| Method | Particle | Color | Count | Description |
+|--------|----------|-------|-------|-------------|
+| `playPiercingShot()` | DUST | White (255,255,255) | 8 | White trail along eye direction |
+| `playVolley()` | CRIT | — | 10 | Crit particles in upward arc |
+
+**MAGIC Effects:**
+| Method | Particle | Color | Count | Description |
+|--------|----------|-------|-------|-------------|
+| `playArcaneSurge()` | DUST | Purple (160,32,240) | 8 | Purple dust at player location |
+| `playManaShield()` | DUST | Cyan (0,200,200) | 10 | Cyan dust ring around player |
+| `playBlink()` | DUST | Purple (128,0,128) | 12 | Purple poof at origin + destination |
+
+**WEALTH Effects:**
+| Method | Particle | Color | Count | Description |
+|--------|----------|-------|-------|-------------|
+| `playPlunderKill()` | DUST | Gold (255,215,0) | 10 | Gold coins burst at target |
+| `playTreasureSense()` | DUST | Gold (255,200,0) | 6 | Gold arrows pointing up at player |
+
+**UTILITY Effects:**
+| Method | Particle | Color | Count | Description |
+|--------|----------|-------|-------|-------------|
+| `playSpeedBoost()` | DUST | White (240,240,240) | 6 | White poof at feet |
+| `playStealth()` | DUST | Dark Gray (50,50,50) | 8 | Smoke at player location |
+| `playRegeneration()` | DUST | Green (0,200,0) | 6 | Green hearts at player location |
+
+**CONTROL Effects:**
+| Method | Particle | Color | Count | Description |
+|--------|----------|-------|-------|-------------|
+| `playFreeze()` | DUST | Ice Blue (150,200,255) | 10 | Ice blue particles at target |
+| `playShock()` | DUST | Electric (255,255,100) | 8 | Electric sparks at target |
+
+### Legacy Compatibility Methods
+| Method | Usage | Description |
+|--------|-------|-------------|
+| `playSupportParticles(player, attr, level)` | Called on support activation | Routes to attribute-specific effects |
+| `playMeleeParticles(attacker, target, attr)` | Called on melee hit | Routes to attribute-specific effects |
+| `playPassiveParticles(player, attr)` | Called every second by ticker | Routes to attribute-specific effects, respects pulse intervals |
+
+### Helper Effect Methods
+| Method | Description |
+|--------|-------------|
+| `playVampiricHeal(player)` | Red dust for Health lifesteal |
+| `playLockdownZone(player)` | Purple ring for Control lockdown |
+| `playSystemJam(player)` | Red dust for Disruption system jam |
+| `playDominionCharge(player)` | Purple dust for Dragon Egg charge |
+| `playStunEffect(target)` | Yellow sparks for Tempo stun |
 
 ---
 
@@ -970,8 +1108,9 @@ commands:
 | Attributes | 17 (13 standard + 4 boss) |
 | Weapons | 17 (13 standard + 4 boss) |
 | Abilities | 51 (17 melee + 17 support + 17 passive) |
-| GUI Menus | 20+ (admin panel, settings, editor, per-attribute, etc.) |
-| Commands | 20+ subcommands across /smp and /admin |
+| GUI Menus | 25+ (admin panel, settings, editor, altar settings, altar list, vision tracking, etc.) |
+| Commands | 22+ subcommands across /smp and /admin |
 | Config Options | 70+ individual settings |
-| Particle Effects | 28 toggleable categories, 30+ special effect methods |
+| Particle Effects | Strict limit system (25/player, 12/trigger), 20+ effect methods |
 | Combat Log Events | 10 types |
+| Normal Boss Drops | 3 bosses (Warden, Wither, Ender Dragon) with attribute items |
