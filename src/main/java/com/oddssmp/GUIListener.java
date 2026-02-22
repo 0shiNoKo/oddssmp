@@ -35,6 +35,7 @@ public class GUIListener implements Listener {
                 !title.contains("Edit:") && !title.contains("Weapons") &&
                 !title.contains("Custom Items") && !title.contains("Combat Log") &&
                 !title.contains("Particle") && !title.contains("Track") &&
+                !title.contains("Altar") &&
                 !isAttributeDetailsGUI(title)) {
             return;
         }
@@ -119,6 +120,14 @@ public class GUIListener implements Listener {
         // Vision Player Tracking GUI
         else if (title.equals("§3§lSelect Player to Track")) {
             handleTrackingSelection(player, clicked);
+        }
+        // Altar Settings GUI
+        else if (title.equals("§3§lAltar Settings")) {
+            handleAltarSettings(player, clicked, itemName, event.getClick(), event.getSlot());
+        }
+        // All Altars list GUI
+        else if (title.equals("§3§lAll Altars")) {
+            handleAltarList(player, clicked, itemName, event.getClick(), event.getSlot());
         }
     }
 
@@ -1720,6 +1729,215 @@ public class GUIListener implements Listener {
             player.getInventory().addItem(itemToGive);
             player.sendMessage("§aYou received " + itemToGive.getItemMeta().getDisplayName() + "§a!");
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+        }
+    }
+
+    // ========== ALTAR SETTINGS HANDLERS ==========
+
+    // Track which altar each player is currently editing
+    private final java.util.Map<java.util.UUID, WeaponAltar> editingAltar = new java.util.HashMap<>();
+
+    public void setEditingAltar(Player player, WeaponAltar altar) {
+        if (altar != null) {
+            editingAltar.put(player.getUniqueId(), altar);
+        } else {
+            editingAltar.remove(player.getUniqueId());
+        }
+    }
+
+    private WeaponAltar getEditingAltar(Player player) {
+        return editingAltar.get(player.getUniqueId());
+    }
+
+    private void handleAltarSettings(Player player, ItemStack clicked, String itemName, ClickType click, int slot) {
+        WeaponAltar altar = getEditingAltar(player);
+
+        // Per-altar settings (row 2, slots 9-17)
+        if (altar != null && slot >= 9 && slot <= 17) {
+            switch (slot) {
+                case 9: // Base Block
+                    if (click == ClickType.RIGHT) {
+                        altar.setBaseBlock(org.bukkit.Material.ANCIENT_DEBRIS);
+                    } else {
+                        altar.setBaseBlock(AdminGUI.cycleBaseBlock(altar.getBaseBlock()));
+                    }
+                    altar.respawn();
+                    break;
+                case 10: // Weapon Size
+                    float scale = altar.getWeaponScale();
+                    if (click == ClickType.RIGHT) {
+                        scale = Math.max(0.5f, scale - 0.25f);
+                    } else {
+                        scale = Math.min(5.0f, scale + 0.25f);
+                    }
+                    altar.setWeaponScale(scale);
+                    altar.respawn();
+                    break;
+                case 11: // Rotation Speed
+                    double rSpeed = altar.getRotationSpeed();
+                    if (click == ClickType.RIGHT) {
+                        rSpeed = Math.max(0.0, rSpeed - 0.01);
+                    } else {
+                        rSpeed = Math.min(0.5, rSpeed + 0.01);
+                    }
+                    altar.setRotationSpeed(rSpeed);
+                    break;
+                case 12: // Particle Type
+                    altar.setParticleType(AdminGUI.cycleParticle(altar.getParticleType()));
+                    break;
+                case 13: // Particle Count
+                    int pCount = altar.getParticleCount();
+                    if (click == ClickType.RIGHT) {
+                        pCount = Math.max(1, pCount - 5);
+                    } else {
+                        pCount = Math.min(100, pCount + 5);
+                    }
+                    altar.setParticleCount(pCount);
+                    break;
+                case 14: // Particles Toggle
+                    altar.setParticlesEnabled(!altar.isParticlesEnabled());
+                    break;
+                case 15: // Rotation Toggle
+                    altar.setRotationEnabled(!altar.isRotationEnabled());
+                    break;
+                case 17: // Delete This Altar
+                    plugin.removeAltar(altar);
+                    setEditingAltar(player, null);
+                    player.closeInventory();
+                    player.sendMessage("§aAltar removed!");
+                    return;
+            }
+            // Refresh the GUI
+            plugin.getAdminGUI().openAltarSettingsGUI(player, altar);
+            return;
+        }
+
+        // Global settings (row 4, slots 27-35)
+        if (slot >= 27 && slot <= 35) {
+            switch (slot) {
+                case 27: // Global Base Block
+                    if (click == ClickType.RIGHT) {
+                        WeaponAltar.setGlobalBaseBlock(org.bukkit.Material.ANCIENT_DEBRIS);
+                    } else {
+                        WeaponAltar.setGlobalBaseBlock(AdminGUI.cycleBaseBlock(WeaponAltar.getGlobalBaseBlock()));
+                    }
+                    break;
+                case 28: // Global Weapon Size
+                    float gScale = WeaponAltar.getGlobalWeaponScale();
+                    if (click == ClickType.RIGHT) {
+                        gScale = Math.max(0.5f, gScale - 0.25f);
+                    } else {
+                        gScale = Math.min(5.0f, gScale + 0.25f);
+                    }
+                    WeaponAltar.setGlobalWeaponScale(gScale);
+                    break;
+                case 29: // Global Rotation Speed
+                    double gRSpeed = WeaponAltar.getGlobalRotationSpeed();
+                    if (click == ClickType.RIGHT) {
+                        gRSpeed = Math.max(0.0, gRSpeed - 0.01);
+                    } else {
+                        gRSpeed = Math.min(0.5, gRSpeed + 0.01);
+                    }
+                    WeaponAltar.setGlobalRotationSpeed(gRSpeed);
+                    break;
+                case 30: // Global Particle Type
+                    WeaponAltar.setGlobalParticleType(AdminGUI.cycleParticle(WeaponAltar.getGlobalParticleType()));
+                    break;
+                case 31: // Global Particle Count
+                    int gPCount = WeaponAltar.getGlobalParticleCount();
+                    if (click == ClickType.RIGHT) {
+                        gPCount = Math.max(1, gPCount - 5);
+                    } else {
+                        gPCount = Math.min(100, gPCount + 5);
+                    }
+                    WeaponAltar.setGlobalParticleCount(gPCount);
+                    break;
+                case 32: // Global Particles Toggle
+                    WeaponAltar.setGlobalParticlesEnabled(!WeaponAltar.isGlobalParticlesEnabled());
+                    break;
+                case 33: // Global Rotation Toggle
+                    WeaponAltar.setGlobalRotationEnabled(!WeaponAltar.isGlobalRotationEnabled());
+                    break;
+                case 35: // Apply Global to All
+                    for (WeaponAltar a : plugin.getActiveAltars()) {
+                        a.applyGlobalSettings();
+                        a.respawn();
+                    }
+                    player.sendMessage("§aApplied global settings to all " + plugin.getActiveAltars().size() + " altar(s) and respawned!");
+                    break;
+            }
+            // Refresh the GUI
+            plugin.getAdminGUI().openAltarSettingsGUI(player, altar);
+            return;
+        }
+
+        // Bottom row actions (slots 45-53)
+        switch (slot) {
+            case 45: // List All Altars
+                plugin.getAdminGUI().openAltarListGUI(player);
+                break;
+            case 47: // Teleport
+                if (altar != null) {
+                    player.teleport(altar.getLocation().add(0, 1, 0));
+                    player.closeInventory();
+                    player.sendMessage("§aTeleported to " + altar.getWeapon().getColor() + altar.getWeapon().getName() + " §aaltar!");
+                }
+                break;
+            case 49: // Respawn Current
+                if (altar != null) {
+                    altar.respawn();
+                    player.sendMessage("§aAltar respawned with current settings!");
+                    plugin.getAdminGUI().openAltarSettingsGUI(player, altar);
+                }
+                break;
+            case 51: // Delete ALL Altars
+                if (click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT) {
+                    int count = plugin.getActiveAltars().size();
+                    for (WeaponAltar a : new java.util.ArrayList<>(plugin.getActiveAltars())) {
+                        plugin.removeAltar(a);
+                    }
+                    setEditingAltar(player, null);
+                    player.closeInventory();
+                    player.sendMessage("§cRemoved all §e" + count + " §caltar(s)!");
+                } else {
+                    player.sendMessage("§cShift-click to confirm deletion of all altars!");
+                }
+                break;
+            case 53: // Close
+                player.closeInventory();
+                break;
+        }
+    }
+
+    private void handleAltarList(Player player, ItemStack clicked, String itemName, ClickType click, int slot) {
+        java.util.List<WeaponAltar> altars = plugin.getActiveAltars();
+
+        // Back button (last slot)
+        if (itemName.contains("Back")) {
+            WeaponAltar editing = getEditingAltar(player);
+            plugin.getAdminGUI().openAltarSettingsGUI(player, editing);
+            return;
+        }
+
+        // Altar item clicked
+        if (slot >= 0 && slot < altars.size()) {
+            WeaponAltar altar = altars.get(slot);
+
+            if (click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT) {
+                // Shift-click = delete
+                plugin.removeAltar(altar);
+                player.sendMessage("§aRemoved " + altar.getWeapon().getColor() + altar.getWeapon().getName() + " §aaltar!");
+                plugin.getAdminGUI().openAltarListGUI(player);
+            } else if (click == ClickType.RIGHT) {
+                // Right-click = teleport
+                player.teleport(altar.getLocation().add(0, 1, 0));
+                player.closeInventory();
+                player.sendMessage("§aTeleported to " + altar.getWeapon().getColor() + altar.getWeapon().getName() + " §aaltar!");
+            } else {
+                // Left-click = edit settings
+                setEditingAltar(player, altar);
+                plugin.getAdminGUI().openAltarSettingsGUI(player, altar);
+            }
         }
     }
 }

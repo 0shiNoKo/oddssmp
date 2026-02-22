@@ -399,6 +399,13 @@ public class EventListener implements Listener {
                     return;
                 }
 
+                // Creative mode + shift-right-click = open altar settings GUI
+                if (player.getGameMode() == org.bukkit.GameMode.CREATIVE && player.isSneaking()) {
+                    plugin.getGUIListener().setEditingAltar(player, altar);
+                    plugin.getAdminGUI().openAltarSettingsGUI(player, altar);
+                    return;
+                }
+
                 // Check if sneaking to view requirements, otherwise try to craft
                 if (player.isSneaking()) {
                     // Show requirements

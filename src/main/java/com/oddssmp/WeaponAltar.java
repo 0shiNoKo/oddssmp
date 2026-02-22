@@ -31,8 +31,26 @@ public class WeaponAltar {
     private final Location location;
     private Set<Location> protectedBlocks = new HashSet<>();
     private boolean active = true;
-    private List<Entity> displayEntities = new ArrayList<>(); // Track spawned display entities
-    private ItemDisplay weaponDisplay; // Track weapon display for rotation
+    private List<Entity> displayEntities = new ArrayList<>();
+    private ItemDisplay weaponDisplay;
+
+    // Per-altar configurable settings
+    private Material baseBlock = Material.ANCIENT_DEBRIS;
+    private float weaponScale = 1.75f;
+    private double rotationSpeed = 0.05;
+    private Particle particleType = Particle.ENCHANT;
+    private int particleCount = 10;
+    private boolean particlesEnabled = true;
+    private boolean rotationEnabled = true;
+
+    // Global altar settings
+    private static Material globalBaseBlock = Material.ANCIENT_DEBRIS;
+    private static float globalWeaponScale = 1.75f;
+    private static double globalRotationSpeed = 0.05;
+    private static Particle globalParticleType = Particle.ENCHANT;
+    private static int globalParticleCount = 10;
+    private static boolean globalParticlesEnabled = true;
+    private static boolean globalRotationEnabled = true;
 
     // Crafting costs for each weapon
     private static final Map<AttributeWeapon, Map<Material, Integer>> CRAFTING_COSTS = new HashMap<>();
@@ -166,20 +184,19 @@ public class WeaponAltar {
             ItemStack weaponItem = new ItemStack(weapon.getMaterial());
             display.setItemStack(weaponItem);
             display.setBillboard(Display.Billboard.FIXED);
-            // Scale up the item (1.75x)
             Transformation transform = new Transformation(
-                new Vector3f(0f, 0f, 0f),         // translation
-                new AxisAngle4f(0, 0, 1, 0),      // left rotation (Y axis)
-                new Vector3f(1.75f, 1.75f, 1.75f), // scale
-                new AxisAngle4f(0, 0, 0, 1)       // right rotation
+                new Vector3f(0f, 0f, 0f),
+                new AxisAngle4f(0, 0, 1, 0),
+                new Vector3f(weaponScale, weaponScale, weaponScale),
+                new AxisAngle4f(0, 0, 0, 1)
             );
             display.setTransformation(transform);
         });
         displayEntities.add(weaponDisplay);
 
-        // 4. PLACE SOLID ANCIENT DEBRIS BLOCK - below the display
+        // 4. PLACE BASE BLOCK - below the display
         Location blockLoc = new Location(world, location.getBlockX(), location.getBlockY() - 1, location.getBlockZ());
-        setBlock(blockLoc, Material.ANCIENT_DEBRIS);
+        setBlock(blockLoc, baseBlock);
 
         plugin.getLogger().info("Created display entities for " + weapon.getName() + " altar");
     }
@@ -202,27 +219,27 @@ public class WeaponAltar {
                 tick++;
 
                 // Rotate weapon display smoothly
-                if (weaponDisplay != null && !weaponDisplay.isDead()) {
-                    rotation += 0.05f; // Rotation speed
+                if (rotationEnabled && weaponDisplay != null && !weaponDisplay.isDead()) {
+                    rotation += (float) rotationSpeed;
                     if (rotation > (float)(Math.PI * 2)) {
                         rotation -= (float)(Math.PI * 2);
                     }
 
                     Transformation transform = new Transformation(
-                        new Vector3f(0f, 0f, 0f),                    // translation
-                        new AxisAngle4f(rotation, 0, 1, 0),          // left rotation (around Y axis)
-                        new Vector3f(1.75f, 1.75f, 1.75f),           // scale
-                        new AxisAngle4f(0, 0, 0, 1)                  // right rotation
+                        new Vector3f(0f, 0f, 0f),
+                        new AxisAngle4f(rotation, 0, 1, 0),
+                        new Vector3f(weaponScale, weaponScale, weaponScale),
+                        new AxisAngle4f(0, 0, 0, 1)
                     );
                     weaponDisplay.setTransformation(transform);
                 }
 
-                // Particle effects every second (around the display)
+                // Particle effects every second
                 World world = location.getWorld();
-                if (world != null && tick % 20 == 0) {
-                    world.spawnParticle(Particle.ENCHANT,
+                if (particlesEnabled && world != null && tick % 20 == 0) {
+                    world.spawnParticle(particleType,
                         location.clone().add(0.5, 2.0, 0.5),
-                        10, 0.3, 0.5, 0.3, 0.05);
+                        particleCount, 0.3, 0.5, 0.3, 0.05);
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
@@ -466,6 +483,87 @@ public class WeaponAltar {
 
     public boolean isActive() {
         return active;
+    }
+
+    /**
+     * Respawn the altar (remove and recreate display entities)
+     */
+    public void respawn() {
+        // Remove display entities only (not the altar itself)
+        for (Entity entity : displayEntities) {
+            if (entity != null && !entity.isDead()) {
+                entity.remove();
+            }
+        }
+        displayEntities.clear();
+        for (Location loc : protectedBlocks) {
+            if (loc.getWorld() != null) {
+                loc.getBlock().setType(Material.AIR);
+            }
+        }
+        protectedBlocks.clear();
+        weaponDisplay = null;
+        active = true;
+        spawn();
+    }
+
+    // --- Per-altar settings getters/setters ---
+
+    public Material getBaseBlock() { return baseBlock; }
+    public void setBaseBlock(Material block) { this.baseBlock = block; }
+
+    public float getWeaponScale() { return weaponScale; }
+    public void setWeaponScale(float scale) { this.weaponScale = scale; }
+
+    public double getRotationSpeed() { return rotationSpeed; }
+    public void setRotationSpeed(double speed) { this.rotationSpeed = speed; }
+
+    public Particle getParticleType() { return particleType; }
+    public void setParticleType(Particle type) { this.particleType = type; }
+
+    public int getParticleCount() { return particleCount; }
+    public void setParticleCount(int count) { this.particleCount = count; }
+
+    public boolean isParticlesEnabled() { return particlesEnabled; }
+    public void setParticlesEnabled(boolean enabled) { this.particlesEnabled = enabled; }
+
+    public boolean isRotationEnabled() { return rotationEnabled; }
+    public void setRotationEnabled(boolean enabled) { this.rotationEnabled = enabled; }
+
+    // --- Global settings static getters/setters ---
+
+    public static Material getGlobalBaseBlock() { return globalBaseBlock; }
+    public static void setGlobalBaseBlock(Material block) { globalBaseBlock = block; }
+
+    public static float getGlobalWeaponScale() { return globalWeaponScale; }
+    public static void setGlobalWeaponScale(float scale) { globalWeaponScale = scale; }
+
+    public static double getGlobalRotationSpeed() { return globalRotationSpeed; }
+    public static void setGlobalRotationSpeed(double speed) { globalRotationSpeed = speed; }
+
+    public static Particle getGlobalParticleType() { return globalParticleType; }
+    public static void setGlobalParticleType(Particle type) { globalParticleType = type; }
+
+    public static int getGlobalParticleCount() { return globalParticleCount; }
+    public static void setGlobalParticleCount(int count) { globalParticleCount = count; }
+
+    public static boolean isGlobalParticlesEnabled() { return globalParticlesEnabled; }
+    public static void setGlobalParticlesEnabled(boolean enabled) { globalParticlesEnabled = enabled; }
+
+    public static boolean isGlobalRotationEnabled() { return globalRotationEnabled; }
+    public static void setGlobalRotationEnabled(boolean enabled) { globalRotationEnabled = enabled; }
+
+    /**
+     * Apply global settings to this altar
+     */
+    public void applyGlobalSettings() {
+        this.baseBlock = globalBaseBlock;
+        this.weaponScale = globalWeaponScale;
+        this.rotationSpeed = globalRotationSpeed;
+        this.particleType = globalParticleType;
+        this.particleCount = globalParticleCount;
+        this.particlesEnabled = globalParticlesEnabled;
+        this.rotationEnabled = globalRotationEnabled;
     }
 
     private static String formatMaterialName(Material material) {
