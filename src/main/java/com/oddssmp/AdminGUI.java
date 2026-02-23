@@ -1915,6 +1915,10 @@ public class AdminGUI {
         return item;
     }
 
+    private ItemStack createItem(Material material, String name, String... lore) {
+        return createItem(material, name, lore.length > 0 ? Arrays.asList(lore) : new ArrayList<>());
+    }
+
     private ItemStack createPlayerStatsItem(Player player, PlayerData data) {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) skull.getItemMeta();

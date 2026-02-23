@@ -1285,6 +1285,7 @@ public class AbilityManager {
         AbilityFlags flags = getAbilityFlags(tracker.getUniqueId());
         int duration = flags.trackingDuration;
         if (duration <= 0) duration = 5;
+        final int finalDuration = duration;
 
         flags.trackingTarget = target.getUniqueId();
         tracker.sendMessage("§aNow tracking §e" + target.getName() + " §afor §e" + duration + "s§a!");
@@ -1292,7 +1293,7 @@ public class AbilityManager {
         // Apply glowing to target (only visible to tracker)
         // Since Bukkit doesn't support per-player glowing easily, we'll use action bar updates
         new BukkitRunnable() {
-            int ticks = duration * 20;
+            int ticks = finalDuration * 20;
 
             @Override
             public void run() {
