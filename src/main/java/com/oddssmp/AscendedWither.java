@@ -168,7 +168,9 @@ public class AscendedWither implements Listener {
         double radius = 8.0;
 
         // Visual effect
-        ParticleManager.playBlueShockwave(loc, radius);
+        world.spawnParticle(Particle.SONIC_BOOM, loc, 1, 0, 0, 0, 0);
+        world.spawnParticle(Particle.DUST, loc, 20, radius, 1, radius, 0,
+                new Particle.DustOptions(Color.fromRGB(100, 100, 255), 2.0f));
         world.playSound(loc, Sound.ENTITY_WITHER_SHOOT, 1.5f, 0.5f);
 
         // Damage nearby players
@@ -248,7 +250,8 @@ public class AscendedWither implements Listener {
         for (int i = 0; i < 5; i++) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (wither != null) {
-                    ParticleManager.playDarkSlash((Player) null);
+                    world.spawnParticle(Particle.DUST, wither.getLocation(), 30, 2, 2, 2, 0,
+                            new Particle.DustOptions(Color.fromRGB(80, 0, 80), 2.0f));
                     world.spawnParticle(Particle.SMOKE, wither.getLocation(), 100, 2, 2, 2, 0.1);
                 }
             }, i * 10L);
