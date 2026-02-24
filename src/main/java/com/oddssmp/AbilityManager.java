@@ -1260,7 +1260,7 @@ public class AbilityManager {
             meta.setOwningPlayer(target);
             meta.setDisplayName("§e" + target.getName());
             List<String> lore = new ArrayList<>();
-            lore.add("§7Click to track for §e" + trackingDuration + "s");
+            lore.add("§7Click to track until within §e5 chunks §7(80 blocks)");
             lore.add("");
             lore.add("§7World: §f" + target.getWorld().getName());
             double distance = caster.getWorld().equals(target.getWorld()) ?
@@ -1283,25 +1283,16 @@ public class AbilityManager {
      */
     public void startTracking(Player tracker, Player target) {
         AbilityFlags flags = getAbilityFlags(tracker.getUniqueId());
-        int duration = flags.trackingDuration;
-        if (duration <= 0) duration = 5;
-        final int finalDuration = duration;
+        final double TRACKING_END_RADIUS = 80.0; // 5 chunks = 80 blocks
 
         flags.trackingTarget = target.getUniqueId();
-        tracker.sendMessage("§aNow tracking §e" + target.getName() + " §afor §e" + duration + "s§a!");
+        tracker.sendMessage("§aNow tracking §e" + target.getName() + "§a! Ends when within §e5 chunks §a(80 blocks).");
 
-        // Apply glowing to target (only visible to tracker)
-        // Since Bukkit doesn't support per-player glowing easily, we'll use action bar updates
         new BukkitRunnable() {
-            int ticks = finalDuration * 20;
-
             @Override
             public void run() {
-                if (ticks <= 0 || !tracker.isOnline()) {
+                if (!tracker.isOnline()) {
                     flags.trackingTarget = null;
-                    if (tracker.isOnline()) {
-                        tracker.sendMessage("§7Tracking ended.");
-                    }
                     this.cancel();
                     return;
                 }
@@ -1317,6 +1308,15 @@ public class AbilityManager {
                 // Send tracking info via action bar
                 if (tracker.getWorld().equals(trackedPlayer.getWorld())) {
                     double distance = tracker.getLocation().distance(trackedPlayer.getLocation());
+
+                    // End tracking when within 5 chunk radius
+                    if (distance <= TRACKING_END_RADIUS) {
+                        flags.trackingTarget = null;
+                        tracker.sendMessage("§aYou are within §e5 chunks §aof §e" + trackedPlayer.getName() + "§a! Tracking ended.");
+                        this.cancel();
+                        return;
+                    }
+
                     String direction = getDirectionTo(tracker, trackedPlayer);
                     tracker.sendActionBar(net.kyori.adventure.text.Component.text(
                             "§3§lTRACKING §e" + trackedPlayer.getName() + " §7| §f" +
@@ -1328,8 +1328,6 @@ public class AbilityManager {
                     tracker.sendActionBar(net.kyori.adventure.text.Component.text(
                             "§3§lTRACKING §e" + trackedPlayer.getName() + " §7| §cDifferent world"));
                 }
-
-                ticks -= 20;
             }
         }.runTaskTimer(plugin, 0L, 20L);
     }

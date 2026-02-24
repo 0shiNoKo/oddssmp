@@ -4,7 +4,18 @@ All notable changes to the OddsSMP plugin are documented in this file.
 
 ---
 
-## [Unreleased] - 2026-02-22
+## [Unreleased] - 2026-02-23
+
+### Abilities
+- **Change Vision support tracking to distance-based ending**
+  - Tracking now continues until tracker is within 5 chunks (80 blocks) of target
+  - No longer time-limited; ends on proximity, target going offline, or tracker going offline
+
+### Bug Fixes
+- **Fix 14 compilation errors across 3 files** (`f7aa5f5`)
+  - AbilityManager.java: non-effectively-final variable in inner class
+  - AdminGUI.java: 11 createItem() calls using varargs instead of List
+  - AscendedWither.java: removed particle methods replaced with inline spawning
 
 ### Particle System
 - **Rewrite particle system with strict global limits and tracking** (`4925290`)

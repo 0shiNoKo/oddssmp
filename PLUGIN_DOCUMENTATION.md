@@ -110,7 +110,7 @@
 | Ability | Type | Details |
 |---------|------|---------|
 | Target Mark | Melee | Apply Glowing for 300s (+30s/level, max 450s = 7.5m). **CD: 120s** |
-| True Sight | Support | Opens **Player Tracking GUI** to select a target. Tracks for 5s (+1s/level, max 10s). Shows action bar with distance, compass direction (N/NE/E/SE/S/SW/W/NW), and applies Glowing to target. **CD: 120s** |
+| True Sight | Support | Opens **Player Tracking GUI** to select a target. Tracks until tracker is within **5 chunks (80 blocks)** of target. Shows action bar with distance, compass direction (N/NE/E/SE/S/SW/W/NW), and applies Glowing to target. **CD: 120s** |
 | Awareness | Passive | Players within 12 blocks glow (visible only to you). |
 
 #### TRANSFER (🔁)
@@ -764,8 +764,9 @@ Shows cooldown as green checkmark (ready) or red countdown (on cooldown).
 - Shows all online players (except caster) as player heads
 - Lore: player name, world, distance in blocks
 - Click a head to begin tracking that player
-- During tracking: action bar shows `§bTracking: §e[Name] §7| §fDistance: §a[X] blocks §7| §fDirection: §e[N/NE/E/etc]`
-- Tracking applies Glowing effect to target for the duration
+- During tracking: action bar shows `§3§lTRACKING §e[Name] §7| §f[X] blocks §7[Direction]`
+- Tracking applies Glowing effect to target
+- Tracking ends when tracker is within **5 chunks (80 blocks)** of target, or target goes offline
 
 ### GUI Material Icons per Attribute
 | Attribute | Material |
